@@ -65,17 +65,17 @@ export const Route = createFileRoute("/api/remove-bg")({
           const item = json.data?.[0];
           if (!item) return new Response("لم تُرجع المعالجة أي صورة", { status: 500 });
 
-          let bytes: Uint8Array;
+          let bytes: ArrayBuffer;
           if (item.b64_json) {
-            bytes = Uint8Array.from(Buffer.from(item.b64_json, "base64"));
+            bytes = Buffer.from(item.b64_json, "base64").buffer.slice(0) as ArrayBuffer;
           } else if (item.url) {
             const r = await fetch(item.url);
-            bytes = new Uint8Array(await r.arrayBuffer());
+            bytes = await r.arrayBuffer();
           } else {
             return new Response("استجابة غير متوقعة", { status: 500 });
           }
 
-          return new Response(new Blob([bytes], { type: "image/png" }), {
+          return new Response(bytes, {
             status: 200,
             headers: {
               "Content-Type": "image/png",
