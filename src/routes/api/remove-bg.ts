@@ -75,7 +75,7 @@ export const Route = createFileRoute("/api/remove-bg")({
             return new Response("استجابة غير متوقعة", { status: 500 });
           }
 
-          return new Response(bytes as BlobPart as BodyInit, {
+          return new Response(new Blob([bytes], { type: "image/png" }), {
             status: 200,
             headers: {
               "Content-Type": "image/png",
