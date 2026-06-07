@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Upload, Download, Loader2, Image as ImageIcon, Sparkles } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import { AdminGate } from "@/components/AdminGate";
 
 export const Route = createFileRoute("/marketing-tool")({
   head: () => ({
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/marketing-tool")({
       },
     ],
   }),
-  component: MarketingToolPage,
+  component: () => <AdminGate title="أداة التسويق — منطقة محمية"><MarketingToolPage /></AdminGate>,
 });
 
 const TEMPLATES = [
