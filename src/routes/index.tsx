@@ -208,6 +208,3 @@ function GalleryPage() {
     </div>
   );
 }
-    </div>
-  );
-}
