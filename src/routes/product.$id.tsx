@@ -4,7 +4,7 @@ import { supabase, type Design } from "@/integrations/supabase/client";
 import { ArrowRight, MessageCircle, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { ProductChat } from "@/components/ProductChat";
-import { toast } from "sonner";
+import { SITE_CONFIG } from "@/lib/site-config";
 
 export const Route = createFileRoute("/product/$id")({
   loader: async ({ params }) => {
@@ -92,13 +92,17 @@ function ProductPage() {
                 <MessageCircle className="size-4" />
                 اسأل عن هذا المنتج
               </button>
-              <button
-                onClick={() => toast.success("سيتم التواصل معك قريباً لإكمال الطلب")}
+              <a
+                href={`https://wa.me/${SITE_CONFIG.whatsappNumber}?text=${encodeURIComponent(
+                  `مرحباً، أرغب بطلب التصميم:\n${design.name}${design.price != null ? `\nالسعر: ${design.price} ل.س` : ""}\nالرابط: ${typeof window !== "undefined" ? window.location.href : ""}`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft transition hover:opacity-90"
               >
                 <ShoppingBag className="size-4" />
-                اطلب الخدمة
-              </button>
+                اطلب عبر واتساب
+              </a>
             </div>
           </div>
         </div>
