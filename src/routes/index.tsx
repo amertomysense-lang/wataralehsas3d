@@ -202,7 +202,12 @@ function GalleryPage() {
 
       <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} وتر الإحساس — جميع الحقوق محفوظة
+        <span className="mx-2">·</span>
+        <Link to="/admin" className="hover:text-primary">لوحة التحكم</Link>
       </footer>
+    </div>
+  );
+}
     </div>
   );
 }
