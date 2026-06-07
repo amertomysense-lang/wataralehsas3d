@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MarketingToolRouteImport } from './routes/marketing-tool'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as ApiRemoveBgRouteImport } from './routes/api/remove-bg'
@@ -18,6 +19,11 @@ import { Route as ApiChatRouteImport } from './routes/api/chat'
 const MarketingToolRoute = MarketingToolRouteImport.update({
   id: '/marketing-tool',
   path: '/marketing-tool',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -43,6 +49,7 @@ const ApiChatRoute = ApiChatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/api/chat': typeof ApiChatRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/api/chat': typeof ApiChatRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/api/chat': typeof ApiChatRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
@@ -67,15 +76,23 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/marketing-tool'
     | '/api/chat'
     | '/api/remove-bg'
     | '/product/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/marketing-tool' | '/api/chat' | '/api/remove-bg' | '/product/$id'
+  to:
+    | '/'
+    | '/admin'
+    | '/marketing-tool'
+    | '/api/chat'
+    | '/api/remove-bg'
+    | '/product/$id'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/marketing-tool'
     | '/api/chat'
     | '/api/remove-bg'
@@ -84,6 +101,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   MarketingToolRoute: typeof MarketingToolRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiRemoveBgRoute: typeof ApiRemoveBgRoute
@@ -97,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/marketing-tool'
       fullPath: '/marketing-tool'
       preLoaderRoute: typeof MarketingToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -132,6 +157,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   MarketingToolRoute: MarketingToolRoute,
   ApiChatRoute: ApiChatRoute,
   ApiRemoveBgRoute: ApiRemoveBgRoute,
