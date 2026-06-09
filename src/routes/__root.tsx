@@ -132,6 +132,7 @@ function RootComponent() {
       <SiteBackground />
       <Outlet />
       <FloatingChat />
+      <FeaturesBubble />
       <Toaster position="top-center" richColors dir="rtl" />
     </QueryClientProvider>
   );
