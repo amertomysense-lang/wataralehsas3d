@@ -4,8 +4,9 @@ import { toast } from "sonner";
 import { consumeQuota, useQuota } from "@/lib/quota";
 import { QuotaModal } from "./QuotaModal";
 import { saveImageToDevice, shareImageWhatsApp } from "@/lib/save-image";
+import { useSettings, type DesignSection } from "@/lib/settings";
 
-type Preset = { id: string; label: string; prompt: string };
+type Preset = { id: string; label: string; prompt: string; preview?: string };
 
 export function AiImageStudio({
   title,
@@ -14,6 +15,7 @@ export function AiImageStudio({
   presets = [],
   basePrompt = "",
   allowImageInput = true,
+  section,
 }: {
   title: string;
   subtitle?: string;
@@ -21,7 +23,14 @@ export function AiImageStudio({
   presets?: Preset[];
   basePrompt?: string;
   allowImageInput?: boolean;
+  section?: DesignSection;
 }) {
+  const [s] = useSettings();
+  const customForSection: Preset[] = section
+    ? s.customDesigns.filter((d) => d.section === section).map((d) => ({ id: d.id, label: d.label, prompt: d.prompt, preview: d.preview }))
+    : [];
+  const allPresets = [...presets, ...customForSection];
+
   const [prompt, setPrompt] = useState("");
   const [preset, setPreset] = useState<Preset | null>(null);
   const [image, setImage] = useState<string | null>(null);
