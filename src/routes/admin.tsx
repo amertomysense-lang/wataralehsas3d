@@ -760,7 +760,7 @@ function QuotaSettingsTab() {
       </div>
 
       <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-4">
-        <ToggleRow
+        <AdToggleRow
           label="حصص الزوار غير محدودة"
           desc="عند التفعيل، يستطيع كل الزوار توليد عدد لا نهائي من النتائج (مناسب للعروض الترويجية)."
           checked={s.quotaUnlimited}
@@ -778,7 +778,7 @@ function QuotaSettingsTab() {
 
       <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-4">
         <h3 className="text-sm font-black">مكافأة مشاهدة الإعلان</h3>
-        <ToggleRow
+        <AdToggleRow
           label="السماح باستعادة محاولة عبر مشاهدة إعلان"
           desc="بعد نفاد المحاولات، يظهر للزائر زر مشاهدة إعلان قصير لاستعادة محاولة جديدة."
           checked={s.adRewardEnabled}
