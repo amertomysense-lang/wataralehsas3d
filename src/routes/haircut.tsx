@@ -377,7 +377,7 @@ function HaircutStudio() {
           </button>
           <button onClick={runAI} disabled={busy || !person || !style}
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-6 py-4 text-base font-black text-primary-foreground shadow-soft disabled:opacity-50">
-            {busy ? <><Loader2 className="size-5 animate-spin" /> جاري…</> : <><Sparkles className="size-5" /> توليد AI واقعي ({remLabel})</>}
+            {busy ? <><Loader2 className="size-5 animate-spin" /> جاري الدمج…</> : <><Sparkles className="size-5" /> ادمج بواقعية AI ({remLabel})</>}
           </button>
         </div>
         {busy && <AiLoungeBanner className="mt-4" />}
