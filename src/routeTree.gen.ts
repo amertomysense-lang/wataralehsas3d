@@ -9,13 +9,38 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WorkflowRouteImport } from './routes/workflow'
+import { Route as TryonRouteImport } from './routes/tryon'
+import { Route as SimulatorRouteImport } from './routes/simulator'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MarketingToolRouteImport } from './routes/marketing-tool'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
+import { Route as ApiTryonRouteImport } from './routes/api/tryon'
 import { Route as ApiRemoveBgRouteImport } from './routes/api/remove-bg'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
+const WorkflowRoute = WorkflowRouteImport.update({
+  id: '/workflow',
+  path: '/workflow',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TryonRoute = TryonRouteImport.update({
+  id: '/tryon',
+  path: '/tryon',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SimulatorRoute = SimulatorRouteImport.update({
+  id: '/simulator',
+  path: '/simulator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketingToolRoute = MarketingToolRouteImport.update({
   id: '/marketing-tool',
   path: '/marketing-tool',
@@ -36,6 +61,11 @@ const ProductIdRoute = ProductIdRouteImport.update({
   path: '/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTryonRoute = ApiTryonRouteImport.update({
+  id: '/api/tryon',
+  path: '/api/tryon',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRemoveBgRoute = ApiRemoveBgRouteImport.update({
   id: '/api/remove-bg',
   path: '/api/remove-bg',
@@ -51,16 +81,26 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/marketing-tool': typeof MarketingToolRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/simulator': typeof SimulatorRoute
+  '/tryon': typeof TryonRoute
+  '/workflow': typeof WorkflowRoute
   '/api/chat': typeof ApiChatRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/api/tryon': typeof ApiTryonRoute
   '/product/$id': typeof ProductIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/marketing-tool': typeof MarketingToolRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/simulator': typeof SimulatorRoute
+  '/tryon': typeof TryonRoute
+  '/workflow': typeof WorkflowRoute
   '/api/chat': typeof ApiChatRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/api/tryon': typeof ApiTryonRoute
   '/product/$id': typeof ProductIdRoute
 }
 export interface FileRoutesById {
@@ -68,8 +108,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/marketing-tool': typeof MarketingToolRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/simulator': typeof SimulatorRoute
+  '/tryon': typeof TryonRoute
+  '/workflow': typeof WorkflowRoute
   '/api/chat': typeof ApiChatRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/api/tryon': typeof ApiTryonRoute
   '/product/$id': typeof ProductIdRoute
 }
 export interface FileRouteTypes {
@@ -78,24 +123,39 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/marketing-tool'
+    | '/marketplace'
+    | '/simulator'
+    | '/tryon'
+    | '/workflow'
     | '/api/chat'
     | '/api/remove-bg'
+    | '/api/tryon'
     | '/product/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
     | '/marketing-tool'
+    | '/marketplace'
+    | '/simulator'
+    | '/tryon'
+    | '/workflow'
     | '/api/chat'
     | '/api/remove-bg'
+    | '/api/tryon'
     | '/product/$id'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/marketing-tool'
+    | '/marketplace'
+    | '/simulator'
+    | '/tryon'
+    | '/workflow'
     | '/api/chat'
     | '/api/remove-bg'
+    | '/api/tryon'
     | '/product/$id'
   fileRoutesById: FileRoutesById
 }
@@ -103,13 +163,46 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   MarketingToolRoute: typeof MarketingToolRoute
+  MarketplaceRoute: typeof MarketplaceRoute
+  SimulatorRoute: typeof SimulatorRoute
+  TryonRoute: typeof TryonRoute
+  WorkflowRoute: typeof WorkflowRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiRemoveBgRoute: typeof ApiRemoveBgRoute
+  ApiTryonRoute: typeof ApiTryonRoute
   ProductIdRoute: typeof ProductIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/workflow': {
+      id: '/workflow'
+      path: '/workflow'
+      fullPath: '/workflow'
+      preLoaderRoute: typeof WorkflowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tryon': {
+      id: '/tryon'
+      path: '/tryon'
+      fullPath: '/tryon'
+      preLoaderRoute: typeof TryonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/simulator': {
+      id: '/simulator'
+      path: '/simulator'
+      fullPath: '/simulator'
+      preLoaderRoute: typeof SimulatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketing-tool': {
       id: '/marketing-tool'
       path: '/marketing-tool'
@@ -138,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/tryon': {
+      id: '/api/tryon'
+      path: '/api/tryon'
+      fullPath: '/api/tryon'
+      preLoaderRoute: typeof ApiTryonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/remove-bg': {
       id: '/api/remove-bg'
       path: '/api/remove-bg'
@@ -159,20 +259,15 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   MarketingToolRoute: MarketingToolRoute,
+  MarketplaceRoute: MarketplaceRoute,
+  SimulatorRoute: SimulatorRoute,
+  TryonRoute: TryonRoute,
+  WorkflowRoute: WorkflowRoute,
   ApiChatRoute: ApiChatRoute,
   ApiRemoveBgRoute: ApiRemoveBgRoute,
+  ApiTryonRoute: ApiTryonRoute,
   ProductIdRoute: ProductIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
