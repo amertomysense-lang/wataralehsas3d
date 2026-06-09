@@ -296,6 +296,8 @@ function ProductsTab({ vendor }: { vendor: Vendor }) {
         </button>
       </div>
 
+      <BatchUploadToProducts vendor={vendor} />
+
       <div className="surface-card p-5">
         <h2 className="mb-3 text-sm font-black">القائمة ({items?.length ?? 0})</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -304,7 +306,7 @@ function ProductsTab({ vendor }: { vendor: Vendor }) {
               <img src={p.image_url} className="h-32 w-full object-cover" alt={p.name} />
               <div className="p-3">
                 <p className="text-sm font-bold line-clamp-1">{p.name}</p>
-                {p.price != null && <p className="mt-1 text-xs text-primary font-black">{p.price}</p>}
+                <PriceOrTrialBadge price={p.price} currency="$" />
                 <button onClick={() => remove(p.id)} className="mt-2 inline-flex items-center gap-1 text-xs text-destructive hover:underline">
                   <Trash2 className="size-3" /> حذف
                 </button>
@@ -314,6 +316,36 @@ function ProductsTab({ vendor }: { vendor: Vendor }) {
           {(!items || items.length === 0) && <p className="col-span-full text-center text-xs text-muted-foreground py-6">لا منتجات بعد.</p>}
         </div>
       </div>
+    </div>
+  );
+}
+
+function BatchUploadToProducts({ vendor }: { vendor: Vendor }) {
+  const qc = useQueryClient();
+  async function handle(items: BatchItem[]) {
+    if (!items.length) return;
+    const fashion = vendor.category === "fashion";
+    if (fashion) {
+      const rows = items.map((it) => ({
+        vendor_id: vendor.id, item_name: it.name || "تصميم", image_url: it.dataUrl,
+        price: null, vendor_whatsapp: vendor.whatsapp_number,
+      }));
+      const { error } = await supabase.from("fashion_items").insert(rows);
+      if (error) throw error;
+    } else {
+      const rows = items.map((it) => ({
+        name: it.name || "تصميم", image_url: it.dataUrl, price: null, category: vendor.category,
+      }));
+      const { error } = await supabase.from("products").insert(rows);
+      if (error) throw error;
+    }
+    qc.invalidateQueries({ queryKey: ["vendor-items"] });
+    qc.invalidateQueries({ queryKey: ["products"] });
+  }
+  return (
+    <div className="surface-card p-5">
+      <h2 className="mb-3 text-sm font-black">رفع جماعي للتصاميم (بدون أسعار)</h2>
+      <BatchImageUploader onUploaded={handle} hint="ارفع حتى 100 صورة دفعة واحدة — تُربط تلقائياً بفئة معرضك بدون سعر." />
     </div>
   );
 }
