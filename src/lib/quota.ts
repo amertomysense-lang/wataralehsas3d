@@ -48,8 +48,9 @@ function effectiveLimit(): number {
 
 export function remainingQuota(): number {
   const limit = effectiveLimit();
+  const paid = paidAttemptsForDevice();
   if (!isFinite(limit)) return Number.POSITIVE_INFINITY;
-  return Math.max(0, limit - readQuota().count);
+  return Math.max(0, limit - readQuota().count) + paid;
 }
 
 export function isUnlimited(): boolean {
@@ -76,7 +77,10 @@ export function consumeQuota(): boolean {
   if (isUnlimited()) return true;
   const limit = effectiveLimit();
   const q = readQuota();
-  if (q.count >= limit) return false;
+  // إن نفد المجاني، اسحب من الرصيد المدفوع
+  if (q.count >= limit) {
+    return consumePaidAttempt();
+  }
   const next = { day: today(), count: q.count + 1 };
   window.localStorage.setItem(KEY, JSON.stringify(next));
   window.dispatchEvent(new CustomEvent("watar:quota"));
@@ -90,10 +94,12 @@ export function useQuota() {
     refresh();
     window.addEventListener("watar:quota", refresh);
     window.addEventListener("watar:settings", refresh);
+    window.addEventListener("watar:payments", refresh);
     window.addEventListener("storage", refresh);
     return () => {
       window.removeEventListener("watar:quota", refresh);
       window.removeEventListener("watar:settings", refresh);
+      window.removeEventListener("watar:payments", refresh);
       window.removeEventListener("storage", refresh);
     };
   }, []);
