@@ -639,6 +639,25 @@ function VendorsTab() {
 }
 
 /* ============ Helpers ============ */
+function CurrencyQuickSwitch() {
+  const [s, setS] = useSettings();
+  return (
+    <label className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-2 py-1 text-[11px] font-bold text-primary">
+      <span className="opacity-70">العملة</span>
+      <select
+        value={s.currency}
+        onChange={(e) => setS({ ...s, currency: e.target.value })}
+        className="bg-transparent outline-none text-primary font-black"
+        title="تبديل العملة الفوري عبر كل الوحدات"
+      >
+        {CURRENCY_OPTIONS.map((c) => (
+          <option key={c.value} value={c.value} className="bg-background text-foreground">{c.label}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function Input({ value, onChange, placeholder, type = "text", full }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string; full?: boolean }) {
   return (
     <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} type={type}
