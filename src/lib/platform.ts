@@ -7,6 +7,7 @@ export type Region = {
   whatsapp_number: string;
   assistant_name: string | null;
   is_active: boolean;
+  distance_km?: number | null;
 };
 
 export type Pricing = {
