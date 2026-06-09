@@ -5,6 +5,7 @@ import { consumeQuota, useQuota } from "@/lib/quota";
 import { QuotaModal } from "./QuotaModal";
 import { saveImageToDevice, shareImageWhatsApp } from "@/lib/save-image";
 import { useSettings, type DesignSection } from "@/lib/settings";
+import { AiLoungeBanner } from "./AiLoungeBanner";
 
 type Preset = { id: string; label: string; prompt: string; preview?: string };
 
