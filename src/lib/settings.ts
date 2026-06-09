@@ -11,6 +11,14 @@ export type PlatformSettings = {
   showMarketingBanner: boolean; // إظهار قسم حملة الإطلاق
   fleetMobilizationEnabled: boolean; // إظهار خدمة الأسطول السريع
   enableOfflineSync: boolean;
+
+  // ===== نظام المحاولات & الإعلانات =====
+  quotaUnlimited: boolean;      // إن كان true → كل الزوار بلا حد
+  freeAttemptsDaily: number;    // عدد المحاولات اليومية المجانية
+  adRewardEnabled: boolean;     // السماح بمشاهدة إعلان لاستعادة محاولة
+  adBonusAttempts: number;      // عدد المحاولات لكل إعلان
+  adMaxDaily: number;           // أقصى محاولات إضافية يومياً عبر الإعلانات
+  adSeconds: number;            // مدة الإعلان الإجبارية (ثانية)
 };
 
 export const DEFAULT_SETTINGS: PlatformSettings = {
@@ -22,6 +30,13 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
   showMarketingBanner: true,
   fleetMobilizationEnabled: true,
   enableOfflineSync: true,
+
+  quotaUnlimited: false,
+  freeAttemptsDaily: 3,
+  adRewardEnabled: true,
+  adBonusAttempts: 1,
+  adMaxDaily: 5,
+  adSeconds: 15,
 };
 
 const KEY = "watar.platform.settings.v2";

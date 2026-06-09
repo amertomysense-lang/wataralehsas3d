@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal, Type, ToggleLeft } from "lucide-react";
+import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal, Type, ToggleLeft, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/AdminGate";
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/admin")({
   component: () => <AdminGate title="لوحة تحكم المعرض"><AdminPage /></AdminGate>,
 });
 
-type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms";
+type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms" | "quota";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
@@ -60,6 +60,7 @@ function AdminPage() {
           <TabBtn icon={<SettingsIcon className="size-4" />} label="إعدادات شاملة" active={tab === "settings"} onClick={() => setTab("settings")} />
           <TabBtn icon={<SlidersHorizontal className="size-4" />} label="Schema Controller" active={tab === "schema"} onClick={() => setTab("schema")} />
           <TabBtn icon={<Type className="size-4" />} label="نصوص الموقع (CMS)" active={tab === "cms"} onClick={() => setTab("cms")} />
+          <TabBtn icon={<Sparkles className="size-4" />} label="المحاولات والإعلانات" active={tab === "quota"} onClick={() => setTab("quota")} />
         </div>
 
         {tab === "products" && <ProductsTab />}
@@ -70,6 +71,7 @@ function AdminPage() {
         {tab === "settings" && <GlobalSettingsTab />}
         {tab === "schema" && <SchemaControllerTab />}
         {tab === "cms" && <CmsStringsTab />}
+        {tab === "quota" && <QuotaSettingsTab />}
       </div>
     </div>
   );
@@ -402,10 +404,10 @@ function SchemaControllerTab() {
         <p className="text-xs text-muted-foreground">مفاتيح تحكم سريعة لأي ظرف تشغيلي مستقبلي دون تعديل الكود.</p>
 
         <div className="grid gap-2 sm:grid-cols-2">
-          <ToggleRow label="إظهار قسم حملة الإطلاق" value={s.showMarketingBanner} onChange={() => toggle("showMarketingBanner")} />
-          <ToggleRow label="إظهار خدمة الأسطول السريع" value={s.fleetMobilizationEnabled} onChange={() => toggle("fleetMobilizationEnabled")} />
-          <ToggleRow label="تسجيل تجارب AI Try-On" value={s.aiTryOnLogging} onChange={() => toggle("aiTryOnLogging")} />
-          <ToggleRow label="تفعيل المزامنة الأوفلاين" value={s.enableOfflineSync} onChange={() => toggle("enableOfflineSync")} />
+          <QuotaToggleRow label="إظهار قسم حملة الإطلاق" value={s.showMarketingBanner} onChange={() => toggle("showMarketingBanner")} />
+          <QuotaToggleRow label="إظهار خدمة الأسطول السريع" value={s.fleetMobilizationEnabled} onChange={() => toggle("fleetMobilizationEnabled")} />
+          <QuotaToggleRow label="تسجيل تجارب AI Try-On" value={s.aiTryOnLogging} onChange={() => toggle("aiTryOnLogging")} />
+          <QuotaToggleRow label="تفعيل المزامنة الأوفلاين" value={s.enableOfflineSync} onChange={() => toggle("enableOfflineSync")} />
         </div>
       </div>
 
@@ -436,7 +438,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function ToggleRow({ label, value, onChange }: { label: string; value: boolean; onChange: () => void }) {
+function QuotaToggleRow({ label, value, onChange }: { label: string; value: boolean; onChange: () => void }) {
   return (
     <button onClick={onChange}
       className={`flex items-center justify-between rounded-xl border-2 px-3 py-3 text-xs font-bold transition ${value ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-foreground/80"}`}>
@@ -739,6 +741,85 @@ function CmsStringsTab() {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ============ المحاولات والإعلانات ============ */
+function QuotaSettingsTab() {
+  const [s, setS] = useSettings();
+  const set = (patch: Partial<typeof s>) => setS({ ...s, ...patch });
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-3xl p-5 text-primary-foreground shadow-soft" style={{ background: "var(--gradient-hero)" }}>
+        <h2 className="text-base font-black">🌹 إدارة المحاولات والإعلانات</h2>
+        <p className="mt-1 text-xs opacity-90">تحكم في حصة الزوار، فعّل الوصول غير المحدود، أو امنحهم محاولات إضافية مقابل مشاهدة إعلان قصير.</p>
+        <p className="mt-2 inline-block rounded-full bg-white/15 px-3 py-1 text-[11px] font-black">
+          الأدمن: محاولات غير محدودة دائماً ✓
+        </p>
+      </div>
+
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-4">
+        <AdToggleRow
+          label="حصص الزوار غير محدودة"
+          desc="عند التفعيل، يستطيع كل الزوار توليد عدد لا نهائي من النتائج (مناسب للعروض الترويجية)."
+          checked={s.quotaUnlimited}
+          onChange={(v) => set({ quotaUnlimited: v })}
+        />
+
+        <NumberRow
+          label="عدد المحاولات اليومية المجانية"
+          value={s.freeAttemptsDaily}
+          min={0} max={50}
+          disabled={s.quotaUnlimited}
+          onChange={(v) => set({ freeAttemptsDaily: v })}
+        />
+      </div>
+
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-4">
+        <h3 className="text-sm font-black">مكافأة مشاهدة الإعلان</h3>
+        <AdToggleRow
+          label="السماح باستعادة محاولة عبر مشاهدة إعلان"
+          desc="بعد نفاد المحاولات، يظهر للزائر زر مشاهدة إعلان قصير لاستعادة محاولة جديدة."
+          checked={s.adRewardEnabled}
+          onChange={(v) => set({ adRewardEnabled: v })}
+        />
+        <div className="grid gap-3 sm:grid-cols-3">
+          <AdNumberRow label="محاولات لكل إعلان" value={s.adBonusAttempts} min={1} max={10}
+            disabled={!s.adRewardEnabled} onChange={(v) => set({ adBonusAttempts: v })} compact />
+          <AdNumberRow label="الحد الأقصى يومياً" value={s.adMaxDaily} min={0} max={50}
+            disabled={!s.adRewardEnabled} onChange={(v) => set({ adMaxDaily: v })} compact />
+          <AdNumberRow label="مدة الإعلان (ثانية)" value={s.adSeconds} min={5} max={60}
+            disabled={!s.adRewardEnabled} onChange={(v) => set({ adSeconds: v })} compact />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdToggleRow({ label, desc, checked, onChange }: { label: string; desc?: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-start gap-3 cursor-pointer">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
+        className="mt-1 size-5 accent-primary" />
+      <div className="flex-1">
+        <p className="text-sm font-bold">{label}</p>
+        {desc && <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{desc}</p>}
+      </div>
+    </label>
+  );
+}
+
+function AdNumberRow({ label, value, min, max, onChange, disabled, compact }: {
+  label: string; value: number; min: number; max: number; onChange: (v: number) => void; disabled?: boolean; compact?: boolean;
+}) {
+  return (
+    <label className={`block ${disabled ? "opacity-50" : ""}`}>
+      <span className={`${compact ? "text-[11px]" : "text-xs"} font-bold`}>{label}</span>
+      <input type="number" min={min} max={max} value={value} disabled={disabled}
+        onChange={(e) => onChange(Math.max(min, Math.min(max, Number(e.target.value) || 0)))}
+        className="mt-1 w-full rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed" />
+    </label>
   );
 }
 

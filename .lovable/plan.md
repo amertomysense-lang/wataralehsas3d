@@ -1,95 +1,85 @@
-# خطة التنفيذ — منصة "وتر الإحساس" SaaS متعددة المستأجرين
+# خطة التطوير الشاملة — منصة "وتر الإحساس"
 
-نطاق ضخم؛ سأنفّذه على 6 مراحل متسلسلة في نفس الجلسة، ثم أصدّر الكود. أحتاج إجاباتك على 3 أسئلة حرجة قبل البدء (في النهاية).
-
----
-
-## المرحلة 1 — الهوية البصرية والصفحة الرئيسية (Luxury Dark + Gold)
-
-- تحديث `src/styles.css`: ثيم داكن فاخر (`--background` رمادي فحمي، `--primary` ذهبي كهرماني `oklch(0.78 0.15 75)`)، تدرجات ذهبية، ظلال ناعمة.
-- خط العناوين: **Tajawal** أو **Cairo Display** (RTL).
-- إعادة بناء `src/routes/index.tsx`:
-  - Hero بعنوان: «مستقبل الديكور الرقمي والتجارة الذكية في الشمال»
-  - عنوان فرعي يبرز: طباعة 8K، تأثيرات بروز ثلاثية الأبعاد ملموسة، تجربة AI افتراضية.
-  - زر CTA رئيسي: «ابدأ التجربة التفاعلية الآن» → `/workflow`
-- صفحة `/workflow`: محوّل بين 3 وحدات (محاكي الجدران، السوق، تجربة الأزياء).
-
-## المرحلة 2 — PWA + Offline Sync
-
-- `vite-plugin-pwa` مع `generateSW`، `autoUpdate`، `NetworkFirst` للـ HTML، `CacheFirst` للأصول.
-- Wrapper تسجيل آمن (يرفض في معاينة Lovable، iframe، dev).
-- **IndexedDB** عبر `idb`: جدول `pending_orders`.
-- خطاف `useOnlineSync`: يستمع لـ `online` → يفرغ القائمة إلى `public.orders`.
-- صفحة المنتج: إذا فشل `insert` بسبب الاتصال → خزّن محلياً + Toast «سيُرسل تلقائياً عند عودة الاتصال».
-
-## المرحلة 3 — Module A: محاكي الجدران/الأرضيات
-
-- صفحة `/simulator`:
-  - رفع صورة الغرفة (Slot من كاميرا الهاتف).
-  - طبقات SVG/PNG شفافة قابلة للسحب (Konva.js) + Pinch-to-Zoom + تشويه منظور (CSS `transform: matrix3d`).
-  - فلاتر: خط عربي، رخام، كسر جدار 3D، إيبوكسي محيطي.
-  - حاسبة: `W×H × price_per_meter × (1 + embossed?0.3:0)`.
-  - **شحن**: زرّان شفافان:
-    - «تأمين النقل من طرفك = $0»
-    - «سيارة الشركة المدعومة = $0.30/كم» (من `regions.distance_km` — حقل جديد)
-    - تنبيه ودّي: «مساهمة وقود مدعومة أقل من التكلفة الفعلية».
-
-## المرحلة 4 — Module B: سوق الشركاء (Multi-Tenant)
-
-هجرة SQL:
-```sql
-CREATE TABLE public.vendors (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  business_name text NOT NULL,
-  category text NOT NULL, -- 'curtains'|'sofa'|'furniture'|'fashion'
-  whatsapp_number text NOT NULL,
-  logo_url text,
-  is_premium boolean DEFAULT false,
-  region_id uuid REFERENCES public.regions(id),
-  created_at timestamptz DEFAULT now()
-);
--- GRANT + RLS (قراءة عامة، كتابة admin فقط)
-```
-- شريط جانبي في المحاكي: أصول PNG شفافة (ستائر، أرائك) قابلة للسحب فوق الجدار.
-- عند طلب فيه عنصر vendor → فتح واتساب الـ vendor + نسخة لـ `orders` مع `vendor_id`.
-
-## المرحلة 5 — Module C: AI Virtual Try-On
-
-هجرة:
-```sql
-CREATE TABLE public.fashion_items(id, vendor_id, item_name, image_url, mask_url, price);
-CREATE TABLE public.tryon_logs(id, user_phone, person_url, garment_id, result_url, created_at);
-```
-- صفحة `/tryon`: Slot A (صورة شخصية) + Slot B (قطعة من الكتالوج).
-- Server route `/api/public/tryon`: ينادي Replicate API لـ **IDM-VTON** (`cuuupid/idm-vton`).
-- نتيجة مركّبة عالية الدقة + زر «احجز القطعة الآن عبر واتساب المحل» → `vendor.whatsapp_number`.
-- **يتطلب**: مفتاح `REPLICATE_API_TOKEN` (سأطلبه عبر `add_secret` لاحقاً).
-
-## المرحلة 6 — الأدوار والأمان
-
-- `/assistant`: تسجيل دخول بـ Supabase Auth + جدول `user_roles(user_id, role, region_id)`.
-  - يرى فقط طلبات منطقته. حالات: New → Inspected → Active → Finished → Cancelled.
-- `/admin`: محمي بـ `site-config.adminPassword` (الحالي) + يدير: الأسعار، المناطق، الـ vendors، رموز الـ premium، سجلات تدقيق.
-- زر **«تصدير الكود الكامل»** في الأدمن: ينشئ tarball عبر server route.
+أقترح تنفيذ ما طلبت على شكل **حزمة متكاملة** بدلاً من ميزات متفرقة، وأضيف لك اقتراحات تجعل لوحة الأدمن قوية وسهلة. أخبرني إن أردت تعديل أي بند قبل أن أبدأ.
 
 ---
 
-## التقنيات المضافة
+## 1. نظام المحاولات الذكي (Quota v2)
 
-| المهمة | الحزمة |
+- **الأدمن: محاولات غير محدودة** تلقائياً (نتحقق من `isAdmin()` في `quota.ts` ونتجاوز العدّاد بالكامل).
+- **إعدادات قابلة للتحكم من لوحة الأدمن**:
+  - مفتاح: *حصص الزوار محدودة / غير محدودة*.
+  - حقل رقمي: *عدد المحاولات اليومية المجانية* (افتراضي 3).
+  - مفتاح: *تفعيل مشاهدة إعلان لاستعادة المحاولات*.
+  - حقل: *عدد المحاولات الإضافية لكل إعلان* (افتراضي 1).
+  - حقل: *الحد الأقصى للمحاولات عبر الإعلانات يومياً* (افتراضي 5).
+
+## 2. مكافأة الإعلان (Ad-Reward)
+
+- بعد نفاد الحصة، يفتح المودال خياراً جديداً: **"شاهد إعلاناً لاستعادة محاولة"**.
+- نُنشئ مكوّن `AdRewardModal` يعرض إعلاناً وهمياً (Placeholder قابل لاحقاً للربط بـ AdMob / Google Ad Manager).
+- مؤقّت إجباري (15 ثانية) ثم زر "احصل على المحاولة".
+- بعد المشاهدة: نضيف المحاولة عبر `grantBonusAttempt()` ونحدّث العدّاد فوراً.
+
+## 3. CMS موسّع — تحرير كل النصوص
+
+`cms-strings.ts` يدعم بالفعل تخزين النصوص، لكن سأضيف:
+- **مفتاح اسم المنصة** (`brand.name`) يستخدم في كل المكونات بدلاً من القيمة الثابتة في `site-config.ts`.
+- **محرر نصوص شامل** في `/admin` بتبويب "النصوص" مع: بحث، تصنيف حسب الصفحة، زر "إعادة للأصل".
+- **استيراد/تصدير JSON** للنصوص — نسخ احتياطي سريع.
+
+## 4. مكتبة تصاميم الأدمن — إدارة بصرية
+
+تبويب جديد "التصاميم" داخل `/admin` يتيح:
+- **رفع/استبدال** صور قصّات الشعر، قطع الأزياء، عيّنات الديكور بسحب وإفلات.
+- تحرير الاسم، الوصف، السعر، الفئة مباشرة من شبكة المعاينات.
+- **تفعيل/إخفاء** كل تصميم بنقرة (دون حذفه).
+- **ترتيب بالسحب** (drag-to-reorder) ليتحكم بأولوية العرض.
+
+## 5. اقتراحات ثرية للأدمن (سأضيفها كلها)
+
+| الميزة | الفائدة |
 |---|---|
-| PWA | `vite-plugin-pwa`, `workbox-window` |
-| IndexedDB | `idb` |
-| Canvas Layers | `konva`, `react-konva` |
-| AI Try-On | Replicate API (REST، بدون SDK) |
-| Pinch/Zoom | `react-zoom-pan-pinch` |
+| **Theme Studio** | اختيار لوحة الألوان من بين 6 ثيمات جاهزة + Picker مخصص (يُحفظ في CSS variables). |
+| **Hero Switcher** | تبديل عنوان وفيديو/صورة الواجهة فوراً. |
+| **شارات ترويجية** | شارة "جديد / حصري / خصم" قابلة للإضافة على أي منتج. |
+| **Coupon Engine** | أكواد خصم مع نسبة وتاريخ انتهاء. |
+| **Announcements Bar** | شريط علوي قابل للإغلاق لإعلان موسمي. |
+| **Analytics Lite** | عداد محلي للمشاهدات والاستخدام اليومي لكل وحدة. |
+| **Backup/Restore** | تصدير كل الإعدادات والنصوص والتصاميم بزر واحد. |
+
+## 6. الهوية البصرية — "بستان الورود"
+
+**لوحة جديدة دافئة وأنثوية راقية**:
+- خلفية: تدرّجات وردية حالمة `#fff5f7 → #fce4ec → #f8bbd0` (نهاري) و `#1a0e14 → #2d1822` (ليلي).
+- لون أساسي: وردي عميق `oklch(0.62 0.18 10)` مع توهّج `oklch(0.78 0.14 350)`.
+- لمسات ذهبية ناعمة للأزرار المميّزة.
+- خطوط: **Tajawal** للعناوين العربية + **Cairo** للنص — يجلبان دفء وأنوثة بصرية.
+- زخارف خلفية: بتلات ورد متحركة برفق (CSS) في الصفحة الرئيسية وصفحة الدخول.
+- بطاقات بحدود `border-image` متدرّجة + ظلال وردية ناعمة.
+- صفحة دخول الأدمن: لوحة كاملة مع صورة بستان ورود + قفل ذهبي متوهّج.
+
+## 7. التفاصيل التقنية (للمراجعة)
+
+**ملفات سأعدّلها/أنشئها:**
+- `src/lib/quota.ts` — دعم unlimited للأدمن، settings-driven limits، ad-bonus.
+- `src/lib/settings.ts` — حقول جديدة (`quotaUnlimited`, `freeAttempts`, `adRewardEnabled`, `adBonusAttempts`, `adMaxDaily`).
+- `src/lib/cms-strings.ts` — مفتاح `brand.name`.
+- `src/components/QuotaModal.tsx` — زر "شاهد إعلاناً".
+- `src/components/AdRewardModal.tsx` *(جديد)* — مودال الإعلان.
+- `src/components/admin/QuotaSettingsCard.tsx` *(جديد)*.
+- `src/components/admin/StringsEditor.tsx` *(جديد)*.
+- `src/components/admin/DesignsManager.tsx` *(جديد)*.
+- `src/components/admin/ThemeStudio.tsx` *(جديد)*.
+- `src/styles.css` — لوحة الورود الجديدة + خطوط + Keyframes للبتلات.
+- `src/routes/__root.tsx` — تحميل خطوط Tajawal/Cairo.
+- `src/routes/admin.tsx` — تبويبات جديدة (إعدادات/نصوص/تصاميم/ثيم).
+- `src/components/AdminGate.tsx` — تصميم جديد بصورة ورود.
+
+**خارج النطاق (ما لن أنفّذه إلا بطلبك):**
+- ربط فعلي بشبكة إعلانات حقيقية (سأترك hook جاهز).
+- ترحيل البيانات لقاعدة بيانات (حالياً كلها localStorage كما هي البنية الحالية).
 
 ---
 
-## ⚠️ قبل أن أبدأ — أحتاج 3 إجابات:
-
-1. **AI Try-On**: هل ستزوّدني بمفتاح **Replicate API** (مدفوع ~$0.05/صورة) أم أستخدم بديلاً مجانياً (Hugging Face Spaces — أبطأ وأقل جودة)؟
-2. **مصفوفة المسافات (KM)**: هل أضيف عمود `distance_km` لكل منطقة في `regions` (تعدّله من الأدمن)، أم تريد مصفوفة `region_distances(from_id, to_id, km)` كاملة؟
-3. **تصدير الكود**: زر التصدير من الأدمن → ZIP يُرفع لـ Supabase Storage، أم ملف ينزّل مباشرة في المتصفح؟
-
-أجبني وسأنفّذ كل شيء دفعة واحدة.
+هل أبدأ بتنفيذ الحزمة كاملة؟ أو تفضّل أن أبدأ بـ (المحاولات + الإعلان + الهوية الوردية) أولاً ثم نكمل الباقي؟

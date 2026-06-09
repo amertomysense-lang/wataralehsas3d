@@ -5,6 +5,9 @@ const KEY = "watar.cms.strings.v1";
 
 // السجل الافتراضي — مفاتيح مع نصوص أصلية (Arabic)
 export const DEFAULT_STRINGS: Record<string, string> = {
+  "brand.name": "وتر الإحساس",
+  "brand.tagline": "مستقبل الديكور والذكاء الاصطناعي",
+
   "home.badge": "وتر الإحساس · النسخة الاحترافية",
   "home.title_1": "مستقبل الديكور الرقمي",
   "home.title_2": "والتجارة الذكية في الشمال",
