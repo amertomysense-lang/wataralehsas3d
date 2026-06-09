@@ -16,6 +16,7 @@ import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MarketingToolRouteImport } from './routes/marketing-tool'
 import { Route as HaircutRouteImport } from './routes/haircut'
+import { Route as BulkUploadStudioRouteImport } from './routes/bulk-upload-studio'
 import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -59,6 +60,11 @@ const MarketingToolRoute = MarketingToolRouteImport.update({
 const HaircutRoute = HaircutRouteImport.update({
   id: '/haircut',
   path: '/haircut',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BulkUploadStudioRoute = BulkUploadStudioRouteImport.update({
+  id: '/bulk-upload-studio',
+  path: '/bulk-upload-studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssistantRoute = AssistantRouteImport.update({
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
+  '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/haircut': typeof HaircutRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/marketplace': typeof MarketplaceRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
+  '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/haircut': typeof HaircutRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/marketplace': typeof MarketplaceRoute
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
+  '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/haircut': typeof HaircutRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/marketplace': typeof MarketplaceRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/assistant'
+    | '/bulk-upload-studio'
     | '/haircut'
     | '/marketing-tool'
     | '/marketplace'
@@ -186,6 +196,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/assistant'
+    | '/bulk-upload-studio'
     | '/haircut'
     | '/marketing-tool'
     | '/marketplace'
@@ -204,6 +215,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/assistant'
+    | '/bulk-upload-studio'
     | '/haircut'
     | '/marketing-tool'
     | '/marketplace'
@@ -223,6 +235,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AssistantRoute: typeof AssistantRoute
+  BulkUploadStudioRoute: typeof BulkUploadStudioRoute
   HaircutRoute: typeof HaircutRoute
   MarketingToolRoute: typeof MarketingToolRoute
   MarketplaceRoute: typeof MarketplaceRoute
@@ -287,6 +300,13 @@ declare module '@tanstack/react-router' {
       path: '/haircut'
       fullPath: '/haircut'
       preLoaderRoute: typeof HaircutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bulk-upload-studio': {
+      id: '/bulk-upload-studio'
+      path: '/bulk-upload-studio'
+      fullPath: '/bulk-upload-studio'
+      preLoaderRoute: typeof BulkUploadStudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assistant': {
@@ -359,6 +379,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AssistantRoute: AssistantRoute,
+  BulkUploadStudioRoute: BulkUploadStudioRoute,
   HaircutRoute: HaircutRoute,
   MarketingToolRoute: MarketingToolRoute,
   MarketplaceRoute: MarketplaceRoute,
@@ -376,3 +397,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

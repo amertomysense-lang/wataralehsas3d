@@ -1,38 +1,45 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { aiEditImage } from "@/lib/ai-image-edit.server";
 
-// تحرير قصّة الشعر — يفضّل Lovable AI (Nano Banana 2) عند توفّر المفتاح،
-// ويُستخدم Replicate كبديل اختياري إن أُضيف REPLICATE_API_TOKEN.
+// تحرير قصّة الشعر — قفل هوية صارم + تعديل حدود الشعر فقط
 export const Route = createFileRoute("/api/haircut")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const { person, style, color } = (await request.json()) as {
-          person: string; style?: string; color?: string;
+        const { person, style, color, hairstyle_url } = (await request.json()) as {
+          person: string; style?: string; color?: string; hairstyle_url?: string;
         };
         if (!person) return json({ error: "missing person image" }, 400);
 
         const styleText = (style?.trim() || "modern stylish haircut").replace(/\s+/g, " ");
         const colorText = color?.trim() ? `, hair color: ${color.trim()}` : "";
-        const prompt = [
-          `Edit the photo: change ONLY the hairstyle of the person to: ${styleText}${colorText}.`,
-          `Keep face geometry, eyes, nose, mouth, jaw, skin tone, freckles and expression 100% identical.`,
-          `Do NOT smooth, retouch, beautify, slim or alter the face. Preserve clothing, background, lighting and framing.`,
-          `Hair edges must be clean and natural. Output: photorealistic, sharp, single subject, no watermark.`,
-          `Return the edited image only.`,
-        ].join(" ");
+        const refClause = hairstyle_url
+          ? `Use the second image strictly as a STYLE REFERENCE for hair shape, length, parting and texture — do NOT copy its face, skin, lighting or background.`
+          : ``;
 
-        // 1) المسار المفضّل: Lovable AI Gateway (مغطى برصيد المشروع)
+        // برومبت محترف يحاكي تأثير IP-Adapter Face + ControlNet Hair Boundary
+        const prompt = [
+          `Identity-locked photo edit. INPUT 1 = the real person (source of truth).`,
+          refClause,
+          `TASK: Re-synthesize ONLY the hair region of the person to match this hairstyle: ${styleText}${colorText}.`,
+          `STRICT IDENTITY LOCK: Treat the face as a fixed mask. Preserve 100% of facial geometry, eye shape & color, eyebrows, nose, mouth, lips, jawline, chin, ears, skin tone, freckles, moles, beard/stubble, neck, age, gender, ethnicity and original expression. Do NOT smooth, slim, beautify, retouch, age, de-age or alter the face in any way.`,
+          `HAIR BOUNDARY: Re-grow hair organically from the actual scalp topology. Match natural hairline, scalp curvature, baby hairs, follicle direction, root density, shine and stray strands. Blend hair edges seamlessly with the forehead, temples and ears. No stamping, no flat overlay, no cap-like silhouette.`,
+          `CONTEXT LOCK: Preserve the original clothing, background, camera angle, framing, focal length, lighting direction, color temperature, shadows and depth of field exactly.`,
+          `OUTPUT: A single photorealistic image, sharp, natural film grain, no watermark, no text, no extra people. Return ONLY the edited image.`,
+        ].filter(Boolean).join(" ");
+
+        const inputs = hairstyle_url ? [person, hairstyle_url] : [person];
+
+        // 1) Lovable AI Gateway (Nano Banana)
         if (process.env.LOVABLE_API_KEY) {
-          const r = await aiEditImage(prompt, [person]);
+          const r = await aiEditImage(prompt, inputs);
           if (r.ok) return json({ result_url: r.dataUrl });
-          // إن فشل لأي سبب (402/429/شبكة) ينتقل تلقائياً لـ Replicate إن وُجد
           if (!process.env.REPLICATE_API_TOKEN) {
             return json({ error: r.error }, r.status);
           }
         }
 
-        // 2) المسار البديل: Replicate (اختياري)
+        // 2) Replicate fallback
         const token = process.env.REPLICATE_API_TOKEN;
         if (!token) return json({ error: "AI service unavailable" }, 503);
 
