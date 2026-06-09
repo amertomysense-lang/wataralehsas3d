@@ -24,6 +24,7 @@ import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as ApiTryonRouteImport } from './routes/api/tryon'
 import { Route as ApiRemoveBgRouteImport } from './routes/api/remove-bg'
 import { Route as ApiHaircutRouteImport } from './routes/api/haircut'
+import { Route as ApiDecorProjectRouteImport } from './routes/api/decor-project'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiAiImageRouteImport } from './routes/api/ai-image'
 
@@ -102,6 +103,11 @@ const ApiHaircutRoute = ApiHaircutRouteImport.update({
   path: '/api/haircut',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDecorProjectRoute = ApiDecorProjectRouteImport.update({
+  id: '/api/decor-project',
+  path: '/api/decor-project',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/workflow': typeof WorkflowRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/haircut': typeof ApiHaircutRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/tryon': typeof ApiTryonRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/workflow': typeof WorkflowRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/haircut': typeof ApiHaircutRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/tryon': typeof ApiTryonRoute
@@ -166,6 +174,7 @@ export interface FileRoutesById {
   '/workflow': typeof WorkflowRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/haircut': typeof ApiHaircutRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/tryon': typeof ApiTryonRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/workflow'
     | '/api/ai-image'
     | '/api/chat'
+    | '/api/decor-project'
     | '/api/haircut'
     | '/api/remove-bg'
     | '/api/tryon'
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/workflow'
     | '/api/ai-image'
     | '/api/chat'
+    | '/api/decor-project'
     | '/api/haircut'
     | '/api/remove-bg'
     | '/api/tryon'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/workflow'
     | '/api/ai-image'
     | '/api/chat'
+    | '/api/decor-project'
     | '/api/haircut'
     | '/api/remove-bg'
     | '/api/tryon'
@@ -245,6 +257,7 @@ export interface RootRouteChildren {
   WorkflowRoute: typeof WorkflowRoute
   ApiAiImageRoute: typeof ApiAiImageRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiDecorProjectRoute: typeof ApiDecorProjectRoute
   ApiHaircutRoute: typeof ApiHaircutRoute
   ApiRemoveBgRoute: typeof ApiRemoveBgRoute
   ApiTryonRoute: typeof ApiTryonRoute
@@ -358,6 +371,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHaircutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/decor-project': {
+      id: '/api/decor-project'
+      path: '/api/decor-project'
+      fullPath: '/api/decor-project'
+      preLoaderRoute: typeof ApiDecorProjectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -389,6 +409,7 @@ const rootRouteChildren: RootRouteChildren = {
   WorkflowRoute: WorkflowRoute,
   ApiAiImageRoute: ApiAiImageRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiDecorProjectRoute: ApiDecorProjectRoute,
   ApiHaircutRoute: ApiHaircutRoute,
   ApiRemoveBgRoute: ApiRemoveBgRoute,
   ApiTryonRoute: ApiTryonRoute,
