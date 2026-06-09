@@ -15,7 +15,7 @@ type ChatBody = {
 
 async function fetchAllProducts() {
   const { data } = await supabase
-    .from("designs")
+    .from("products")
     .select("id, name, description, category, price")
     .limit(100);
   return data ?? [];

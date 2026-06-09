@@ -5,7 +5,7 @@ export async function exportPlatformSnapshot() {
   const [regions, pricing, designs, vendors, fashion, orders] = await Promise.all([
     supabase.from("regions").select("*"),
     supabase.from("pricing_config").select("*"),
-    supabase.from("designs").select("*"),
+    supabase.from("products").select("*"),
     supabase.from("vendors").select("*"),
     supabase.from("fashion_items").select("*"),
     supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(500),
