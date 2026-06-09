@@ -9,14 +9,16 @@ type Props = {
   box: DesignBox;
   onChange: (b: DesignBox) => void;
   container: React.RefObject<HTMLDivElement | null>;
+  /** يفعّل مصفوفة بروز SVG عالية التباين لمحاكاة الطباعة UV الملموسة */
+  embossed?: boolean;
 };
 
 /**
  * طبقة تصميم قابلة للسحب والتحجيم فوق صورة الجدار الثابتة.
- * الجدار يبقى ثابتاً والمستخدم يحرّك ويحجّم التصميم على المكان المطلوب
- * مما يسمح بقياس دقيق للمساحة المطبوعة.
+ * تستخدم Vector-Grid Mapping (object-cover + image-rendering crisp) لتفادي البلر
+ * وعند تفعيل embossed تُطبَّق فلتر SVG displacement لإبراز العروق الفيزيائية.
  */
-export function DraggableDesignLayer({ src, name, box, onChange, container }: Props) {
+export function DraggableDesignLayer({ src, name, box, onChange, container, embossed }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<"drag" | "resize" | null>(null);
   const start = useRef<{ px: number; py: number; box: DesignBox } | null>(null);
@@ -61,6 +63,12 @@ export function DraggableDesignLayer({ src, name, box, onChange, container }: Pr
     };
   }, [mode, container, onChange]);
 
+  // فلتر SVG لمحاكاة البروز الـ UV — تباين عالي + ظلال داخلية حادّة
+  const embossFilter = embossed ? "url(#watar-emboss)" : undefined;
+  const embossShadow = embossed
+    ? "drop-shadow(0 1px 0 rgba(0,0,0,.55)) drop-shadow(0 -1px 0 rgba(255,255,255,.35))"
+    : undefined;
+
   return (
     <div
       ref={ref}
@@ -72,8 +80,27 @@ export function DraggableDesignLayer({ src, name, box, onChange, container }: Pr
         mixBlendMode: "multiply",
       }}
     >
-      <img src={src} alt={name ?? "design"} draggable={false}
-        className="size-full rounded-lg object-cover shadow-2xl" />
+      {/* تعريف فلتر البروز مرّة واحدة على كامل الطبقة */}
+      {embossed && (
+        <svg width="0" height="0" className="absolute" aria-hidden>
+          <filter id="watar-emboss">
+            <feConvolveMatrix order="3" kernelMatrix="-2 -1 0  -1 1 1  0 1 2" preserveAlpha="true" />
+            <feColorMatrix type="saturate" values="1.4" />
+          </filter>
+        </svg>
+      )}
+      <img
+        src={src}
+        alt={name ?? "design"}
+        draggable={false}
+        decoding="async"
+        className="size-full rounded-lg object-cover shadow-2xl"
+        style={{
+          imageRendering: "crisp-edges",
+          filter: [embossFilter, embossShadow].filter(Boolean).join(" ") || undefined,
+          contrast: embossed ? 1.15 : undefined,
+        } as React.CSSProperties}
+      />
       {/* drag overlay */}
       <button onPointerDown={onDown("drag")}
         aria-label="سحب التصميم"
@@ -82,6 +109,11 @@ export function DraggableDesignLayer({ src, name, box, onChange, container }: Pr
       <span className="pointer-events-none absolute -top-3 right-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-black text-primary-foreground shadow">
         <Move className="size-3" /> اسحب
       </span>
+      {embossed && (
+        <span className="pointer-events-none absolute -top-3 left-2 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-black text-accent-foreground shadow">
+          بروز +30%
+        </span>
+      )}
       {/* resize handle */}
       <button onPointerDown={onDown("resize")}
         aria-label="تكبير وتصغير"

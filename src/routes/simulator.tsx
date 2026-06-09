@@ -45,11 +45,19 @@ function Simulator() {
   const { data: pricing } = usePricing();
   const [settings] = useSettings();
   const region = useMemo(() => regions?.find((r) => r.id === regionId), [regions, regionId]);
-  const currency = pricing?.currency ?? settings.currency;
 
-  const baseTotal = useMemo(() => (pricing ? calcTotal(width, height, embossed, pricing) : 0),
-    [pricing, width, height, embossed]);
-  const shippingCost = shipping === "company" ? km * settings.fuelPerKm : 0;
+  // عملة مزدوجة USD ⇄ TRY — يبدّلها المستخدم وتنعكس على الإجمالي وواتساب
+  const [currencyMode, setCurrencyMode] = useState<"USD" | "TRY">("USD");
+  const TRY_RATE = 32.5; // سعر صرف تقريبي — قابل للتعديل لاحقاً من إعدادات الأدمن
+  const currency = currencyMode === "USD" ? "$" : "₺";
+  const fx = currencyMode === "USD" ? 1 : TRY_RATE;
+
+  const baseTotalUsd = useMemo(
+    () => (pricing ? calcTotal(width, height, embossed, pricing) : 0),
+    [pricing, width, height, embossed],
+  );
+  const baseTotal = baseTotalUsd * fx;
+  const shippingCost = (shipping === "company" ? km * settings.fuelPerKm : 0) * fx;
   const grandTotal = baseTotal + shippingCost;
 
   function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -154,6 +162,7 @@ function Simulator() {
                     box={{ ...box, opacity: active.opacity }}
                     onChange={(b) => setBox(b)}
                     container={stageRef}
+                    embossed={embossed}
                   />
                 )}
               </>
@@ -290,10 +299,20 @@ function Simulator() {
           </div>
 
           <div className="rounded-2xl p-4 text-primary-foreground" style={{ background: "var(--gradient-brand)" }}>
-            <p className="text-xs opacity-90">الإجمالي المقدّر</p>
-            <p className="mt-1 text-3xl font-black">{grandTotal.toLocaleString("ar")} {currency}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs opacity-90">الإجمالي المقدّر</p>
+              <div className="inline-flex rounded-lg bg-background/15 p-0.5 text-[11px] font-black backdrop-blur">
+                {(["USD", "TRY"] as const).map((c) => (
+                  <button key={c} onClick={() => setCurrencyMode(c)}
+                    className={`px-2.5 py-1 rounded-md transition ${currencyMode === c ? "bg-background text-foreground" : "text-primary-foreground/80"}`}>
+                    {c === "USD" ? "USD $" : "TRY ₺"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="mt-1 text-3xl font-black">{grandTotal.toLocaleString("ar", { maximumFractionDigits: 0 })} {currency}</p>
             <p className="mt-1 text-[11px] opacity-80">
-              طباعة: {baseTotal.toLocaleString("ar")} + شحن: {shippingCost.toLocaleString("ar")}
+              طباعة: {baseTotal.toLocaleString("ar", { maximumFractionDigits: 0 })} + شحن: {shippingCost.toLocaleString("ar", { maximumFractionDigits: 0 })}
             </p>
             <button onClick={sendOrder} disabled={sending || !regionId}
               className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-background px-4 py-3 text-sm font-black text-foreground transition hover:opacity-90 disabled:opacity-50">
