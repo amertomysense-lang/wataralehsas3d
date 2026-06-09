@@ -545,10 +545,11 @@ function OrdersTab() {
 /* ============ السوق (Vendors) ============ */
 type VendorRow = { id: string; name: string; category: string; phone: string; logo_url: string | null; is_premium: boolean; region_id: string | null; subscription_status?: string | null; login_token?: string | null; cover_image?: string | null };
 type VForm = { name: string; category: string; phone: string; logo_url: string; is_premium: boolean; region_id: string };
-const EMPTY_V: VForm = { name: "", category: "curtains", phone: "", logo_url: "", is_premium: false, region_id: "" };
+const EMPTY_V: VForm = { name: "", category: "", phone: "", logo_url: "", is_premium: false, region_id: "" };
 
 function VendorsTab() {
   const qc = useQueryClient();
+  const [cats] = useCategories();
   const { data: regions } = useRegions();
   const [form, setForm] = useState<VForm>(EMPTY_V);
   const [editing, setEditing] = useState<string | null>(null);
@@ -597,11 +598,10 @@ function VendorsTab() {
           <Input value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="اسم النشاط *" />
           <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
             className="rounded-xl bg-muted px-3 py-2 text-sm outline-none">
-            <option value="curtains">ستائر</option>
-            <option value="sofa">كنب</option>
-            <option value="furniture">أثاث</option>
-            <option value="fashion">أزياء</option>
-            <option value="other">أخرى</option>
+            <option value="">— اختر الفئة —</option>
+            {cats.map((c) => (
+              <option key={c.id} value={c.id}>{c.label}</option>
+            ))}
           </select>
           <Input value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} placeholder="واتساب 963xxx" />
           <Input value={form.logo_url} onChange={(v) => setForm({ ...form, logo_url: v })} placeholder="رابط الشعار" />
@@ -629,7 +629,7 @@ function VendorsTab() {
             sample="name,category,phone,logo_url,is_premium"
             map={(row) => ({
               name: row.name,
-              category: ["curtains","sofa","furniture","fashion","other"].includes(row.category) ? row.category : "other",
+              category: row.category || "other",
               phone: (row.phone || "").replace(/\D/g, ""),
               logo_url: row.logo_url || null,
               is_premium: ["true","1","yes","نعم"].includes((row.is_premium || "").toLowerCase()),
