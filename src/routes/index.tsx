@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Sparkles, Cuboid, ShoppingBag, Shirt, ArrowLeft, Wifi, ShieldCheck } from "lucide-react";
 import { useOnlineSync } from "@/lib/offline-sync";
+import { CampaignSection } from "@/components/CampaignSection";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -67,6 +68,10 @@ function Home() {
           </div>
         </div>
       </header>
+
+      <section className="mx-auto max-w-6xl px-5 pb-12">
+        <CampaignSection />
+      </section>
 
       <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} وتر الإحساس — الدانا · سرمدا · إدلب
