@@ -375,12 +375,20 @@ function HaircutStudio() {
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <button onClick={exportCanvas} disabled={busy || !person || !style}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-primary bg-card px-6 py-4 text-base font-black text-primary disabled:opacity-50">
-            <Download className="size-5" /> حفظ المعاينة (مجاناً)
+            className="inline-flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-primary/40 bg-card px-6 py-4 text-base font-black text-primary disabled:opacity-50">
+            <span className="inline-flex items-center gap-2"><Download className="size-5" /> معاينة فورية (ملصق)</span>
+            <span className="text-[10px] font-bold text-muted-foreground">عرض سريع لضبط الحجم والموضع — بدون استهلاك</span>
           </button>
           <button onClick={runAI} disabled={busy || !person || !style}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-6 py-4 text-base font-black text-primary-foreground shadow-soft disabled:opacity-50">
-            {busy ? <><Loader2 className="size-5 animate-spin" /> جاري الدمج…</> : <><Sparkles className="size-5" /> ادمج بواقعية AI ({remLabel})</>}
+            className="relative inline-flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-l from-primary via-primary to-accent px-6 py-4 text-base font-black text-primary-foreground shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.6)] disabled:opacity-50">
+            {busy ? (
+              <span className="inline-flex items-center gap-2"><Loader2 className="size-5 animate-spin" /> جاري الدمج الواقعي…</span>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-2"><Sparkles className="size-5" /> توليد بالذكاء الاصطناعي ✨</span>
+                <span className="text-[10px] font-bold opacity-90">دمج حقيقي مع قفل الوجه والبشرة ({remLabel})</span>
+              </>
+            )}
           </button>
         </div>
         {busy && <AiLoungeBanner className="mt-4" />}
