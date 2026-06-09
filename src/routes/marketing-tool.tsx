@@ -312,6 +312,7 @@ export default function MarketingToolPage() {
 
         <div className="mt-8">
           <AiImageStudio
+            section="marketing"
             title="استوديو التصاميم التسويقية AI"
             subtitle="ولّد بوستر/منشور سوشيال جاهز بهوية وتر الإحساس — اكتب الفكرة فقط."
             accent="from-accent to-primary"

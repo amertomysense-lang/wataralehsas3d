@@ -137,6 +137,7 @@ function TryOn() {
 
         <div className="mt-8">
           <AiImageStudio
+            section="tryon"
             title="استوديو الأزياء بالذكاء الاصطناعي"
             subtitle="ولّد قطعة ملابس جديدة من الخيال — ارفع صورتك واطلب التصميم الذي يخطر ببالك."
             accent="from-primary to-accent"

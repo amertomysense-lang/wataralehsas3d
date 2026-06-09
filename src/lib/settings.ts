@@ -11,6 +11,24 @@ export type CustomHaircut = {
   prompt?: string;
 };
 
+export type DesignSection = "haircut" | "simulator" | "marketing" | "tryon";
+
+export const SECTION_LABELS: Record<DesignSection, string> = {
+  haircut: "قصّات الشعر",
+  simulator: "محاكي الجدران/الأرضيات",
+  marketing: "أداة التسويق",
+  tryon: "تجربة الأزياء",
+};
+
+export type CustomDesign = {
+  id: string;
+  section: DesignSection;
+  label: string;
+  prompt: string;
+  preview?: string;
+  createdAt: number;
+};
+
 export type PlatformSettings = {
   currency: string;
   fuelPerKm: number;
@@ -37,7 +55,11 @@ export type PlatformSettings = {
   paymentPackages: PaymentPackage[];
 
   // قصّات شعر مخصّصة يضيفها الأدمن
+  // قصّات شعر مخصّصة يضيفها الأدمن
   customHaircuts: CustomHaircut[];
+
+  // تصاميم مخصّصة (برومبتات جاهزة) لكل قسم AI — تُربط تلقائياً
+  customDesigns: CustomDesign[];
 };
 
 export const DEFAULT_SETTINGS: PlatformSettings = {
@@ -65,6 +87,7 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
   paymentPackages: DEFAULT_PACKAGES,
 
   customHaircuts: [],
+  customDesigns: [],
 };
 
 const KEY = "watar.platform.settings.v2";

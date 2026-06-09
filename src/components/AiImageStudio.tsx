@@ -4,8 +4,9 @@ import { toast } from "sonner";
 import { consumeQuota, useQuota } from "@/lib/quota";
 import { QuotaModal } from "./QuotaModal";
 import { saveImageToDevice, shareImageWhatsApp } from "@/lib/save-image";
+import { useSettings, type DesignSection } from "@/lib/settings";
 
-type Preset = { id: string; label: string; prompt: string };
+type Preset = { id: string; label: string; prompt: string; preview?: string };
 
 export function AiImageStudio({
   title,
@@ -14,6 +15,7 @@ export function AiImageStudio({
   presets = [],
   basePrompt = "",
   allowImageInput = true,
+  section,
 }: {
   title: string;
   subtitle?: string;
@@ -21,7 +23,14 @@ export function AiImageStudio({
   presets?: Preset[];
   basePrompt?: string;
   allowImageInput?: boolean;
+  section?: DesignSection;
 }) {
+  const [s] = useSettings();
+  const customForSection: Preset[] = section
+    ? s.customDesigns.filter((d) => d.section === section).map((d) => ({ id: d.id, label: d.label, prompt: d.prompt, preview: d.preview }))
+    : [];
+  const allPresets = [...presets, ...customForSection];
+
   const [prompt, setPrompt] = useState("");
   const [preset, setPreset] = useState<Preset | null>(null);
   const [image, setImage] = useState<string | null>(null);
@@ -65,11 +74,12 @@ export function AiImageStudio({
       </div>
       {subtitle && <p className="mb-3 text-xs text-muted-foreground leading-relaxed">{subtitle}</p>}
 
-      {presets.length > 0 && (
+      {allPresets.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-2">
-          {presets.map((p) => (
+          {allPresets.map((p) => (
             <button key={p.id} onClick={() => setPreset(preset?.id === p.id ? null : p)}
-              className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition ${preset?.id === p.id ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground/80 hover:border-primary/50"}`}>
+              className={`flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-bold transition ${preset?.id === p.id ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground/80 hover:border-primary/50"}`}>
+              {p.preview && <img src={p.preview} alt="" className="size-5 rounded-full object-cover" />}
               {p.label}
             </button>
           ))}
