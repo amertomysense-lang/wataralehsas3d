@@ -1,10 +1,17 @@
-// عدّاد محلي يحد المستخدم المجاني بـ 3 توليدات AI يومياً
+// عدّاد محلي يحد المستخدم المجاني بمحاولات AI يومياً
+// — الأدمن: غير محدود تلقائياً
+// — يمكن للأدمن من اللوحة جعل الزوار غير محدودين
+// — يدعم استعادة محاولة بعد مشاهدة إعلان
 import { useEffect, useState } from "react";
+import { readSettings } from "./settings";
+import { isAdmin } from "./admin-gate";
 
 const KEY = "watar.ai.quota.v1";
-export const DAILY_LIMIT = 3;
+const AD_KEY = "watar.ai.quota.ads.v1";
+export const DAILY_LIMIT = 3; // متبقي للتوافق العكسي فقط
 
 type Q = { day: string; count: number };
+type A = { day: string; ads: number };
 
 function today() { return new Date().toISOString().slice(0, 10); }
 
@@ -19,13 +26,56 @@ export function readQuota(): Q {
   } catch { return { day: today(), count: 0 }; }
 }
 
+function readAds(): A {
+  if (typeof window === "undefined") return { day: today(), ads: 0 };
+  try {
+    const raw = window.localStorage.getItem(AD_KEY);
+    if (!raw) return { day: today(), ads: 0 };
+    const a = JSON.parse(raw) as A;
+    if (a.day !== today()) return { day: today(), ads: 0 };
+    return a;
+  } catch { return { day: today(), ads: 0 }; }
+}
+
+function effectiveLimit(): number {
+  const s = readSettings();
+  if (isAdmin() || s.quotaUnlimited) return Infinity;
+  const base = Math.max(0, s.freeAttemptsDaily);
+  const bonus = s.adRewardEnabled ? readAds().ads * Math.max(1, s.adBonusAttempts) : 0;
+  return base + bonus;
+}
+
 export function remainingQuota(): number {
-  return Math.max(0, DAILY_LIMIT - readQuota().count);
+  const limit = effectiveLimit();
+  if (!isFinite(limit)) return Number.POSITIVE_INFINITY;
+  return Math.max(0, limit - readQuota().count);
+}
+
+export function isUnlimited(): boolean {
+  return !isFinite(effectiveLimit());
+}
+
+export function canWatchAd(): boolean {
+  const s = readSettings();
+  if (isAdmin() || s.quotaUnlimited) return false;
+  if (!s.adRewardEnabled) return false;
+  return readAds().ads < Math.max(0, s.adMaxDaily);
+}
+
+export function grantAdBonus(): boolean {
+  if (!canWatchAd()) return false;
+  const a = readAds();
+  const next: A = { day: today(), ads: a.ads + 1 };
+  window.localStorage.setItem(AD_KEY, JSON.stringify(next));
+  window.dispatchEvent(new CustomEvent("watar:quota"));
+  return true;
 }
 
 export function consumeQuota(): boolean {
+  if (isUnlimited()) return true;
+  const limit = effectiveLimit();
   const q = readQuota();
-  if (q.count >= DAILY_LIMIT) return false;
+  if (q.count >= limit) return false;
   const next = { day: today(), count: q.count + 1 };
   window.localStorage.setItem(KEY, JSON.stringify(next));
   window.dispatchEvent(new CustomEvent("watar:quota"));
@@ -38,9 +88,11 @@ export function useQuota() {
     const refresh = () => setN(remainingQuota());
     refresh();
     window.addEventListener("watar:quota", refresh);
+    window.addEventListener("watar:settings", refresh);
     window.addEventListener("storage", refresh);
     return () => {
       window.removeEventListener("watar:quota", refresh);
+      window.removeEventListener("watar:settings", refresh);
       window.removeEventListener("storage", refresh);
     };
   }, []);
@@ -48,4 +100,4 @@ export function useQuota() {
 }
 
 export const QUOTA_EXCEEDED_MSG =
-  "لقد استهلكت محاولاتك المجانية اليومية، انتظر للغد أو قم بزيارة أحد صالوناتنا الشريكة المعتمدة لتجربة غير محدودة!";
+  "لقد استهلكت محاولاتك المجانية اليومية. شاهد إعلاناً قصيراً لاستعادة محاولة، أو زر أحد صالوناتنا الشريكة لتجربة بلا حدود!";
