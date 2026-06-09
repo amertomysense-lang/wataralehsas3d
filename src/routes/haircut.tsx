@@ -225,7 +225,7 @@ function HaircutStudio() {
   const visible = allStyles.filter((s) => gender === "u" || s.gender === gender || s.gender === "u");
 
   return (
-    <div className="min-h-screen bg-background px-5 py-8" dir="rtl">
+    <div className="min-h-screen bg-background px-4 py-5 pb-8" dir="rtl">
       <div className="mx-auto max-w-5xl">
         <Link to="/workflow" className="text-sm font-bold text-primary hover:underline">← الوحدات</Link>
         <h1 className="mt-3 text-3xl font-black">
