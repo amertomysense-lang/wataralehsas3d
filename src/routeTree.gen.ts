@@ -14,12 +14,14 @@ import { Route as TryonRouteImport } from './routes/tryon'
 import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MarketingToolRouteImport } from './routes/marketing-tool'
+import { Route as HaircutRouteImport } from './routes/haircut'
 import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as ApiTryonRouteImport } from './routes/api/tryon'
 import { Route as ApiRemoveBgRouteImport } from './routes/api/remove-bg'
+import { Route as ApiHaircutRouteImport } from './routes/api/haircut'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
 const WorkflowRoute = WorkflowRouteImport.update({
@@ -45,6 +47,11 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
 const MarketingToolRoute = MarketingToolRouteImport.update({
   id: '/marketing-tool',
   path: '/marketing-tool',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HaircutRoute = HaircutRouteImport.update({
+  id: '/haircut',
+  path: '/haircut',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssistantRoute = AssistantRouteImport.update({
@@ -77,6 +84,11 @@ const ApiRemoveBgRoute = ApiRemoveBgRouteImport.update({
   path: '/api/remove-bg',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHaircutRoute = ApiHaircutRouteImport.update({
+  id: '/api/haircut',
+  path: '/api/haircut',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -87,12 +99,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
+  '/haircut': typeof HaircutRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/marketplace': typeof MarketplaceRoute
   '/simulator': typeof SimulatorRoute
   '/tryon': typeof TryonRoute
   '/workflow': typeof WorkflowRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/haircut': typeof ApiHaircutRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/tryon': typeof ApiTryonRoute
   '/product/$id': typeof ProductIdRoute
@@ -101,12 +115,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
+  '/haircut': typeof HaircutRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/marketplace': typeof MarketplaceRoute
   '/simulator': typeof SimulatorRoute
   '/tryon': typeof TryonRoute
   '/workflow': typeof WorkflowRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/haircut': typeof ApiHaircutRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/tryon': typeof ApiTryonRoute
   '/product/$id': typeof ProductIdRoute
@@ -116,12 +132,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
+  '/haircut': typeof HaircutRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/marketplace': typeof MarketplaceRoute
   '/simulator': typeof SimulatorRoute
   '/tryon': typeof TryonRoute
   '/workflow': typeof WorkflowRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/haircut': typeof ApiHaircutRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/tryon': typeof ApiTryonRoute
   '/product/$id': typeof ProductIdRoute
@@ -132,12 +150,14 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/assistant'
+    | '/haircut'
     | '/marketing-tool'
     | '/marketplace'
     | '/simulator'
     | '/tryon'
     | '/workflow'
     | '/api/chat'
+    | '/api/haircut'
     | '/api/remove-bg'
     | '/api/tryon'
     | '/product/$id'
@@ -146,12 +166,14 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/assistant'
+    | '/haircut'
     | '/marketing-tool'
     | '/marketplace'
     | '/simulator'
     | '/tryon'
     | '/workflow'
     | '/api/chat'
+    | '/api/haircut'
     | '/api/remove-bg'
     | '/api/tryon'
     | '/product/$id'
@@ -160,12 +182,14 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/assistant'
+    | '/haircut'
     | '/marketing-tool'
     | '/marketplace'
     | '/simulator'
     | '/tryon'
     | '/workflow'
     | '/api/chat'
+    | '/api/haircut'
     | '/api/remove-bg'
     | '/api/tryon'
     | '/product/$id'
@@ -175,12 +199,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AssistantRoute: typeof AssistantRoute
+  HaircutRoute: typeof HaircutRoute
   MarketingToolRoute: typeof MarketingToolRoute
   MarketplaceRoute: typeof MarketplaceRoute
   SimulatorRoute: typeof SimulatorRoute
   TryonRoute: typeof TryonRoute
   WorkflowRoute: typeof WorkflowRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiHaircutRoute: typeof ApiHaircutRoute
   ApiRemoveBgRoute: typeof ApiRemoveBgRoute
   ApiTryonRoute: typeof ApiTryonRoute
   ProductIdRoute: typeof ProductIdRoute
@@ -221,6 +247,13 @@ declare module '@tanstack/react-router' {
       path: '/marketing-tool'
       fullPath: '/marketing-tool'
       preLoaderRoute: typeof MarketingToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/haircut': {
+      id: '/haircut'
+      path: '/haircut'
+      fullPath: '/haircut'
+      preLoaderRoute: typeof HaircutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assistant': {
@@ -265,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRemoveBgRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/haircut': {
+      id: '/api/haircut'
+      path: '/api/haircut'
+      fullPath: '/api/haircut'
+      preLoaderRoute: typeof ApiHaircutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -279,12 +319,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AssistantRoute: AssistantRoute,
+  HaircutRoute: HaircutRoute,
   MarketingToolRoute: MarketingToolRoute,
   MarketplaceRoute: MarketplaceRoute,
   SimulatorRoute: SimulatorRoute,
   TryonRoute: TryonRoute,
   WorkflowRoute: WorkflowRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiHaircutRoute: ApiHaircutRoute,
   ApiRemoveBgRoute: ApiRemoveBgRoute,
   ApiTryonRoute: ApiTryonRoute,
   ProductIdRoute: ProductIdRoute,
@@ -292,13 +334,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
