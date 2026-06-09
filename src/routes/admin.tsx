@@ -94,9 +94,9 @@ function TabBtn({ icon, label, active, onClick }: { icon: React.ReactNode; label
   );
 }
 
-/* ============ المنتجات ============ */
-type ProdForm = { name: string; description: string; image_url: string; category: string; price: string };
-const EMPTY_P: ProdForm = { name: "", description: "", image_url: "", category: "", price: "" };
+/* ============ المنتجات / التصاميم ============ */
+type ProdForm = { title: string; image_url: string; type: string; price: string };
+const EMPTY_P: ProdForm = { title: "", image_url: "", type: "", price: "" };
 
 function ProductsTab() {
   const qc = useQueryClient();
@@ -114,10 +114,10 @@ function ProductsTab() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name || !form.image_url) { toast.error("الاسم والصورة مطلوبان"); return; }
+    if (!form.image_url) { toast.error("الصورة مطلوبة"); return; }
     const payload = {
-      name: form.name, description: form.description || null, image_url: form.image_url,
-      category: form.category || null, price: form.price ? Number(form.price) : null,
+      title: form.title || "تصميم", image_url: form.image_url,
+      type: form.type || null, price: form.price ? Number(form.price) : null,
     };
     const res = editing
       ? await supabase.from("products").update(payload).eq("id", editing)
@@ -139,22 +139,25 @@ function ProductsTab() {
 
   return (
     <div className="space-y-4">
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <h2 className="text-sm font-black">رفع جماعي للتصاميم — حتى 100 صورة</h2>
+        <p className="text-[11px] text-muted-foreground">اختر الفئة (بالعربية) ثم ارفع — تُضاف بدون أسعار وتظهر شارة "للتجربة والمعاينة الافتراضية".</p>
+        <BulkProductsUploader onDone={() => { qc.invalidateQueries({ queryKey: ["admin-products"] }); qc.invalidateQueries({ queryKey: ["products"] }); }} />
+      </div>
+
       <form onSubmit={save} className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-black">{editing ? "تعديل تصميم" : "إضافة تصميم"}</h2>
+          <h2 className="text-sm font-black">{editing ? "تعديل تصميم" : "إضافة تصميم منفرد (اختياري)"}</h2>
           {editing && (
             <button type="button" onClick={() => { setEditing(null); setForm(EMPTY_P); }}
               className="text-xs text-muted-foreground inline-flex items-center gap-1"><X className="size-3" /> إلغاء</button>
           )}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Input value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="اسم المنتج *" />
-          <Input value={form.category} onChange={(v) => setForm({ ...form, category: v })} placeholder="الفئة" />
+          <Input value={form.title} onChange={(v) => setForm({ ...form, title: v })} placeholder="اسم التصميم (اختياري)" />
+          <Input value={form.type} onChange={(v) => setForm({ ...form, type: v })} placeholder="النوع (ستائر/كنب/أزياء…)" />
           <Input value={form.image_url} onChange={(v) => setForm({ ...form, image_url: v })} placeholder="رابط الصورة *" full />
-          <Input value={form.price} onChange={(v) => setForm({ ...form, price: v })} placeholder="السعر" type="number" />
-          <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-            placeholder="الوصف" rows={2}
-            className="sm:col-span-2 rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <Input value={form.price} onChange={(v) => setForm({ ...form, price: v })} placeholder="السعر (اختياري)" type="number" />
         </div>
         <button type="submit" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft hover:opacity-90">
           {editing ? <Save className="size-4" /> : <Plus className="size-4" />}
@@ -162,22 +165,15 @@ function ProductsTab() {
         </button>
       </form>
 
-      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
-        <h2 className="text-sm font-black">رفع جماعي للتصاميم — حتى 100 صورة</h2>
-        <p className="text-[11px] text-muted-foreground">اختر الفئة ثم ارفع — تُضاف بدون أسعار ويظهر شارة "للتجربة والمعاينة الافتراضية".</p>
-        <BulkProductsUploader onDone={() => { qc.invalidateQueries({ queryKey: ["admin-products"] }); qc.invalidateQueries({ queryKey: ["products"] }); }} />
-      </div>
-
       <div className="rounded-2xl bg-card p-5 shadow-card border border-border">
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="text-sm font-black">المنتجات ({designs?.length ?? 0})</h2>
+          <h2 className="text-sm font-black">التصاميم ({designs?.length ?? 0})</h2>
           <CSVImportButton
             table="products"
-            sample="name,description,image_url,category,price"
+            sample="title,image_url,type,price"
             map={(row) => ({
-              name: row.name, description: row.description || null,
-              image_url: row.image_url, category: row.category || null,
-              price: row.price ? Number(row.price) : null,
+              title: row.title || "تصميم", image_url: row.image_url,
+              type: row.type || null, price: row.price ? Number(row.price) : null,
             })}
             onDone={() => { qc.invalidateQueries({ queryKey: ["admin-products"] }); qc.invalidateQueries({ queryKey: ["products"] }); }}
           />
@@ -186,13 +182,13 @@ function ProductsTab() {
         <div className="grid gap-3 sm:grid-cols-2">
           {designs?.map((d) => (
             <div key={d.id} className="flex gap-3 rounded-xl border border-border bg-background p-3">
-              <img src={d.image_url} alt={d.name} className="size-16 rounded-lg object-cover bg-muted" />
+              <img src={d.image_url} alt={d.title} className="size-16 rounded-lg object-cover bg-muted" />
               <div className="flex-1 min-w-0">
-                <p className="line-clamp-1 text-sm font-bold">{d.name}</p>
-                {d.category && <p className="text-[11px] text-muted-foreground">{d.category}</p>}
+                <p className="line-clamp-1 text-sm font-bold">{d.title}</p>
+                {d.type && <p className="text-[11px] text-muted-foreground">{CATEGORY_LABELS_AR[d.type] ?? d.type}</p>}
               </div>
               <div className="flex flex-col gap-1">
-                <button onClick={() => { setEditing(d.id); setForm({ name: d.name, description: d.description ?? "", image_url: d.image_url, category: d.category ?? "", price: d.price != null ? String(d.price) : "" }); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                <button onClick={() => { setEditing(d.id); setForm({ title: d.title, image_url: d.image_url, type: d.type ?? "", price: d.price != null ? String(d.price) : "" }); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                   className="rounded-lg bg-muted p-2"><Edit3 className="size-3.5" /></button>
                 <button onClick={() => remove(d.id)} className="rounded-lg bg-destructive/10 p-2 text-destructive"><Trash2 className="size-3.5" /></button>
               </div>
@@ -541,9 +537,9 @@ function OrdersTab() {
 }
 
 /* ============ السوق (Vendors) ============ */
-type VendorRow = { id: string; business_name: string; category: string; whatsapp_number: string; logo_url: string | null; is_premium: boolean; region_id: string | null; subscription_status?: string | null; login_token?: string | null; cover_image?: string | null };
-type VForm = { business_name: string; category: string; whatsapp_number: string; logo_url: string; is_premium: boolean; region_id: string };
-const EMPTY_V: VForm = { business_name: "", category: "curtains", whatsapp_number: "", logo_url: "", is_premium: false, region_id: "" };
+type VendorRow = { id: string; name: string; category: string; phone: string; logo_url: string | null; is_premium: boolean; region_id: string | null; subscription_status?: string | null; login_token?: string | null; cover_image?: string | null };
+type VForm = { name: string; category: string; phone: string; logo_url: string; is_premium: boolean; region_id: string };
+const EMPTY_V: VForm = { name: "", category: "curtains", phone: "", logo_url: "", is_premium: false, region_id: "" };
 
 function VendorsTab() {
   const qc = useQueryClient();
@@ -562,11 +558,11 @@ function VendorsTab() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.business_name || !form.whatsapp_number) { toast.error("الاسم والرقم مطلوبان"); return; }
+    if (!form.name || !form.phone) { toast.error("الاسم والرقم مطلوبان"); return; }
     const payload = {
-      business_name: form.business_name,
+      name: form.name,
       category: form.category,
-      whatsapp_number: form.whatsapp_number.replace(/\D/g, ""),
+      phone: form.phone.replace(/\D/g, ""),
       logo_url: form.logo_url || null,
       is_premium: form.is_premium,
       region_id: form.region_id || null,
@@ -592,7 +588,7 @@ function VendorsTab() {
       <form onSubmit={save} className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
         <h2 className="text-sm font-black">{editing ? "تعديل شريك" : "إضافة شريك للسوق"}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Input value={form.business_name} onChange={(v) => setForm({ ...form, business_name: v })} placeholder="اسم النشاط *" />
+          <Input value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="اسم النشاط *" />
           <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
             className="rounded-xl bg-muted px-3 py-2 text-sm outline-none">
             <option value="curtains">ستائر</option>
@@ -601,7 +597,7 @@ function VendorsTab() {
             <option value="fashion">أزياء</option>
             <option value="other">أخرى</option>
           </select>
-          <Input value={form.whatsapp_number} onChange={(v) => setForm({ ...form, whatsapp_number: v })} placeholder="واتساب 963xxx" />
+          <Input value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} placeholder="واتساب 963xxx" />
           <Input value={form.logo_url} onChange={(v) => setForm({ ...form, logo_url: v })} placeholder="رابط الشعار" />
           <select value={form.region_id} onChange={(e) => setForm({ ...form, region_id: e.target.value })}
             className="rounded-xl bg-muted px-3 py-2 text-sm outline-none">
@@ -624,11 +620,11 @@ function VendorsTab() {
           <h2 className="text-sm font-black">الشركاء ({vendors?.length ?? 0})</h2>
           <CSVImportButton
             table="vendors"
-            sample="business_name,category,whatsapp_number,logo_url,is_premium"
+            sample="name,category,phone,logo_url,is_premium"
             map={(row) => ({
-              business_name: row.business_name,
+              name: row.name,
               category: ["curtains","sofa","furniture","fashion","other"].includes(row.category) ? row.category : "other",
-              whatsapp_number: (row.whatsapp_number || "").replace(/\D/g, ""),
+              phone: (row.phone || "").replace(/\D/g, ""),
               logo_url: row.logo_url || null,
               is_premium: ["true","1","yes","نعم"].includes((row.is_premium || "").toLowerCase()),
             })}
@@ -637,7 +633,7 @@ function VendorsTab() {
         </div>
 
         <div className="space-y-2">
-          {vendors?.map(v => <VendorRowEditor key={v.id} v={v} onEdit={() => { setEditing(v.id); setForm({ business_name: v.business_name, category: v.category, whatsapp_number: v.whatsapp_number, logo_url: v.logo_url ?? "", is_premium: v.is_premium, region_id: v.region_id ?? "" }); }} onRemove={() => remove(v.id)} />)}
+          {vendors?.map(v => <VendorRowEditor key={v.id} v={v} onEdit={() => { setEditing(v.id); setForm({ name: v.name, category: v.category, phone: v.phone, logo_url: v.logo_url ?? "", is_premium: v.is_premium, region_id: v.region_id ?? "" }); }} onRemove={() => remove(v.id)} />)}
           {(!vendors || vendors.length === 0) && <p className="text-center text-xs text-muted-foreground py-6">لا شركاء بعد. أضف أول شريك ليظهر في السوق.</p>}
         </div>
       </div>
@@ -678,8 +674,8 @@ function VendorRowEditor({ v, onEdit, onRemove }: { v: VendorRow; onEdit: () => 
       <div className="flex items-center gap-3">
         {v.logo_url && <img src={v.logo_url} className="size-10 rounded-lg object-cover bg-muted" alt="" />}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold">{v.business_name} {v.is_premium && <span className="text-[10px] text-primary">★</span>}</p>
-          <p className="text-[11px] text-muted-foreground" dir="ltr">{v.category} · {v.whatsapp_number}</p>
+          <p className="text-sm font-bold">{v.name} {v.is_premium && <span className="text-[10px] text-primary">★</span>}</p>
+          <p className="text-[11px] text-muted-foreground" dir="ltr">{v.category} · {v.phone}</p>
           {v.login_token && <p className="text-[10px] font-mono text-primary mt-1" dir="ltr">🔑 {v.login_token}</p>}
         </div>
         <button onClick={generateToken} title="توليد رمز دخول للشريك" className="rounded-lg bg-primary/10 px-2 py-1 text-[10px] font-black text-primary">رمز</button>
@@ -1269,24 +1265,33 @@ function DesignsTab() {
   );
 }
 
+const CATEGORY_LABELS_AR: Record<string, string> = {
+  curtains: "ستائر",
+  sofa: "كنب",
+  furniture: "أثاث",
+  fashion: "أزياء",
+  haircut: "قصّات شعر",
+  other: "أخرى",
+};
+
 function BulkProductsUploader({ onDone }: { onDone: () => void }) {
-  const [category, setCategory] = useState<string>("curtains");
-  const cats = ["curtains", "sofa", "furniture", "fashion", "haircut", "other"];
+  const [type, setType] = useState<string>("curtains");
+  const cats = Object.keys(CATEGORY_LABELS_AR);
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         {cats.map((c) => (
-          <button key={c} type="button" onClick={() => setCategory(c)}
+          <button key={c} type="button" onClick={() => setType(c)}
             className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition ${
-              category === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary/50"
-            }`}>{c}</button>
+              type === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary/50"
+            }`}>{CATEGORY_LABELS_AR[c]}</button>
         ))}
       </div>
       <BatchImageUploader
         onUploaded={async (items: BatchItem[]) => {
           if (!items.length) return;
           const rows = items.map((it) => ({
-            name: it.name || "تصميم", image_url: it.dataUrl, price: null, category, description: null,
+            title: it.name || "تصميم", image_url: it.dataUrl, price: null, type,
           }));
           const { error } = await supabase.from("products").insert(rows);
           if (error) throw error;
@@ -1296,3 +1301,4 @@ function BulkProductsUploader({ onDone }: { onDone: () => void }) {
     </div>
   );
 }
+

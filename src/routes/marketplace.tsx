@@ -11,13 +11,13 @@ import { useStr } from "@/lib/cms-strings";
 import { PriceOrTrialBadge } from "@/components/BatchImageUploader";
 
 type Vendor = {
-  id: string; business_name: string; category: string;
-  whatsapp_number: string; logo_url: string | null; is_premium: boolean;
+  id: string; name: string; category: string;
+  phone: string | null; logo_url: string | null; is_premium: boolean;
   cover_image?: string | null; subscription_status?: string | null;
 };
 
 type Product = {
-  id: string; name: string; category: string | null;
+  id: string; title: string; type: string | null;
   image_url: string; price: number | null;
 };
 
@@ -47,7 +47,7 @@ function Marketplace() {
         .from("vendors")
         .select("*")
         .order("is_premium", { ascending: false })
-        .order("business_name");
+        .order("name");
       if (error) return [];
       return (data ?? []) as Vendor[];
     },
@@ -57,7 +57,7 @@ function Marketplace() {
     queryKey: ["products"],
     queryFn: async (): Promise<Product[]> => {
       const { data, error } = await supabase
-        .from("products").select("id,name,category,image_url,price")
+        .from("products").select("id,title,type,image_url,price")
         .order("created_at", { ascending: false }).limit(60);
       if (error) return [];
       return (data ?? []) as Product[];
@@ -126,10 +126,10 @@ function Marketplace() {
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {products.map((p) => (
                 <div key={p.id} className="overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-0.5 hover:border-primary/50">
-                  <img src={p.image_url} alt={p.name} className="h-36 w-full object-cover" />
+                  <img src={p.image_url} alt={p.title} className="h-36 w-full object-cover" />
                   <div className="p-3">
-                    <p className="line-clamp-1 text-sm font-bold">{p.name}</p>
-                    {p.category && <p className="text-[11px] text-muted-foreground">{p.category}</p>}
+                    <p className="line-clamp-1 text-sm font-bold">{p.title}</p>
+                    {p.type && <p className="text-[11px] text-muted-foreground">{p.type}</p>}
                     <PriceOrTrialBadge price={p.price} currency={currency} />
                   </div>
                 </div>
@@ -185,13 +185,13 @@ function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolea
         <div className="relative flex items-center gap-3">
           <div className="grid size-16 place-items-center rounded-2xl bg-muted ring-1 ring-border">
             {v.logo_url ? (
-              <img src={v.logo_url} alt={v.business_name} className="size-full rounded-2xl object-cover" />
+              <img src={v.logo_url} alt={v.name} className="size-full rounded-2xl object-cover" />
             ) : (
               <Sparkles className="size-6 text-primary" />
             )}
           </div>
           <div className="min-w-0">
-            <h3 className="truncate text-base font-black text-foreground">{v.business_name}</h3>
+            <h3 className="truncate text-base font-black text-foreground">{v.name}</h3>
             <p className="text-xs text-muted-foreground">{catLabel[v.category] ?? v.category}</p>
           </div>
         </div>
@@ -202,7 +202,7 @@ function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolea
           {mods.haircut && <span className="badge-rose"><Scissors className="size-3" /> قصّات AI</span>}
         </div>
 
-        <a href={`https://wa.me/${v.whatsapp_number}`} target="_blank" rel="noreferrer"
+        <a href={`https://wa.me/${v.phone ?? ""}`} target="_blank" rel="noreferrer"
           className="relative mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
           <MessageCircle className="size-4" /> تواصل واتساب
         </a>

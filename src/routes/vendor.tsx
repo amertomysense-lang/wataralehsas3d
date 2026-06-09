@@ -13,7 +13,7 @@ export const Route = createFileRoute("/vendor")({
 });
 
 type Vendor = {
-  id: string; business_name: string; category: string; whatsapp_number: string;
+  id: string; name: string; category: string; phone: string;
   logo_url: string | null; cover_image?: string | null; video_url?: string | null;
   map_location?: string | null; bio?: string | null; login_token?: string | null;
   subscription_status?: string | null; is_premium: boolean;
@@ -117,7 +117,7 @@ function VendorDashboard({ vendorId }: { vendorId: string }) {
           <div className="flex items-center gap-2">
             <Store className="size-5 text-primary" />
             <div>
-              <p className="text-sm font-black">{vendor.business_name}</p>
+              <p className="text-sm font-black">{vendor.name}</p>
               <p className="text-[10px] text-muted-foreground">لوحة تحكم الشريك</p>
             </div>
           </div>
@@ -135,7 +135,7 @@ function VendorDashboard({ vendorId }: { vendorId: string }) {
         )}
 
         <div className="rounded-3xl p-6 text-primary-foreground shadow-soft" style={{ background: "var(--gradient-hero)" }}>
-          <h1 className="text-xl font-black">أهلاً، {vendor.business_name}</h1>
+          <h1 className="text-xl font-black">أهلاً، {vendor.name}</h1>
           <p className="mt-1 text-sm opacity-90">أنت تدير معرضك بنفسك — التغييرات تنعكس فوراً في صفحة السوق.</p>
         </div>
 
@@ -167,8 +167,8 @@ function TabBtn({ label, active, onClick, icon }: { label: string; active: boole
 /* ============ بطاقة المعرض ============ */
 function ProfileTab({ vendor, onSaved }: { vendor: Vendor; onSaved: () => void }) {
   const [form, setForm] = useState({
-    business_name: vendor.business_name,
-    whatsapp_number: vendor.whatsapp_number,
+    name: vendor.name,
+    phone: vendor.phone,
     bio: vendor.bio ?? "",
     logo_url: vendor.logo_url ?? "",
     cover_image: vendor.cover_image ?? "",
@@ -194,10 +194,10 @@ function ProfileTab({ vendor, onSaved }: { vendor: Vendor; onSaved: () => void }
       )}
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="اسم المعرض">
-          <input value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} className="input" />
+          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input" />
         </Field>
         <Field label="رقم الواتساب">
-          <input value={form.whatsapp_number} dir="ltr" onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })} className="input" />
+          <input value={form.phone} dir="ltr" onChange={(e) => setForm({ ...form, phone: e.target.value })} className="input" />
         </Field>
         <Field label="رابط الشعار">
           <input value={form.logo_url} dir="ltr" onChange={(e) => setForm({ ...form, logo_url: e.target.value })} className="input" />
@@ -235,60 +235,49 @@ function Field({ label, children }: { label: React.ReactNode; children: React.Re
 }
 
 /* ============ منتجاتي ============ */
-type Product = { id: string; name: string; price: number | null; image_url: string; category: string | null };
+type Product = { id: string; title: string; price: number | null; image_url: string; type: string | null };
 
 function ProductsTab({ vendor }: { vendor: Vendor }) {
   const qc = useQueryClient();
-  const [form, setForm] = useState({ name: "", price: "", image_url: "", category: vendor.category });
+  const [form, setForm] = useState({ title: "", price: "", image_url: "", type: vendor.category });
 
   const { data: items } = useQuery({
     queryKey: ["vendor-items", vendor.id],
     queryFn: async () => {
-      // نستخدم fashion_items للأزياء و products لباقي الفئات — تبسيطاً نقرأ كلاهما
-      const fashion = vendor.category === "fashion";
-      if (fashion) {
-        const { data } = await supabase.from("fashion_items").select("id,item_name,image_url,price").eq("vendor_id", vendor.id);
-        return (data ?? []).map((r) => ({ id: r.id, name: r.item_name, image_url: r.image_url, price: r.price, category: "fashion" })) as Product[];
-      }
-      const { data } = await supabase.from("products").select("id,name,image_url,price,category").order("created_at", { ascending: false }).limit(100);
+      const { data } = await supabase
+        .from("products").select("id,title,image_url,price,type")
+        .order("created_at", { ascending: false }).limit(200);
       return (data ?? []) as Product[];
     },
   });
 
   async function add() {
-    if (!form.name || !form.image_url) { toast.error("الاسم والصورة مطلوبان"); return; }
-    if (vendor.category === "fashion") {
-      const { error } = await supabase.from("fashion_items").insert({
-        vendor_id: vendor.id, item_name: form.name, image_url: form.image_url,
-        price: form.price ? Number(form.price) : null, vendor_whatsapp: vendor.whatsapp_number,
-      });
-      if (error) { toast.error(error.message); return; }
-    } else {
-      const { error } = await supabase.from("products").insert({
-        name: form.name, image_url: form.image_url,
-        price: form.price ? Number(form.price) : null, category: form.category,
-      });
-      if (error) { toast.error(error.message); return; }
-    }
+    if (!form.image_url) { toast.error("الصورة مطلوبة"); return; }
+    const { error } = await supabase.from("products").insert({
+      title: form.title || "تصميم", image_url: form.image_url,
+      price: form.price ? Number(form.price) : null, type: form.type,
+    });
+    if (error) { toast.error(error.message); return; }
     toast.success("أُضيف العنصر");
-    setForm({ name: "", price: "", image_url: "", category: vendor.category });
+    setForm({ title: "", price: "", image_url: "", type: vendor.category });
     qc.invalidateQueries({ queryKey: ["vendor-items"] });
   }
 
   async function remove(id: string) {
     if (!confirm("حذف هذا العنصر؟")) return;
-    const table = vendor.category === "fashion" ? "fashion_items" : "products";
-    await supabase.from(table).delete().eq("id", id);
+    await supabase.from("products").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["vendor-items"] });
   }
 
   return (
     <div className="space-y-4">
+      <BatchUploadToProducts vendor={vendor} />
+
       <div className="surface-card p-5 space-y-3">
-        <h2 className="text-sm font-black">إضافة منتج</h2>
+        <h2 className="text-sm font-black">إضافة منتج منفرد (اختياري)</h2>
         <div className="grid gap-3 sm:grid-cols-4">
-          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="الاسم *" className="rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
-          <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="السعر" type="number" className="rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="الاسم (اختياري)" className="rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="السعر (اختياري)" type="number" className="rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
           <input value={form.image_url} dir="ltr" onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="رابط الصورة *" className="sm:col-span-2 rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
         </div>
         <button onClick={add} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-black text-primary-foreground">
@@ -296,17 +285,15 @@ function ProductsTab({ vendor }: { vendor: Vendor }) {
         </button>
       </div>
 
-      <BatchUploadToProducts vendor={vendor} />
-
       <div className="surface-card p-5">
         <h2 className="mb-3 text-sm font-black">القائمة ({items?.length ?? 0})</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {items?.map((p) => (
             <div key={p.id} className="overflow-hidden rounded-2xl border border-border bg-background">
-              <img src={p.image_url} className="h-32 w-full object-cover" alt={p.name} />
+              <img src={p.image_url} className="h-32 w-full object-cover" alt={p.title} />
               <div className="p-3">
-                <p className="text-sm font-bold line-clamp-1">{p.name}</p>
-                <PriceOrTrialBadge price={p.price} currency="$" />
+                <p className="text-sm font-bold line-clamp-1">{p.title}</p>
+                <PriceOrTrialBadge price={p.price} />
                 <button onClick={() => remove(p.id)} className="mt-2 inline-flex items-center gap-1 text-xs text-destructive hover:underline">
                   <Trash2 className="size-3" /> حذف
                 </button>
@@ -320,35 +307,42 @@ function ProductsTab({ vendor }: { vendor: Vendor }) {
   );
 }
 
+const VENDOR_TYPE_LABELS: Record<string, string> = {
+  curtains: "ستائر", sofa: "كنب", furniture: "أثاث",
+  fashion: "أزياء", haircut: "قصّات شعر", other: "أخرى",
+};
+
 function BatchUploadToProducts({ vendor }: { vendor: Vendor }) {
   const qc = useQueryClient();
+  const TYPES = Object.keys(VENDOR_TYPE_LABELS);
+  const [type, setType] = useState<string>(vendor.category && TYPES.includes(vendor.category) ? vendor.category : "other");
   async function handle(items: BatchItem[]) {
     if (!items.length) return;
-    const fashion = vendor.category === "fashion";
-    if (fashion) {
-      const rows = items.map((it) => ({
-        vendor_id: vendor.id, item_name: it.name || "تصميم", image_url: it.dataUrl,
-        price: null, vendor_whatsapp: vendor.whatsapp_number,
-      }));
-      const { error } = await supabase.from("fashion_items").insert(rows);
-      if (error) throw error;
-    } else {
-      const rows = items.map((it) => ({
-        name: it.name || "تصميم", image_url: it.dataUrl, price: null, category: vendor.category,
-      }));
-      const { error } = await supabase.from("products").insert(rows);
-      if (error) throw error;
-    }
+    const rows = items.map((it) => ({
+      title: it.name || "تصميم", image_url: it.dataUrl, price: null, type,
+    }));
+    const { error } = await supabase.from("products").insert(rows);
+    if (error) throw error;
     qc.invalidateQueries({ queryKey: ["vendor-items"] });
     qc.invalidateQueries({ queryKey: ["products"] });
   }
   return (
-    <div className="surface-card p-5">
-      <h2 className="mb-3 text-sm font-black">رفع جماعي للتصاميم (بدون أسعار)</h2>
-      <BatchImageUploader onUploaded={handle} hint="ارفع حتى 100 صورة دفعة واحدة — تُربط تلقائياً بفئة معرضك بدون سعر." />
+    <div className="surface-card p-5 space-y-3">
+      <h2 className="text-sm font-black">رفع جماعي ذكي (حتى 100 صورة)</h2>
+      <p className="text-[11px] text-muted-foreground">اختر النوع ثم اسحب الصور — تُضغط وتُرفع تلقائياً بدون أيّ بيانات إجبارية.</p>
+      <div className="flex flex-wrap gap-2">
+        {TYPES.map((c) => (
+          <button key={c} type="button" onClick={() => setType(c)}
+            className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition ${
+              type === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary/50"
+            }`}>{VENDOR_TYPE_LABELS[c]}</button>
+        ))}
+      </div>
+      <BatchImageUploader onUploaded={handle} />
     </div>
   );
 }
+
 
 /* ============ المعرض المرئي ============ */
 function GalleryTab({ vendor }: { vendor: Vendor }) {

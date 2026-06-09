@@ -23,11 +23,11 @@ export function ProductChat({
       setMessages([
         {
           role: "assistant",
-          content: `أهلاً! اسألني أي شيء عن "${design.name}" — السعر، المواصفات، أو طريقة التركيب.`,
+          content: `أهلاً! اسألني أي شيء عن "${design.title}" — السعر، المواصفات، أو طريقة التركيب.`,
         },
       ]);
     }
-  }, [open, design.name, messages.length]);
+  }, [open, design.title, messages.length]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -49,9 +49,9 @@ export function ProductChat({
         body: JSON.stringify({
           messages: next,
           productContext: {
-            name: design.name,
-            description: design.description,
-            category: design.category,
+            name: design.title,
+            
+            category: design.type,
             price: design.price,
           },
         }),
@@ -80,7 +80,7 @@ export function ProductChat({
               <Sparkles className="size-4" />
             </div>
             <div>
-              <p className="text-sm font-bold text-foreground">سؤال عن: {design.name}</p>
+              <p className="text-sm font-bold text-foreground">سؤال عن: {design.title}</p>
               <p className="text-[11px] text-muted-foreground">المساعد يرد بمعلومات هذا المنتج فقط</p>
             </div>
           </div>
