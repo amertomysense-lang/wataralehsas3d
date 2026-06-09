@@ -1,8 +1,16 @@
+import { useEffect, useState } from "react";
 import { Zap, Droplets, Layers3, TrendingDown, Truck, Sparkles } from "lucide-react";
 import { readSettings } from "@/lib/settings";
 
 export function CampaignSection({ compact = false }: { compact?: boolean }) {
-  if (typeof window !== "undefined" && !readSettings().showMarketingBanner) return null;
+  const [show, setShow] = useState(true);
+  const [showFleet, setShowFleet] = useState(false);
+  useEffect(() => {
+    const s = readSettings();
+    setShow(!!s.showMarketingBanner);
+    setShowFleet(!!s.fleetMobilizationEnabled);
+  }, []);
+  if (!show) return null;
 
   const features = [
     { i: Zap, t: "طباعة فائقة 8K", d: "بتقنية Epson i1600-U1 ثنائي الرأس UV LED — تفاصيل لا تُصدّق." },
