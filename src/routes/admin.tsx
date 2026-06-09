@@ -1271,26 +1271,17 @@ function DesignsTab() {
   );
 }
 
-const CATEGORY_LABELS_AR: Record<string, string> = {
-  curtains: "ستائر",
-  sofa: "كنب",
-  furniture: "أثاث",
-  fashion: "أزياء",
-  haircut: "قصّات شعر",
-  other: "أخرى",
-};
-
 function BulkProductsUploader({ onDone }: { onDone: () => void }) {
-  const [type, setType] = useState<string>("curtains");
-  const cats = Object.keys(CATEGORY_LABELS_AR);
+  const [cats] = useCategories();
+  const [type, setType] = useState<string>(cats[0]?.id ?? "other");
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         {cats.map((c) => (
-          <button key={c} type="button" onClick={() => setType(c)}
+          <button key={c.id} type="button" onClick={() => setType(c.id)}
             className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition ${
-              type === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary/50"
-            }`}>{CATEGORY_LABELS_AR[c]}</button>
+              type === c.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary/50"
+            }`}>{c.label}</button>
         ))}
       </div>
       <BatchImageUploader
@@ -1307,4 +1298,78 @@ function BulkProductsUploader({ onDone }: { onDone: () => void }) {
     </div>
   );
 }
+
+/* ============ إدارة الفئات (طبقة بيانات مرنة) ============ */
+function CategoriesTab() {
+  const [cats, setCats] = useCategories();
+  const [draft, setDraft] = useState<Category>({ id: "", label: "", tab: "decor" });
+
+  function add() {
+    const id = draft.id.trim().toLowerCase().replace(/\s+/g, "_");
+    const label = draft.label.trim();
+    if (!id || !label) { toast.error("المعرّف والاسم العربي مطلوبان"); return; }
+    if (cats.some((c) => c.id === id)) { toast.error("هذا المعرّف موجود مسبقاً"); return; }
+    setCats([...cats, { id, label, tab: draft.tab }]);
+    setDraft({ id: "", label: "", tab: "decor" });
+    toast.success("تمت إضافة الفئة");
+  }
+
+  function update(id: string, patch: Partial<Category>) {
+    setCats(cats.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  }
+
+  function remove(id: string) {
+    if (!confirm("حذف هذه الفئة؟ لن يتأثر المنتجات/الشركاء بل ستظهر فئتهم كما هي.")) return;
+    setCats(cats.filter((c) => c.id !== id));
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-card space-y-3">
+        <h2 className="text-sm font-black">إضافة فئة جديدة</h2>
+        <p className="text-[11px] text-muted-foreground">المعرّف بالإنجليزية (مثل: rugs) — يُحفظ في قاعدة البيانات. الاسم العربي يظهر في الواجهة.</p>
+        <div className="grid gap-2 sm:grid-cols-4">
+          <input value={draft.id} dir="ltr" onChange={(e) => setDraft({ ...draft, id: e.target.value })}
+            placeholder="id (مثال: rugs)" className="rounded-xl bg-muted px-3 py-2 text-sm outline-none" />
+          <input value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })}
+            placeholder="الاسم العربي (مثال: سجّاد)" className="rounded-xl bg-muted px-3 py-2 text-sm outline-none" />
+          <select value={draft.tab} onChange={(e) => setDraft({ ...draft, tab: e.target.value as CategoryTab })}
+            className="rounded-xl bg-muted px-3 py-2 text-sm outline-none">
+            <option value="decor">عالم الديكور</option>
+            <option value="fashion">عالم الأزياء</option>
+          </select>
+          <button onClick={add} className="inline-flex items-center justify-center gap-1 rounded-xl bg-primary px-4 py-2 text-sm font-black text-primary-foreground">
+            <Plus className="size-4" /> إضافة
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+        <h2 className="mb-3 text-sm font-black">الفئات الحالية ({cats.length})</h2>
+        <div className="space-y-2">
+          {cats.map((c) => (
+            <div key={c.id} className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-background p-3">
+              <code className="rounded bg-muted px-2 py-0.5 text-[11px]" dir="ltr">{c.id}</code>
+              <input value={c.label} onChange={(e) => update(c.id, { label: e.target.value })}
+                className="flex-1 min-w-[140px] rounded-lg bg-muted px-2 py-1.5 text-sm outline-none" />
+              <select value={c.tab} onChange={(e) => update(c.id, { tab: e.target.value as CategoryTab })}
+                className="rounded-lg bg-muted px-2 py-1.5 text-xs outline-none">
+                <option value="decor">ديكور</option>
+                <option value="fashion">أزياء</option>
+              </select>
+              <button onClick={() => remove(c.id)} className="rounded-lg bg-destructive/10 p-2 text-destructive">
+                <Trash2 className="size-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <button onClick={() => { if (confirm("استعادة الفئات الافتراضية؟")) { setCats([]); setTimeout(() => location.reload(), 100); } }}
+          className="mt-3 text-[11px] text-muted-foreground hover:text-foreground">
+          استعادة الافتراضي
+        </button>
+      </div>
+    </div>
+  );
+}
+
 
