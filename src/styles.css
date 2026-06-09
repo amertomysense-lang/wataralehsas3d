@@ -43,54 +43,58 @@
 
 :root {
   --radius: 1.1rem;
-  /* 🌹 Rose Garden — وردي دافئ مع لمسات ذهبية */
-  --background: oklch(0.14 0.018 12);
-  --foreground: oklch(0.97 0.012 20);
-  --card: oklch(0.19 0.024 14);
-  --card-foreground: oklch(0.97 0.012 20);
-  --popover: oklch(0.19 0.024 14);
-  --popover-foreground: oklch(0.97 0.012 20);
-  --primary: oklch(0.66 0.19 5);
-  --primary-foreground: oklch(0.99 0.008 20);
-  --primary-glow: oklch(0.78 0.16 350);
-  --secondary: oklch(0.26 0.03 12);
-  --secondary-foreground: oklch(0.97 0.012 20);
-  --muted: oklch(0.23 0.026 12);
-  --muted-foreground: oklch(0.74 0.022 20);
-  --accent: oklch(0.78 0.13 75);
+  /* 🌹 Rose Garden — عنابي مخملي + أونيكس أسود + ذهبي شامبانيا */
+  --background: oklch(0.11 0.012 18);
+  --foreground: oklch(0.97 0.012 60);
+  --card: oklch(0.16 0.018 16);
+  --card-foreground: oklch(0.97 0.012 60);
+  --popover: oklch(0.16 0.018 16);
+  --popover-foreground: oklch(0.97 0.012 60);
+  --primary: oklch(0.52 0.19 12);
+  --primary-foreground: oklch(0.99 0.008 60);
+  --primary-glow: oklch(0.68 0.22 8);
+  --secondary: oklch(0.22 0.025 14);
+  --secondary-foreground: oklch(0.97 0.012 60);
+  --muted: oklch(0.2 0.022 14);
+  --muted-foreground: oklch(0.78 0.018 60);
+  --accent: oklch(0.82 0.13 88);
   --accent-foreground: oklch(0.14 0.02 12);
   --destructive: oklch(0.65 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
   --success: oklch(0.7 0.14 155);
   --success-foreground: oklch(0.14 0.02 12);
-  --border: oklch(1 0 0 / 0.1);
+  --border: oklch(1 0 0 / 0.08);
   --input: oklch(1 0 0 / 0.12);
-  --ring: oklch(0.78 0.16 350);
+  --ring: oklch(0.82 0.13 88);
+  --gold: oklch(0.82 0.13 88);
+  --gold-soft: oklch(0.9 0.09 92);
 }
 
 .dark {
-  --background: oklch(0.14 0.018 12);
-  --foreground: oklch(0.97 0.012 20);
-  --card: oklch(0.19 0.024 14);
-  --card-foreground: oklch(0.97 0.012 20);
-  --popover: oklch(0.19 0.024 14);
-  --popover-foreground: oklch(0.97 0.012 20);
-  --primary: oklch(0.66 0.19 5);
-  --primary-foreground: oklch(0.99 0.008 20);
-  --primary-glow: oklch(0.78 0.16 350);
-  --secondary: oklch(0.26 0.03 12);
-  --secondary-foreground: oklch(0.97 0.012 20);
-  --muted: oklch(0.23 0.026 12);
-  --muted-foreground: oklch(0.74 0.022 20);
-  --accent: oklch(0.78 0.13 75);
+  --background: oklch(0.11 0.012 18);
+  --foreground: oklch(0.97 0.012 60);
+  --card: oklch(0.16 0.018 16);
+  --card-foreground: oklch(0.97 0.012 60);
+  --popover: oklch(0.16 0.018 16);
+  --popover-foreground: oklch(0.97 0.012 60);
+  --primary: oklch(0.52 0.19 12);
+  --primary-foreground: oklch(0.99 0.008 60);
+  --primary-glow: oklch(0.68 0.22 8);
+  --secondary: oklch(0.22 0.025 14);
+  --secondary-foreground: oklch(0.97 0.012 60);
+  --muted: oklch(0.2 0.022 14);
+  --muted-foreground: oklch(0.78 0.018 60);
+  --accent: oklch(0.82 0.13 88);
   --accent-foreground: oklch(0.14 0.02 12);
   --destructive: oklch(0.65 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
   --success: oklch(0.7 0.14 155);
   --success-foreground: oklch(0.14 0.02 12);
-  --border: oklch(1 0 0 / 0.1);
+  --border: oklch(1 0 0 / 0.08);
   --input: oklch(1 0 0 / 0.12);
-  --ring: oklch(0.78 0.16 350);
+  --ring: oklch(0.82 0.13 88);
+  --gold: oklch(0.82 0.13 88);
+  --gold-soft: oklch(0.9 0.09 92);
 }
 
 @layer base {
@@ -101,12 +105,52 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
     background-image:
-      radial-gradient(circle at 12% 8%, oklch(0.66 0.19 5 / 0.18) 0, transparent 42%),
-      radial-gradient(circle at 88% 92%, oklch(0.78 0.16 350 / 0.14) 0, transparent 40%),
-      radial-gradient(circle at 50% 50%, oklch(0.78 0.13 75 / 0.06) 0, transparent 60%);
+      radial-gradient(circle at 10% 6%, oklch(0.52 0.19 12 / 0.22) 0, transparent 45%),
+      radial-gradient(circle at 92% 96%, oklch(0.68 0.22 8 / 0.16) 0, transparent 42%),
+      radial-gradient(circle at 50% 50%, oklch(0.82 0.13 88 / 0.05) 0, transparent 60%);
     background-attachment: fixed;
   }
+}
+
+/* Premium identity utilities — Rose Garden */
+@utility badge-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  padding: 0.22rem 0.6rem;
+  font-weight: 800;
+  font-size: 10px;
+  color: oklch(0.14 0.02 12);
+  background: linear-gradient(135deg, var(--gold-soft), var(--gold));
+  border: 1px solid color-mix(in oklab, var(--gold) 60%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--gold) 25%, transparent),
+              0 6px 18px -8px color-mix(in oklab, var(--gold) 70%, transparent);
+}
+
+@utility badge-rose {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  padding: 0.22rem 0.6rem;
+  font-weight: 800;
+  font-size: 10px;
+  color: var(--primary-foreground);
+  background: linear-gradient(135deg, var(--primary), var(--primary-glow));
+  box-shadow: 0 0 18px -4px color-mix(in oklab, var(--primary-glow) 55%, transparent);
+}
+
+@utility ring-gold {
+  border-color: color-mix(in oklab, var(--gold) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--gold) 35%, transparent),
+              0 14px 40px -18px color-mix(in oklab, var(--primary) 60%, transparent);
+}
+
+@utility glow-rose {
+  box-shadow: 0 0 32px -8px color-mix(in oklab, var(--primary-glow) 60%, transparent);
 }
 
 @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
