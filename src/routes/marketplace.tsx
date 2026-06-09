@@ -2,10 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo, useState } from "react";
-import { ShoppingBag, Crown, MessageCircle, Sofa, Shirt, Sparkles } from "lucide-react";
+import { ShoppingBag, Crown, MessageCircle, Sofa, Shirt, Sparkles, Cuboid, Scissors } from "lucide-react";
 import { CampaignSection } from "@/components/CampaignSection";
 import { useSettings } from "@/lib/settings";
 import { usePricing } from "@/lib/platform";
+import { useVendorStore, DEFAULT_VENDOR_STATE } from "@/lib/vendor-config";
+import { useStr } from "@/lib/cms-strings";
 
 type Vendor = {
   id: string; business_name: string; category: string;
