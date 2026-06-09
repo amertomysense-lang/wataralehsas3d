@@ -1,91 +1,95 @@
+# خطة التنفيذ — منصة "وتر الإحساس" SaaS متعددة المستأجرين
 
-# منصة "وتر الإحساس" — نظام متعدد المناطق متكامل
-
-سأبني نظاماً كاملاً متعدد الأدوار والمناطق، مع لوحة تحكم ديناميكية لإدارة كل شيء من المتصفح بدون كود، مع محاكي مقاسات وذكاء اصطناعي مدمج.
+نطاق ضخم؛ سأنفّذه على 6 مراحل متسلسلة في نفس الجلسة، ثم أصدّر الكود. أحتاج إجاباتك على 3 أسئلة حرجة قبل البدء (في النهاية).
 
 ---
 
-## 1) قاعدة البيانات (Supabase — جداول جديدة)
+## المرحلة 1 — الهوية البصرية والصفحة الرئيسية (Luxury Dark + Gold)
 
-```text
-regions              → id, name (الدانا, سرمدا...), whatsapp_number, assistant_name, is_active
-pricing_config       → id (singleton), price_per_meter, embossed_premium_rate, currency, updated_at
-user_roles           → user_id, role (admin | assistant), region_id (للمساعدين)
-orders               → id, region_id, customer_phone, width, height, embossed, design_id, total, status, created_at
-ai_conversations     → id, customer_phone, messages (jsonb), recommended_designs, created_at
+- تحديث `src/styles.css`: ثيم داكن فاخر (`--background` رمادي فحمي، `--primary` ذهبي كهرماني `oklch(0.78 0.15 75)`)، تدرجات ذهبية، ظلال ناعمة.
+- خط العناوين: **Tajawal** أو **Cairo Display** (RTL).
+- إعادة بناء `src/routes/index.tsx`:
+  - Hero بعنوان: «مستقبل الديكور الرقمي والتجارة الذكية في الشمال»
+  - عنوان فرعي يبرز: طباعة 8K، تأثيرات بروز ثلاثية الأبعاد ملموسة، تجربة AI افتراضية.
+  - زر CTA رئيسي: «ابدأ التجربة التفاعلية الآن» → `/workflow`
+- صفحة `/workflow`: محوّل بين 3 وحدات (محاكي الجدران، السوق، تجربة الأزياء).
+
+## المرحلة 2 — PWA + Offline Sync
+
+- `vite-plugin-pwa` مع `generateSW`، `autoUpdate`، `NetworkFirst` للـ HTML، `CacheFirst` للأصول.
+- Wrapper تسجيل آمن (يرفض في معاينة Lovable، iframe، dev).
+- **IndexedDB** عبر `idb`: جدول `pending_orders`.
+- خطاف `useOnlineSync`: يستمع لـ `online` → يفرغ القائمة إلى `public.orders`.
+- صفحة المنتج: إذا فشل `insert` بسبب الاتصال → خزّن محلياً + Toast «سيُرسل تلقائياً عند عودة الاتصال».
+
+## المرحلة 3 — Module A: محاكي الجدران/الأرضيات
+
+- صفحة `/simulator`:
+  - رفع صورة الغرفة (Slot من كاميرا الهاتف).
+  - طبقات SVG/PNG شفافة قابلة للسحب (Konva.js) + Pinch-to-Zoom + تشويه منظور (CSS `transform: matrix3d`).
+  - فلاتر: خط عربي، رخام، كسر جدار 3D، إيبوكسي محيطي.
+  - حاسبة: `W×H × price_per_meter × (1 + embossed?0.3:0)`.
+  - **شحن**: زرّان شفافان:
+    - «تأمين النقل من طرفك = $0»
+    - «سيارة الشركة المدعومة = $0.30/كم» (من `regions.distance_km` — حقل جديد)
+    - تنبيه ودّي: «مساهمة وقود مدعومة أقل من التكلفة الفعلية».
+
+## المرحلة 4 — Module B: سوق الشركاء (Multi-Tenant)
+
+هجرة SQL:
+```sql
+CREATE TABLE public.vendors (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_name text NOT NULL,
+  category text NOT NULL, -- 'curtains'|'sofa'|'furniture'|'fashion'
+  whatsapp_number text NOT NULL,
+  logo_url text,
+  is_premium boolean DEFAULT false,
+  region_id uuid REFERENCES public.regions(id),
+  created_at timestamptz DEFAULT now()
+);
+-- GRANT + RLS (قراءة عامة، كتابة admin فقط)
 ```
-+ تفعيل RLS + جدول `has_role()` security-definer.
+- شريط جانبي في المحاكي: أصول PNG شفافة (ستائر، أرائك) قابلة للسحب فوق الجدار.
+- عند طلب فيه عنصر vendor → فتح واتساب الـ vendor + نسخة لـ `orders` مع `vendor_id`.
 
-## 2) الأدوار والصلاحيات
+## المرحلة 5 — Module C: AI Virtual Try-On
 
-| الدور | الوصول |
-|---|---|
-| **عام (Public)** | المعرض، المحاكي، اختيار المنطقة، إرسال الطلب لواتساب |
-| **مالك (Admin)** | كل شيء — منتجات، مناطق، أسعار، طلبات، إعدادات AI |
-| **مساعد فرع (Assistant)** | طلبات منطقته فقط (read-only + تحديث الحالة) |
+هجرة:
+```sql
+CREATE TABLE public.fashion_items(id, vendor_id, item_name, image_url, mask_url, price);
+CREATE TABLE public.tryon_logs(id, user_phone, person_url, garment_id, result_url, created_at);
+```
+- صفحة `/tryon`: Slot A (صورة شخصية) + Slot B (قطعة من الكتالوج).
+- Server route `/api/public/tryon`: ينادي Replicate API لـ **IDM-VTON** (`cuuupid/idm-vton`).
+- نتيجة مركّبة عالية الدقة + زر «احجز القطعة الآن عبر واتساب المحل» → `vendor.whatsapp_number`.
+- **يتطلب**: مفتاح `REPLICATE_API_TOKEN` (سأطلبه عبر `add_secret` لاحقاً).
 
-تسجيل الدخول عبر Supabase Auth (Email/Password) — يستبدل كلمة السر localStorage الحالية.
+## المرحلة 6 — الأدوار والأمان
 
-## 3) لوحة تحكم المالك `/admin` (موسّعة)
-
-تبويبات:
-- **المنتجات** (موجود) — إضافة/تعديل/حذف تصاميم وصور 8K.
-- **المناطق** — CRUD مناطق + رقم واتساب لكل منطقة + اسم المساعد.
-- **الأسعار** — تعديل فوري لسعر المتر ونسبة البروز.
-- **الطلبات** — عرض كل الطلبات الواردة + تصفية حسب المنطقة/الحالة.
-- **المساعدون** — دعوة موظفي الفروع وربطهم بمنطقة.
-- **إعدادات AI** — تفعيل/تعطيل + تخصيص نبرة الرد.
-
-## 4) واجهة العميل العامة
-
-- **الصفحة الرئيسية**: المعرض + زر "ابدأ المحاكاة".
-- **صفحة المنتج**: تفاصيل + **محاكي مقاسات تفاعلي**:
-  - إدخال العرض × الارتفاع (متر)
-  - زر "ميزة البروز" (embossed)
-  - حساب فوري: `Width × Height × price_per_meter × (embossed ? 1 + premium_rate : 1)`
-- **منتقي المنطقة**: قبل الإرسال يختار العميل منطقته → النظام يحدد رقم الواتساب تلقائياً.
-- **زر إرسال واتساب**: يبني الرسالة بالقالب المطلوب ويفتح `wa.me/<dynamic_number>?text=...`.
-
-## 5) المساعد الذكي (AI)
-
-- زر دردشة عائم في كل صفحة (موجود) — محسّن:
-  - يحلل طلب العميل النصي (مثال: "صالون صغير جدرانه رطبة")
-  - يقترح **3 تصاميم** من قاعدة البيانات مع الروابط
-  - يقترح المواصفات التقنية (Epson i1600)
-  - يلتزم بحدوده: لا يفصح عن أسرار، يجيب فقط بمعلومات المنتجات والأسعار
-- يستخدم **Lovable AI Gateway** (Gemini 3 Flash) — الموجود حالياً.
-- يخزّن المحادثة في `ai_conversations` لمراجعتها لاحقاً.
-
-## 6) لوحة المساعد `/assistant`
-
-- يدخل بإيميله → يرى فقط طلبات منطقته
-- يضع حالة الطلب: جديد / تم التواصل / مكتمل / ملغى
-- زر فتح واتساب العميل مباشرة
-
-## 7) التفاصيل التقنية
-
-- **Stack**: TanStack Start (الحالي) + Supabase + AI SDK + Tailwind.
-- **Auth**: Supabase Auth + `_authenticated/` layout + `has_role()`.
-- **Realtime**: استخدام Supabase Realtime لإشعار المساعدين بطلب جديد.
-- **i18n/RTL**: عربي بالكامل (موجود) + Cairo font.
-- **PWA**: موجود — سيُحدّث.
-
-## 8) الترتيب التنفيذي
-
-1. إصلاح خطأ SSR الحالي (لو موجود).
-2. هجرة قواعد البيانات (5 جداول + RLS + has_role).
-3. استبدال نظام كلمة السر localStorage بـ Supabase Auth.
-4. لوحة `/admin` بتبويبات (مناطق، أسعار، طلبات، مساعدون).
-5. المحاكي + منتقي المنطقة + الواتساب الديناميكي في صفحة المنتج.
-6. تحسين AI Chat — إرجاع 3 تصاميم مقترحة + حفظ المحادثات.
-7. لوحة `/assistant` للمساعدين.
-8. اختبار شامل + نشر.
+- `/assistant`: تسجيل دخول بـ Supabase Auth + جدول `user_roles(user_id, role, region_id)`.
+  - يرى فقط طلبات منطقته. حالات: New → Inspected → Active → Finished → Cancelled.
+- `/admin`: محمي بـ `site-config.adminPassword` (الحالي) + يدير: الأسعار، المناطق، الـ vendors، رموز الـ premium، سجلات تدقيق.
+- زر **«تصدير الكود الكامل»** في الأدمن: ينشئ tarball عبر server route.
 
 ---
 
-## أسئلة تحتاج إجابتك قبل التنفيذ:
+## التقنيات المضافة
 
-1. **العملة في المحاكي**: دولار $ كما في القالب، أم ليرة سورية ل.س؟
-2. **قاعدة البيانات**: أنشئ الجداول الجديدة على Supabase الحالي (`igloimjmnflsghqhumvz`)؟
-3. **بريد المالك (Admin)**: ما الإيميل الذي ستستخدمه للدخول؟ (سأمنحه دور admin مباشرة).
-4. **المناطق الأولية**: هل أبدأ بـ [الدانا، سرمدا، إدلب، أرياف حلب] فقط، وأنت تضيف الباقي من اللوحة؟
+| المهمة | الحزمة |
+|---|---|
+| PWA | `vite-plugin-pwa`, `workbox-window` |
+| IndexedDB | `idb` |
+| Canvas Layers | `konva`, `react-konva` |
+| AI Try-On | Replicate API (REST، بدون SDK) |
+| Pinch/Zoom | `react-zoom-pan-pinch` |
+
+---
+
+## ⚠️ قبل أن أبدأ — أحتاج 3 إجابات:
+
+1. **AI Try-On**: هل ستزوّدني بمفتاح **Replicate API** (مدفوع ~$0.05/صورة) أم أستخدم بديلاً مجانياً (Hugging Face Spaces — أبطأ وأقل جودة)؟
+2. **مصفوفة المسافات (KM)**: هل أضيف عمود `distance_km` لكل منطقة في `regions` (تعدّله من الأدمن)، أم تريد مصفوفة `region_distances(from_id, to_id, km)` كاملة؟
+3. **تصدير الكود**: زر التصدير من الأدمن → ZIP يُرفع لـ Supabase Storage، أم ملف ينزّل مباشرة في المتصفح؟
+
+أجبني وسأنفّذ كل شيء دفعة واحدة.
