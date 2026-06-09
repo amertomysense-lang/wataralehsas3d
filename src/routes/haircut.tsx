@@ -9,6 +9,7 @@ import { consumeQuota, useQuota, isUnlimited } from "@/lib/quota";
 import { QuotaModal } from "@/components/QuotaModal";
 import { PaymentModal } from "@/components/PaymentModal";
 import { saveImageToDevice, shareImageWhatsApp } from "@/lib/save-image";
+import { AiLoungeBanner } from "@/components/AiLoungeBanner";
 
 export const Route = createFileRoute("/haircut")({
   head: () => ({ meta: [{ title: "تجربة قصات الشعر AI — وتر الإحساس" }] }),
@@ -346,6 +347,7 @@ function HaircutStudio() {
             {busy ? <><Loader2 className="size-5 animate-spin" /> جاري…</> : <><Sparkles className="size-5" /> توليد AI واقعي ({remLabel})</>}
           </button>
         </div>
+        {busy && <AiLoungeBanner className="mt-4" />}
 
         {readSettings().paidEnabled && !unlimited && (
           <button onClick={() => setPayOpen(true)}

@@ -1,11 +1,14 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { ArrowRight, MessageCircle, ShoppingBag, Calculator, MapPin } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ProductChat } from "@/components/ProductChat";
+import { VendorWhatsAppFAB } from "@/components/VendorWhatsAppFAB";
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { toast } from "sonner";
+
+type ProductRow = Design & { vendor_id?: string | null };
+type Vendor = { id: string; name: string | null; phone: string | null };
 
 export const Route = createFileRoute("/product/$id")({
   loader: async ({ params }) => {
@@ -16,11 +19,11 @@ export const Route = createFileRoute("/product/$id")({
       .maybeSingle();
     if (error) throw error;
     if (!data) throw notFound();
-    return { design: data as Design };
+    return { design: data as ProductRow };
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: `${loaderData?.design.title ?? "منتج"} — وتر الإحساس` },
+      { title: `${loaderData?.design.title ?? "منتج"} — وتر الإحسان` },
       { name: "description", content: "تصميم طباعة جدارية فاخرة" },
       { property: "og:title", content: loaderData?.design.title ?? "منتج" },
       { property: "og:image", content: loaderData?.design.image_url ?? "" },
@@ -49,9 +52,21 @@ function ProductPage() {
   const [embossed, setEmbossed] = useState(false);
   const [regionId, setRegionId] = useState<string>("");
   const [sending, setSending] = useState(false);
+  const [vendor, setVendor] = useState<Vendor | null>(null);
 
   const { data: regions } = useRegions();
   const { data: pricing } = usePricing();
+
+  useEffect(() => {
+    if (!design.vendor_id) return;
+    let active = true;
+    (async () => {
+      const { data } = await supabase
+        .from("vendors").select("id,name,phone").eq("id", design.vendor_id).maybeSingle();
+      if (active && data) setVendor(data as Vendor);
+    })();
+    return () => { active = false; };
+  }, [design.vendor_id]);
 
   const total = useMemo(() => {
     if (!pricing) return 0;
@@ -71,17 +86,16 @@ function ProductPage() {
       number: region.whatsapp_number,
       region: region.name,
       width, height, embossed,
-      designName: design.name,
+      designName: design.title,
       designUrl: typeof window !== "undefined" ? window.location.href : design.image_url,
       total,
       currency: pricing.currency,
     });
-    // سجّل الطلب (لا يفشل لو ما قدر)
     await supabase.from("orders").insert({
       region_id: region.id,
       region_name: region.name,
       design_id: design.id,
-      design_name: design.name,
+      design_name: design.title,
       design_url: design.image_url,
       width, height, embossed,
       total,
@@ -98,27 +112,25 @@ function ProductPage() {
             <ArrowRight className="size-4" /> المعرض
           </Link>
           <span className="text-muted-foreground">/</span>
-          <span className="line-clamp-1 text-sm font-bold text-foreground">{design.name}</span>
+          <span className="line-clamp-1 text-sm font-bold text-foreground">{design.title}</span>
         </div>
       </div>
 
       <div className="mx-auto max-w-4xl px-5 pt-6 space-y-6">
         <div className="overflow-hidden rounded-3xl bg-card shadow-card border border-border">
           <div className="aspect-[4/3] overflow-hidden bg-muted">
-            <img src={design.image_url} alt={design.name} className="size-full object-cover" />
+            <img src={design.image_url} alt={design.title} className="size-full object-cover" />
           </div>
           <div className="p-6">
-            {design.category && (
+            {design.type && (
               <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-bold text-accent-foreground">
-                {design.category}
+                {design.type}
               </span>
             )}
-            <h1 className="mt-3 text-2xl sm:text-3xl font-black text-foreground">{design.name}</h1>
-            {design.description && <p className="mt-4 leading-relaxed text-muted-foreground">{design.description}</p>}
+            <h1 className="mt-3 text-2xl sm:text-3xl font-black text-foreground">{design.title}</h1>
           </div>
         </div>
 
-        {/* المحاكي */}
         <div className="rounded-3xl bg-card p-5 sm:p-6 shadow-card border border-border">
           <div className="flex items-center gap-2">
             <Calculator className="size-5 text-primary" />
@@ -162,7 +174,6 @@ function ProductPage() {
           </div>
         </div>
 
-        {/* منتقي المنطقة */}
         <div className="rounded-3xl bg-card p-5 sm:p-6 shadow-card border border-border">
           <div className="flex items-center gap-2">
             <MapPin className="size-5 text-primary" />
@@ -202,6 +213,7 @@ function ProductPage() {
       </div>
 
       <ProductChat open={chatOpen} onClose={() => setChatOpen(false)} design={design} />
+      <VendorWhatsAppFAB phone={vendor?.phone} vendorName={vendor?.name} productTitle={design.title} />
     </div>
   );
 }

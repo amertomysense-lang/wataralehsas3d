@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { consumeQuota, useQuota, DAILY_LIMIT } from "@/lib/quota";
 import { QuotaModal } from "@/components/QuotaModal";
 import { AiImageStudio } from "@/components/AiImageStudio";
+import { AiLoungeBanner } from "@/components/AiLoungeBanner";
 
 type FashionItem = {
   id: string; vendor_id: string | null; item_name: string;
@@ -116,6 +117,7 @@ function TryOn() {
           className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-6 py-4 text-base font-black text-primary-foreground shadow-soft disabled:opacity-50">
           {busy ? <><Loader2 className="size-5 animate-spin" /> جاري التجهيز…</> : <><Sparkles className="size-5" /> جرّبها افتراضياً ({remaining}/{DAILY_LIMIT})</>}
         </button>
+        {busy && <AiLoungeBanner className="mt-4" />}
 
         {result && (
           <div className="mt-6 rounded-3xl border border-primary/30 bg-card p-4">

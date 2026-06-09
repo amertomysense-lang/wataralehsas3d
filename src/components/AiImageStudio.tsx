@@ -5,6 +5,7 @@ import { consumeQuota, useQuota } from "@/lib/quota";
 import { QuotaModal } from "./QuotaModal";
 import { saveImageToDevice, shareImageWhatsApp } from "@/lib/save-image";
 import { useSettings, type DesignSection } from "@/lib/settings";
+import { AiLoungeBanner } from "./AiLoungeBanner";
 
 type Preset = { id: string; label: string; prompt: string; preview?: string };
 
@@ -120,6 +121,8 @@ export function AiImageStudio({
         {busy ? <><Loader2 className="size-5 animate-spin" /> جارٍ التوليد…</> : <><Wand2 className="size-5" /> ولّد التصميم بالذكاء الاصطناعي</>}
       </button>
       <p className="mt-2 text-center text-[11px] text-muted-foreground">المحاولات المتبقية: {isFinite(remaining) ? remaining : "∞"}</p>
+
+      {busy && <AiLoungeBanner className="mt-4" />}
 
       {result && (
         <div className="mt-5 rounded-2xl border-2 border-primary/40 bg-card p-3">
