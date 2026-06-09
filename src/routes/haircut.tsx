@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState, useEffect } from "react";
-import { Upload, Loader2, Scissors, Sparkles, Download, RotateCcw, Move } from "lucide-react";
+import { Upload, Loader2, Scissors, Sparkles, Download, RotateCcw, Move, Camera, Share2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { useStr } from "@/lib/cms-strings";
 import { supabase } from "@/integrations/supabase/client";
 import { readSettings } from "@/lib/settings";
-import { consumeQuota, useQuota, DAILY_LIMIT } from "@/lib/quota";
+import { consumeQuota, useQuota, isUnlimited } from "@/lib/quota";
 import { QuotaModal } from "@/components/QuotaModal";
+import { PaymentModal } from "@/components/PaymentModal";
+import { saveImageToDevice, shareImageWhatsApp } from "@/lib/save-image";
 
 export const Route = createFileRoute("/haircut")({
   head: () => ({ meta: [{ title: "تجربة قصات الشعر AI — وتر الإحساس" }] }),
