@@ -8,6 +8,7 @@ import { useSettings } from "@/lib/settings";
 import { CampaignSection } from "@/components/CampaignSection";
 import { AiImageStudio } from "@/components/AiImageStudio";
 import { DraggableDesignLayer, resetBox, type DesignBox } from "@/components/DraggableDesignLayer";
+import { PerspectiveWarpStage } from "@/components/PerspectiveWarpStage";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
