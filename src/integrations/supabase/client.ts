@@ -14,10 +14,9 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
 
 export type Design = {
   id: string;
-  name: string;
-  description: string | null;
+  title: string;
   image_url: string;
-  category: string | null;
+  type: string | null;
   price: number | null;
   created_at: string;
 };
