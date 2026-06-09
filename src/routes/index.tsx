@@ -89,7 +89,8 @@ function Home() {
           </span>
         </h1>
         <p className="mt-4 max-w-xl text-sm sm:text-base text-muted-foreground">
-          نافذة واحدة لثلاث تجارب فاخرة — تصفّح، عاين، وامتلك الإحساس قبل الشراء.
+          المنصّة تعتمد على <b className="text-foreground">الدمج الواقعي بالـ AI</b>:
+          صورتك الحقيقية + التصميم = نتيجة فورية بمقاسات وإضاءة طبيعية.
         </p>
       </section>
 
