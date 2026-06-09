@@ -161,6 +161,12 @@ function ProductsTab() {
         </button>
       </form>
 
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <h2 className="text-sm font-black">رفع جماعي للتصاميم — حتى 100 صورة</h2>
+        <p className="text-[11px] text-muted-foreground">اختر الفئة ثم ارفع — تُضاف بدون أسعار ويظهر شارة "للتجربة والمعاينة الافتراضية".</p>
+        <BulkProductsUploader onDone={() => { qc.invalidateQueries({ queryKey: ["admin-products"] }); qc.invalidateQueries({ queryKey: ["products"] }); }} />
+      </div>
+
       <div className="rounded-2xl bg-card p-5 shadow-card border border-border">
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="text-sm font-black">المنتجات ({designs?.length ?? 0})</h2>
