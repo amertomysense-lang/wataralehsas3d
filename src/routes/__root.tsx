@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { FloatingChat } from "../components/FloatingChat";
 import { SiteBackground } from "../components/SiteBackground";
+import { FeaturesBubble } from "../components/FeaturesBubble";
 import { registerImageSW } from "../lib/register-sw";
 
 function NotFoundComponent() {
