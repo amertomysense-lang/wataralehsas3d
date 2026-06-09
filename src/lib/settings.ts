@@ -87,6 +87,7 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
   paymentPackages: DEFAULT_PACKAGES,
 
   customHaircuts: [],
+  customDesigns: [],
 };
 
 const KEY = "watar.platform.settings.v2";
