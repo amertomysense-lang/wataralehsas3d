@@ -345,7 +345,9 @@ function GlobalSettingsTab() {
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="العملة الافتراضية">
-            <input value={draft.currency} onChange={(e) => update("currency", e.target.value)} className="input" />
+            <select value={draft.currency} onChange={(e) => update("currency", e.target.value)} className="input">
+              {CURRENCY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
           </Field>
           <Field label="السعر/متر² الافتراضي">
             <input type="number" step="0.5" value={draft.pricePerMeter} onChange={(e) => update("pricePerMeter", +e.target.value)} className="input" />
