@@ -151,11 +151,12 @@ function TabBtn({ active, onClick, icon, label }:
   );
 }
 
-function VendorCard({ v }: { v: Vendor }) {
+function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolean; fashion: boolean; haircut: boolean }; subscription_active: boolean; brand_badge?: string } }) {
   const catLabel: Record<string, string> = {
     curtains: "ستائر فاخرة", sofa: "كنب وأرائك", furniture: "أثاث منزلي",
     fashion: "أزياء وموضة", other: "متنوع",
   };
+  const mods = state.modules;
   return (
     <div className={`group relative overflow-hidden rounded-3xl border bg-card p-5 transition hover:-translate-y-1 hover:shadow-soft ${
       v.is_premium ? "border-primary/60 shadow-[0_0_0_1px_var(--primary)/10]" : "border-border"
@@ -165,7 +166,7 @@ function VendorCard({ v }: { v: Vendor }) {
           <div className="pointer-events-none absolute inset-0 opacity-20"
             style={{ background: "radial-gradient(circle at top left, var(--primary), transparent 60%)" }} />
           <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[10px] font-black text-primary-foreground shadow-soft">
-            <Crown className="size-3" /> شريك مميّز
+            <Crown className="size-3" /> {state.brand_badge || "شريك مميّز"}
           </span>
         </>
       )}
@@ -182,6 +183,13 @@ function VendorCard({ v }: { v: Vendor }) {
           <p className="text-xs text-muted-foreground">{catLabel[v.category] ?? v.category}</p>
         </div>
       </div>
+
+      <div className="relative mt-3 flex flex-wrap gap-1.5">
+        {mods.decor && <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"><Cuboid className="size-3" /> ديكور</span>}
+        {mods.fashion && <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"><Shirt className="size-3" /> أزياء AI</span>}
+        {mods.haircut && <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"><Scissors className="size-3" /> قصّات AI</span>}
+      </div>
+
       <a href={`https://wa.me/${v.whatsapp_number}`} target="_blank" rel="noreferrer"
         className="relative mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
         <MessageCircle className="size-4" /> تواصل واتساب
