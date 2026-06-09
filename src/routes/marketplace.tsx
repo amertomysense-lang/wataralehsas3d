@@ -154,10 +154,7 @@ function TabBtn({ active, onClick, icon, label }:
 }
 
 function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolean; fashion: boolean; haircut: boolean }; subscription_active: boolean; brand_badge?: string } }) {
-  const catLabel: Record<string, string> = {
-    curtains: "ستائر فاخرة", sofa: "كنب وأرائك", furniture: "أثاث منزلي",
-    fashion: "أزياء وموضة", other: "متنوع",
-  };
+  const [cats] = useCategories();
   const mods = state.modules;
   const isIdle = v.subscription_status === "idle";
   return (
@@ -191,7 +188,7 @@ function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolea
           </div>
           <div className="min-w-0">
             <h3 className="truncate text-base font-black text-foreground">{v.name}</h3>
-            <p className="text-xs text-muted-foreground">{catLabel[v.category] ?? v.category}</p>
+            <p className="text-xs text-muted-foreground">{labelOf(cats, v.category)}</p>
           </div>
         </div>
 
