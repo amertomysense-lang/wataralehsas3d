@@ -1269,24 +1269,33 @@ function DesignsTab() {
   );
 }
 
+const CATEGORY_LABELS_AR: Record<string, string> = {
+  curtains: "ستائر",
+  sofa: "كنب",
+  furniture: "أثاث",
+  fashion: "أزياء",
+  haircut: "قصّات شعر",
+  other: "أخرى",
+};
+
 function BulkProductsUploader({ onDone }: { onDone: () => void }) {
-  const [category, setCategory] = useState<string>("curtains");
-  const cats = ["curtains", "sofa", "furniture", "fashion", "haircut", "other"];
+  const [type, setType] = useState<string>("curtains");
+  const cats = Object.keys(CATEGORY_LABELS_AR);
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         {cats.map((c) => (
-          <button key={c} type="button" onClick={() => setCategory(c)}
+          <button key={c} type="button" onClick={() => setType(c)}
             className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition ${
-              category === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary/50"
-            }`}>{c}</button>
+              type === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary/50"
+            }`}>{CATEGORY_LABELS_AR[c]}</button>
         ))}
       </div>
       <BatchImageUploader
         onUploaded={async (items: BatchItem[]) => {
           if (!items.length) return;
           const rows = items.map((it) => ({
-            name: it.name || "تصميم", image_url: it.dataUrl, price: null, category, description: null,
+            title: it.name || "تصميم", image_url: it.dataUrl, price: null, type,
           }));
           const { error } = await supabase.from("products").insert(rows);
           if (error) throw error;
@@ -1296,3 +1305,4 @@ function BulkProductsUploader({ onDone }: { onDone: () => void }) {
     </div>
   );
 }
+
