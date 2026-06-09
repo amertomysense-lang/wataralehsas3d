@@ -5,6 +5,8 @@ import { Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X } from "lucid
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
 import { toast } from "sonner";
+import { useSettings } from "@/lib/settings";
+import { CampaignSection } from "@/components/CampaignSection";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
@@ -35,11 +37,13 @@ function Simulator() {
 
   const { data: regions } = useRegions();
   const { data: pricing } = usePricing();
+  const [settings] = useSettings();
   const region = useMemo(() => regions?.find((r) => r.id === regionId), [regions, regionId]);
+  const currency = pricing?.currency ?? settings.currency;
 
   const baseTotal = useMemo(() => (pricing ? calcTotal(width, height, embossed, pricing) : 0),
     [pricing, width, height, embossed]);
-  const shippingCost = shipping === "company" ? km * 0.3 : 0;
+  const shippingCost = shipping === "company" ? km * settings.fuelPerKm : 0;
   const grandTotal = baseTotal + shippingCost;
 
   function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -58,7 +62,7 @@ function Simulator() {
       width, height, embossed,
       designName: active?.name ?? "تصميم مخصص",
       designUrl: active?.url ?? "",
-      total: grandTotal, currency: pricing.currency,
+      total: grandTotal, currency,
     });
     const r = await insertOrderOrQueue({
       region_id: region.id, region_name: region.name,
@@ -80,6 +84,10 @@ function Simulator() {
           <h1 className="text-sm font-black text-foreground">محاكي الجدران والأرضيات</h1>
           <span className="w-12" />
         </div>
+      </div>
+
+      <div className="mx-auto max-w-6xl px-5 pt-6">
+        <CampaignSection compact />
       </div>
 
       <div className="mx-auto grid max-w-6xl gap-5 px-5 py-6 lg:grid-cols-[1fr_360px]">
@@ -177,12 +185,12 @@ function Simulator() {
               <button onClick={() => setShipping("self")}
                 className={`flex items-center justify-between rounded-lg border-2 px-3 py-2 text-xs font-bold transition ${shipping === "self" ? "border-primary bg-primary/10" : "border-border"}`}>
                 <span>تأمين النقل من طرفك</span>
-                <span className="text-success">0.00 {pricing?.currency ?? "$"}</span>
+                <span className="text-success">0.00 {currency}</span>
               </button>
               <button onClick={() => setShipping("company")}
                 className={`flex items-center justify-between rounded-lg border-2 px-3 py-2 text-xs font-bold transition ${shipping === "company" ? "border-primary bg-primary/10" : "border-border"}`}>
                 <span>سيارة الشركة المدعومة</span>
-                <span className="text-primary">0.30 {pricing?.currency ?? "$"} / كم</span>
+                <span className="text-primary">{settings.fuelPerKm} {currency} / كم</span>
               </button>
               {shipping === "company" && (
                 <>
@@ -201,7 +209,7 @@ function Simulator() {
 
           <div className="rounded-2xl p-4 text-primary-foreground" style={{ background: "var(--gradient-brand)" }}>
             <p className="text-xs opacity-90">الإجمالي المقدّر</p>
-            <p className="mt-1 text-3xl font-black">{grandTotal.toLocaleString("ar")} {pricing?.currency ?? "$"}</p>
+            <p className="mt-1 text-3xl font-black">{grandTotal.toLocaleString("ar")} {currency}</p>
             <p className="mt-1 text-[11px] opacity-80">
               طباعة: {baseTotal.toLocaleString("ar")} + شحن: {shippingCost.toLocaleString("ar")}
             </p>

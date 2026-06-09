@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { readSettings } from "@/lib/settings";
 
 export type Region = {
   id: string;
@@ -11,10 +12,11 @@ export type Region = {
 };
 
 export type Pricing = {
-  id: number;
+  id: string | number;
   price_per_meter: number;
   embossed_premium_rate: number;
   currency: string;
+  _rowId?: string | number | null;
 };
 
 export type Order = {
@@ -48,17 +50,26 @@ export function useRegions() {
   });
 }
 
+// نجلب أول صف من pricing_config بلا افتراض نوع id، وندمج الإعدادات المحلية
+// لتجاوز أي أعمدة مفقودة (مثل currency) في schema cache.
 export function usePricing() {
   return useQuery({
     queryKey: ["pricing"],
     queryFn: async (): Promise<Pricing> => {
-      const { data, error } = await supabase
+      const local = readSettings();
+      const { data } = await supabase
         .from("pricing_config")
         .select("*")
-        .eq("id", 1)
+        .limit(1)
         .maybeSingle();
-      if (error) throw error;
-      return (data as Pricing) ?? { id: 1, price_per_meter: 25, embossed_premium_rate: 0.3, currency: "$" };
+      const row = (data ?? null) as Record<string, unknown> | null;
+      return {
+        _rowId: (row?.id as string | number | undefined) ?? null,
+        id: (row?.id as string | number | undefined) ?? "default",
+        price_per_meter: Number(row?.price_per_meter ?? local.pricePerMeter),
+        embossed_premium_rate: Number(row?.embossed_premium_rate ?? local.embossedRate),
+        currency: (row?.currency as string | undefined) ?? local.currency,
+      };
     },
   });
 }

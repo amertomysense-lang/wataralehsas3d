@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload } from "lucide-react";
+import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/AdminGate";
@@ -9,6 +9,7 @@ import { logoutAdmin } from "@/lib/admin-gate";
 import { useRegions, usePricing, type Region, type Order } from "@/lib/platform";
 import { exportPlatformSnapshot } from "@/lib/export-snapshot";
 import { parseCSV } from "@/lib/csv-import";
+import { useSettings, DEFAULT_SETTINGS, SYRIAN_PROVINCES, type PlatformSettings } from "@/lib/settings";
 
 
 export const Route = createFileRoute("/admin")({
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/admin")({
   component: () => <AdminGate title="لوحة تحكم المعرض"><AdminPage /></AdminGate>,
 });
 
-type Tab = "products" | "regions" | "pricing" | "orders" | "vendors";
+type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
@@ -53,6 +54,8 @@ function AdminPage() {
           <TabBtn icon={<DollarSign className="size-4" />} label="الأسعار" active={tab === "pricing"} onClick={() => setTab("pricing")} />
           <TabBtn icon={<Store className="size-4" />} label="السوق" active={tab === "vendors"} onClick={() => setTab("vendors")} />
           <TabBtn icon={<ShoppingBag className="size-4" />} label="الطلبات" active={tab === "orders"} onClick={() => setTab("orders")} />
+          <TabBtn icon={<SettingsIcon className="size-4" />} label="إعدادات شاملة" active={tab === "settings"} onClick={() => setTab("settings")} />
+          <TabBtn icon={<SlidersHorizontal className="size-4" />} label="Schema Controller" active={tab === "schema"} onClick={() => setTab("schema")} />
         </div>
 
         {tab === "products" && <ProductsTab />}
@@ -60,6 +63,8 @@ function AdminPage() {
         {tab === "pricing" && <PricingTab />}
         {tab === "vendors" && <VendorsTab />}
         {tab === "orders" && <OrdersTab />}
+        {tab === "settings" && <GlobalSettingsTab />}
+        {tab === "schema" && <SchemaControllerTab />}
       </div>
     </div>
   );
@@ -255,30 +260,42 @@ function RegionsTab() {
 function PricingTab() {
   const qc = useQueryClient();
   const { data: pricing } = usePricing();
+  const [settings, setSettings] = useSettings();
   const [ppm, setPpm] = useState<string>("");
   const [emb, setEmb] = useState<string>("");
   const [cur, setCur] = useState<string>("");
 
   function init() {
-    setPpm(String(pricing?.price_per_meter ?? 25));
-    setEmb(String((pricing?.embossed_premium_rate ?? 0.3) * 100));
-    setCur(pricing?.currency ?? "$");
+    setPpm(String(pricing?.price_per_meter ?? settings.pricePerMeter));
+    setEmb(String((pricing?.embossed_premium_rate ?? settings.embossedRate) * 100));
+    setCur(pricing?.currency ?? settings.currency);
   }
   if (pricing && ppm === "") init();
 
   async function save() {
-    const { error } = await supabase.from("pricing_config").upsert({
-      id: 1, price_per_meter: Number(ppm), embossed_premium_rate: Number(emb) / 100, currency: cur, updated_at: new Date().toISOString(),
-    });
-    if (error) { toast.error(error.message); return; }
-    toast.success("تم تحديث الأسعار");
+    // 1) العملة وأسعار افتراضية → إعدادات محلية (لتجاوز schema cache)
+    setSettings({ ...settings, currency: cur, pricePerMeter: Number(ppm), embossedRate: Number(emb) / 100 });
+
+    // 2) محاولة المزامنة إلى Supabase دون عمود currency غير الموجود
+    const payload: Record<string, unknown> = {
+      price_per_meter: Number(ppm),
+      embossed_premium_rate: Number(emb) / 100,
+      updated_at: new Date().toISOString(),
+    };
+    const rowId = pricing?._rowId ?? null;
+    const res = rowId
+      ? await supabase.from("pricing_config").update(payload).eq("id", rowId as string)
+      : await supabase.from("pricing_config").insert(payload);
+
+    if (res.error) toast.warning(`حُفظ محلياً — تعذر المزامنة: ${res.error.message}`);
+    else toast.success("تم تحديث الأسعار");
     qc.invalidateQueries({ queryKey: ["pricing"] });
   }
 
   return (
     <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
       <h2 className="text-sm font-black">إعدادات التسعير</h2>
-      <p className="text-xs text-muted-foreground">يطبق فوراً على المحاكي في كل المنتجات.</p>
+      <p className="text-xs text-muted-foreground">يطبق فوراً على المحاكي في كل المنتجات. العملة تُحفظ ضمن إعدادات المنصة الشاملة.</p>
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="block">
           <span className="text-xs font-bold">السعر/متر²</span>
@@ -292,8 +309,11 @@ function PricingTab() {
         </label>
         <label className="block">
           <span className="text-xs font-bold">العملة</span>
-          <input value={cur} onChange={(e) => setCur(e.target.value)}
+          <input value={cur} onChange={(e) => setCur(e.target.value)} list="cur-list"
             className="mt-1 w-full rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <datalist id="cur-list">
+            <option value="$" /><option value="TRY" /><option value="€" /><option value="ل.س" /><option value="SAR" /><option value="AED" />
+          </datalist>
         </label>
       </div>
       <button onClick={save} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft hover:opacity-90">
@@ -302,6 +322,126 @@ function PricingTab() {
     </div>
   );
 }
+
+/* ============ إعدادات المنصة الشاملة ============ */
+function GlobalSettingsTab() {
+  const [s, setS] = useSettings();
+  const [draft, setDraft] = useState<PlatformSettings>(s);
+  // إعادة المزامنة عند تغيّر s الفعلي مرة واحدة
+  if (draft === s && JSON.stringify(draft) !== JSON.stringify(s)) setDraft(s);
+
+  function update<K extends keyof PlatformSettings>(k: K, v: PlatformSettings[K]) {
+    setDraft({ ...draft, [k]: v });
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-4">
+        <div>
+          <h2 className="text-sm font-black">إعدادات المنصة الشاملة</h2>
+          <p className="text-xs text-muted-foreground mt-1">تتجاوز قيم قاعدة البيانات وتعمل فوراً عبر كل الوحدات.</p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="العملة الافتراضية">
+            <input value={draft.currency} onChange={(e) => update("currency", e.target.value)} className="input" />
+          </Field>
+          <Field label="السعر/متر² الافتراضي">
+            <input type="number" step="0.5" value={draft.pricePerMeter} onChange={(e) => update("pricePerMeter", +e.target.value)} className="input" />
+          </Field>
+          <Field label={`رسوم الوقود لكل كم (${draft.currency})`}>
+            <input type="number" step="0.05" value={draft.fuelPerKm} onChange={(e) => update("fuelPerKm", +e.target.value)} className="input" />
+          </Field>
+          <Field label="نسبة البروز الملموس %">
+            <input type="number" step="1" value={Math.round(draft.embossedRate * 100)} onChange={(e) => update("embossedRate", +e.target.value / 100)} className="input" />
+          </Field>
+        </div>
+
+        <div className="flex gap-2">
+          <button onClick={() => setS(draft)}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft hover:opacity-90">
+            <Save className="size-4" /> تطبيق الإعدادات
+          </button>
+          <button onClick={() => { setS(DEFAULT_SETTINGS); setDraft(DEFAULT_SETTINGS); toast.info("تمت الاستعادة"); }}
+            className="rounded-xl bg-muted px-4 py-3 text-xs font-bold text-foreground">استعادة</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============ Schema Controller / Future-Proofing ============ */
+function SchemaControllerTab() {
+  const qc = useQueryClient();
+  const [s, setS] = useSettings();
+  const { data: regions } = useRegions();
+
+  const toggle = (k: keyof PlatformSettings) => setS({ ...s, [k]: !s[k] } as PlatformSettings);
+
+  async function quickAddProvince(name: string) {
+    const exists = regions?.some((r) => r.name === name);
+    if (exists) { toast.info("المنطقة موجودة مسبقاً"); return; }
+    const { error } = await supabase.from("regions").insert({
+      name, whatsapp_number: "", assistant_name: null, distance_km: null, is_active: true,
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success(`أُضيفت ${name}`);
+    qc.invalidateQueries({ queryKey: ["regions"] });
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <h2 className="text-sm font-black">Advanced Configuration · Schema Controller</h2>
+        <p className="text-xs text-muted-foreground">مفاتيح تحكم سريعة لأي ظرف تشغيلي مستقبلي دون تعديل الكود.</p>
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          <ToggleRow label="إظهار قسم حملة الإطلاق" value={s.showMarketingBanner} onChange={() => toggle("showMarketingBanner")} />
+          <ToggleRow label="إظهار خدمة الأسطول السريع" value={s.fleetMobilizationEnabled} onChange={() => toggle("fleetMobilizationEnabled")} />
+          <ToggleRow label="تسجيل تجارب AI Try-On" value={s.aiTryOnLogging} onChange={() => toggle("aiTryOnLogging")} />
+          <ToggleRow label="تفعيل المزامنة الأوفلاين" value={s.enableOfflineSync} onChange={() => toggle("enableOfflineSync")} />
+        </div>
+      </div>
+
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <h2 className="text-sm font-black">إضافة سريعة للمحافظات السورية</h2>
+        <p className="text-xs text-muted-foreground">انقر لإضافة منطقة جديدة فوراً، ثم اربط رقم الواتساب من تبويب «المناطق».</p>
+        <div className="flex flex-wrap gap-2">
+          {SYRIAN_PROVINCES.map((p) => (
+            <button key={p} onClick={() => quickAddProvince(p)}
+              className="rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-bold hover:border-primary hover:text-primary">
+              + {p}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="text-xs font-bold text-foreground/80">{label}</span>
+      <div className="mt-1 [&_.input]:w-full [&_.input]:rounded-xl [&_.input]:bg-muted [&_.input]:px-3 [&_.input]:py-2 [&_.input]:text-sm [&_.input]:outline-none [&_.input]:focus:ring-2 [&_.input]:focus:ring-ring">
+        {children}
+      </div>
+    </label>
+  );
+}
+
+function ToggleRow({ label, value, onChange }: { label: string; value: boolean; onChange: () => void }) {
+  return (
+    <button onClick={onChange}
+      className={`flex items-center justify-between rounded-xl border-2 px-3 py-3 text-xs font-bold transition ${value ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-foreground/80"}`}>
+      <span>{label}</span>
+      <span className={`grid h-5 w-9 items-center rounded-full ${value ? "bg-primary" : "bg-muted"}`}>
+        <span className={`block size-4 rounded-full bg-background transition ${value ? "translate-x-[-16px]" : "translate-x-0"}`} />
+      </span>
+    </button>
+  );
+}
+
 
 /* ============ الطلبات ============ */
 function OrdersTab() {
