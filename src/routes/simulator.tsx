@@ -140,57 +140,59 @@ function Simulator() {
 
       <div className="mx-auto grid max-w-6xl gap-5 px-5 py-6 lg:grid-cols-[1fr_360px]">
         <div className="rounded-3xl border border-border bg-card p-3">
-          <div ref={stageRef} className="relative h-[420px] overflow-hidden rounded-2xl bg-muted">
-            {!bg ? (
-              <button onClick={() => fileRef.current?.click()}
-                className="absolute inset-0 grid place-items-center text-center">
-                <div>
-                  <div className="mx-auto grid size-16 place-items-center rounded-2xl bg-primary/15 text-primary">
-                    <Upload className="size-7" />
-                  </div>
-                  <p className="mt-3 text-sm font-bold text-foreground">ارفع صورة الغرفة من كاميرا هاتفك</p>
-                  <p className="mt-1 text-xs text-muted-foreground">PNG / JPG حتى 10MB · الجدار يبقى ثابتاً والتصميم هو المتحرّك</p>
-                </div>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="inline-flex rounded-lg bg-background p-1 text-[11px] font-bold">
+              <button onClick={() => setWarpMode(true)}
+                className={`px-2.5 py-1 rounded-md ${warpMode ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+                إسقاط بالمنظور (٤ زوايا)
               </button>
-            ) : (
-              <>
-                {/* الجدار ثابت تماماً — لا تحريك ولا تكبير */}
-                <img src={bg} alt="room" draggable={false}
-                  className="pointer-events-none absolute inset-0 size-full select-none object-cover" />
-                {active && (
-                  <DraggableDesignLayer
-                    src={active.url}
-                    name={active.name}
-                    box={{ ...box, opacity: active.opacity }}
-                    onChange={(b) => setBox(b)}
-                    container={stageRef}
-                    embossed={embossed}
-                  />
-                )}
-              </>
-            )}
+              <button onClick={() => setWarpMode(false)}
+                className={`px-2.5 py-1 rounded-md ${!warpMode ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+                سحب ملصق حر
+              </button>
+            </div>
             {bg && (
-              <>
-                <button onClick={() => { setBg(null); setActive(null); setBox(resetBox()); }}
-                  className="absolute top-2 left-2 grid size-8 place-items-center rounded-full bg-background/80 text-foreground backdrop-blur">
-                  <X className="size-4" />
-                </button>
-                {active && (
-                  <button onClick={() => setBox(resetBox())}
-                    title="إعادة تموضع التصميم"
-                    className="absolute top-2 left-12 inline-flex items-center gap-1 rounded-full bg-background/80 px-2.5 py-1.5 text-[11px] font-black text-foreground backdrop-blur">
-                    <RotateCcw className="size-3" /> إعادة
-                  </button>
-                )}
-                {active && (
-                  <div className="absolute bottom-2 right-2 rounded-lg bg-background/85 px-2 py-1 text-[10px] font-bold text-foreground backdrop-blur">
-                    قياس التصميم على الجدار: {Math.round(box.w)}% × {Math.round(box.h)}%
-                  </div>
-                )}
-              </>
+              <button onClick={() => { setBg(null); setActive(null); setBox(resetBox()); }}
+                className="grid size-8 place-items-center rounded-full bg-background/80 text-foreground backdrop-blur">
+                <X className="size-4" />
+              </button>
             )}
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onUpload} />
           </div>
+
+          {!bg ? (
+            <button onClick={() => fileRef.current?.click()}
+              className="grid h-[420px] w-full place-items-center rounded-2xl bg-muted text-center">
+              <div>
+                <div className="mx-auto grid size-16 place-items-center rounded-2xl bg-primary/15 text-primary">
+                  <Upload className="size-7" />
+                </div>
+                <p className="mt-3 text-sm font-bold text-foreground">ارفع صورة الغرفة من كاميرا هاتفك</p>
+                <p className="mt-1 text-xs text-muted-foreground">PNG / JPG · حدّد الزوايا ليُلفّ التصميم بمنظور حقيقي</p>
+              </div>
+            </button>
+          ) : warpMode ? (
+            <PerspectiveWarpStage
+              bg={bg}
+              design={active?.url ?? null}
+              embossed={embossed}
+              blend="multiply"
+              opacity={active?.opacity ?? 0.9}
+              onResult={(u) => setAiResult(u)}
+            />
+          ) : (
+            <div ref={stageRef} className="relative h-[420px] overflow-hidden rounded-2xl bg-muted">
+              <img src={bg} alt="room" draggable={false}
+                className="pointer-events-none absolute inset-0 size-full select-none object-cover" />
+              {active && (
+                <DraggableDesignLayer
+                  src={active.url} name={active.name}
+                  box={{ ...box, opacity: active.opacity }}
+                  onChange={(b) => setBox(b)} container={stageRef} embossed={embossed}
+                />
+              )}
+            </div>
+          )}
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onUpload} />
 
           {/* AI Projection — إسقاط واقعي */}
           <div className="mt-4 rounded-2xl border border-primary/30 bg-gradient-to-tr from-primary/5 via-card to-accent/5 p-3">
