@@ -134,6 +134,7 @@ function TryOn() {
           <Shirt className="mb-1 inline size-3.5" /> يستخدم نموذج IDM-VTON مفتوح المصدر عبر Replicate. للتفعيل أضف مفتاح <code>REPLICATE_API_TOKEN</code>.
         </p>
       </div>
+      <QuotaModal open={quotaOpen} onClose={() => setQuotaOpen(false)} />
     </div>
   );
 }
