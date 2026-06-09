@@ -1,4 +1,4 @@
-// مساعدات حفظ/مشاركة الصور على الجوال مع علامة مائية فاخرة "وتر الإحسان 3D"
+// مساعدات حفظ/مشاركة الصور على الجوال مع علامة مائية فاخرة "وتر الإحساس 3D"
 import { toast } from "sonner";
 
 async function urlToBlob(url: string): Promise<Blob> {
@@ -11,7 +11,7 @@ async function urlToBlob(url: string): Promise<Blob> {
 }
 
 // يضيف علامة مائية شفافة في الزاوية السفلى اليمنى ويُعيد Blob جديد (JPEG)
-async function addWatermark(blob: Blob, text = "وتر الإحسان 3D"): Promise<Blob> {
+async function addWatermark(blob: Blob, text = "وتر الإحساس 3D"): Promise<Blob> {
   try {
     const bitmap = await createImageBitmap(blob);
     const w = bitmap.width, h = bitmap.height;
@@ -75,7 +75,7 @@ export async function saveImageToDevice(url: string, filename = `watar-${Date.no
 
     const navAny = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean };
     if (navAny.canShare && navAny.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: "وتر الإحسان", text: "صورة من وتر الإحسان 3D" });
+      await navigator.share({ files: [file], title: "وتر الإحساس", text: "صورة من وتر الإحساس 3D" });
       toast.success("تم إرسال الصورة — اختر «حفظ في الصور» من القائمة");
       return;
     }
@@ -88,13 +88,13 @@ export async function saveImageToDevice(url: string, filename = `watar-${Date.no
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
-    toast.success("تم تنزيل الصورة بشعار وتر الإحسان 3D");
+    toast.success("تم تنزيل الصورة بشعار وتر الإحساس 3D");
   } catch {
     toast.error("تعذّر الحفظ — جرّب الضغط المطوّل على الصورة ثم «حفظ»");
   }
 }
 
-export async function shareImageWhatsApp(url: string, text = "شاهد صورتي من وتر الإحسان 3D ✨") {
+export async function shareImageWhatsApp(url: string, text = "شاهد صورتي من وتر الإحساس 3D ✨") {
   try {
     const raw = await urlToBlob(url);
     const blob = await addWatermark(raw);

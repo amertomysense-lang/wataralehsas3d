@@ -64,6 +64,11 @@ export type PlatformSettings = {
 
   // تصاميم مخصّصة (برومبتات جاهزة) لكل قسم AI — تُربط تلقائياً
   customDesigns: CustomDesign[];
+
+  // ميديا الواجهة — صورة خلفية شفافة + شريط فيديوهات تعريفية
+  customBgImage: string;        // data:URL أو رابط https — يُعرض كخلفية ثابتة للموقع
+  customBgOpacity: number;      // 0 - 1
+  customVideos: { id: string; url: string; title?: string }[]; // أشرطة فيديو على الواجهة
 };
 
 export const DEFAULT_SETTINGS: PlatformSettings = {
@@ -94,6 +99,9 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
 
   customHaircuts: [],
   customDesigns: [],
+  customBgImage: "",
+  customBgOpacity: 0.18,
+  customVideos: [],
 };
 
 const KEY = "watar.platform.settings.v2";

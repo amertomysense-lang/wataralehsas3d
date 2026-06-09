@@ -6,7 +6,7 @@ export function VendorWhatsAppFAB({
 }: { phone?: string | null; vendorName?: string | null; productTitle?: string | null }) {
   if (!phone) return null;
   const clean = phone.replace(/\D/g, "");
-  const msg = `مرحباً ${vendorName ?? ""}، لقد قمت بمعاينة منتجكم ${productTitle ?? ""} عبر منصة وتر الإحسان وأود استكمال الحجز والتنفيذ معكم.`;
+  const msg = `مرحباً ${vendorName ?? ""}، لقد قمت بمعاينة منتجكم ${productTitle ?? ""} عبر منصة وتر الإحساس وأود استكمال الحجز والتنفيذ معكم.`;
   const url = `https://wa.me/${clean}?text=${encodeURIComponent(msg)}`;
   return (
     <a

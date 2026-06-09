@@ -5,6 +5,7 @@ import { Sparkles, Cuboid, Shirt, Scissors, ArrowLeft, ShieldCheck, MessageCircl
 import { supabase } from "@/integrations/supabase/client";
 import { useOnlineSync } from "@/lib/offline-sync";
 import { useVendorStore, DEFAULT_VENDOR_STATE } from "@/lib/vendor-config";
+import { VideoStrip } from "@/components/VideoStrip";
 
 type Vendor = {
   id: string; name: string; category: string; phone: string;
@@ -31,7 +32,7 @@ const WINGS: Record<WingKey, {
     accent: "from-amber-200/40 to-rose-200/40",
   },
   haircut: {
-    title: "صالون وتر الإحسان للعناية وقصّات الشعر AI",
+    title: "صالون وتر الإحساس للعناية وقصّات الشعر AI",
     subtitle: "جرّب قصّتك الجديدة افتراضياً قبل أيّ موعد",
     icon: Scissors, cats: HAIRCUT_CATS,
     toolPath: "/haircut", toolLabel: "ابدأ تجربة قصّة الشعر",
@@ -92,7 +93,9 @@ function Home() {
         </p>
       </section>
 
-      <section className="mx-auto max-w-6xl px-5 pb-16">
+      <VideoStrip />
+
+      <section className="mx-auto max-w-6xl px-5 pb-16 pt-6">
         <div className="grid gap-5 sm:grid-cols-3">
           {(Object.keys(WINGS) as WingKey[]).map((k) => {
             const w = WINGS[k];

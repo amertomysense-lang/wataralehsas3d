@@ -9,7 +9,7 @@ const MASTER_ADS: Ad[] = [
   { id: "m1", title: "الوحش الميكانيكي يلتهم جميع الأسطح", subtitle: "مقاومة 100% للرطوبة والعفن" },
   { id: "m2", title: "طباعة جدارية 3D فائقة الدقة", subtitle: "ضمان 10 سنوات على الألوان" },
   { id: "m3", title: "تنفيذ خلال 48 ساعة", subtitle: "توصيل وتركيب لجميع المناطق" },
-  { id: "m4", title: "وتر الإحسان — العلامة الأرقى", subtitle: "خصومات حصرية للأعضاء الجدد" },
+  { id: "m4", title: "وتر الإحساس — العلامة الأرقى", subtitle: "خصومات حصرية للأعضاء الجدد" },
 ];
 
 export function AiLoungeBanner({ className = "" }: { className?: string }) {
@@ -25,7 +25,7 @@ export function AiLoungeBanner({ className = "" }: { className?: string }) {
         const merchant = data.map((v: { id: string; name: string }) => ({
           id: v.id,
           title: `إعلان من ${v.name}`,
-          subtitle: "متجر معتمد على وتر الإحسان",
+          subtitle: "متجر معتمد على وتر الإحساس",
         }));
         setAds([...MASTER_ADS, ...merchant]);
       } catch { /* ignore */ }

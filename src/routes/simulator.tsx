@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import { Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X, Wand2, Loader2, Download } from "lucide-react";
+import { Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X, Wand2, Loader2, Download, RotateCcw } from "lucide-react";
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
 import { toast } from "sonner";
 import { useSettings } from "@/lib/settings";
 import { CampaignSection } from "@/components/CampaignSection";
 import { AiImageStudio } from "@/components/AiImageStudio";
+import { DraggableDesignLayer, resetBox, type DesignBox } from "@/components/DraggableDesignLayer";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
@@ -38,6 +38,8 @@ function Simulator() {
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [surface, setSurface] = useState<"wall" | "floor" | "ceiling">("wall");
   const fileRef = useRef<HTMLInputElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState<DesignBox>(resetBox());
 
   const { data: regions } = useRegions();
   const { data: pricing } = usePricing();
@@ -128,7 +130,7 @@ function Simulator() {
 
       <div className="mx-auto grid max-w-6xl gap-5 px-5 py-6 lg:grid-cols-[1fr_360px]">
         <div className="rounded-3xl border border-border bg-card p-3">
-          <div className="relative h-[420px] overflow-hidden rounded-2xl bg-muted">
+          <div ref={stageRef} className="relative h-[420px] overflow-hidden rounded-2xl bg-muted">
             {!bg ? (
               <button onClick={() => fileRef.current?.click()}
                 className="absolute inset-0 grid place-items-center text-center">
@@ -137,28 +139,44 @@ function Simulator() {
                     <Upload className="size-7" />
                   </div>
                   <p className="mt-3 text-sm font-bold text-foreground">ارفع صورة الغرفة من كاميرا هاتفك</p>
-                  <p className="mt-1 text-xs text-muted-foreground">PNG / JPG حتى 10MB</p>
+                  <p className="mt-1 text-xs text-muted-foreground">PNG / JPG حتى 10MB · الجدار يبقى ثابتاً والتصميم هو المتحرّك</p>
                 </div>
               </button>
             ) : (
-              <TransformWrapper minScale={0.5} maxScale={4} doubleClick={{ disabled: true }}>
-                <TransformComponent wrapperClass="!size-full" contentClass="!size-full">
-                  <div className="relative size-full">
-                    <img src={bg} alt="room" className="size-full object-cover" />
-                    {active && (
-                      <img src={active.url} alt={active.name}
-                        className="absolute inset-x-6 top-10 bottom-10 mx-auto object-cover rounded-xl shadow-2xl pointer-events-none"
-                        style={{ opacity: active.opacity, mixBlendMode: "multiply" }} />
-                    )}
-                  </div>
-                </TransformComponent>
-              </TransformWrapper>
+              <>
+                {/* الجدار ثابت تماماً — لا تحريك ولا تكبير */}
+                <img src={bg} alt="room" draggable={false}
+                  className="pointer-events-none absolute inset-0 size-full select-none object-cover" />
+                {active && (
+                  <DraggableDesignLayer
+                    src={active.url}
+                    name={active.name}
+                    box={{ ...box, opacity: active.opacity }}
+                    onChange={(b) => setBox(b)}
+                    container={stageRef}
+                  />
+                )}
+              </>
             )}
             {bg && (
-              <button onClick={() => { setBg(null); setActive(null); }}
-                className="absolute top-2 left-2 grid size-8 place-items-center rounded-full bg-background/80 text-foreground backdrop-blur">
-                <X className="size-4" />
-              </button>
+              <>
+                <button onClick={() => { setBg(null); setActive(null); setBox(resetBox()); }}
+                  className="absolute top-2 left-2 grid size-8 place-items-center rounded-full bg-background/80 text-foreground backdrop-blur">
+                  <X className="size-4" />
+                </button>
+                {active && (
+                  <button onClick={() => setBox(resetBox())}
+                    title="إعادة تموضع التصميم"
+                    className="absolute top-2 left-12 inline-flex items-center gap-1 rounded-full bg-background/80 px-2.5 py-1.5 text-[11px] font-black text-foreground backdrop-blur">
+                    <RotateCcw className="size-3" /> إعادة
+                  </button>
+                )}
+                {active && (
+                  <div className="absolute bottom-2 right-2 rounded-lg bg-background/85 px-2 py-1 text-[10px] font-bold text-foreground backdrop-blur">
+                    قياس التصميم على الجدار: {Math.round(box.w)}% × {Math.round(box.h)}%
+                  </div>
+                )}
+              </>
             )}
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onUpload} />
           </div>

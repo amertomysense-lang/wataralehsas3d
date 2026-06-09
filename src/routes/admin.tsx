@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal, Type, ToggleLeft, Sparkles, Wallet, Scissors, Check, Bell } from "lucide-react";
+import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal, Type, ToggleLeft, Sparkles, Wallet, Scissors, Check, Bell, Image as ImageIcon, Video } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/AdminGate";
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/admin")({
   component: () => <AdminGate title="لوحة تحكم المعرض"><AdminPage /></AdminGate>,
 });
 
-type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms" | "quota" | "payments" | "haircuts" | "categories";
+type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms" | "quota" | "payments" | "haircuts" | "categories" | "media";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
@@ -67,6 +67,7 @@ function AdminPage() {
           <TabBtn icon={<Wallet className="size-4" />} label="الاشتراكات والدفع" active={tab === "payments"} onClick={() => setTab("payments")} />
           <TabBtn icon={<Scissors className="size-4" />} label="معرض التصاميم AI" active={tab === "haircuts"} onClick={() => setTab("haircuts")} />
           <TabBtn icon={<Type className="size-4" />} label="الفئات" active={tab === "categories"} onClick={() => setTab("categories")} />
+          <TabBtn icon={<ImageIcon className="size-4" />} label="خلفية وفيديوهات الواجهة" active={tab === "media"} onClick={() => setTab("media")} />
         </div>
 
         {tab === "products" && <ProductsTab />}
@@ -81,6 +82,7 @@ function AdminPage() {
         {tab === "payments" && <PaymentsTab />}
         {tab === "haircuts" && <DesignsTab />}
         {tab === "categories" && <CategoriesTab />}
+        {tab === "media" && <MediaTab />}
       </div>
     </div>
   );
@@ -1373,3 +1375,120 @@ function CategoriesTab() {
 }
 
 
+
+function MediaTab() {
+  const [s, setS] = useSettings();
+  const bgRef = useRef<HTMLInputElement>(null);
+  const vidRef = useRef<HTMLInputElement>(null);
+  const [vidTitle, setVidTitle] = useState("");
+
+  function onBg(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]; if (!f) return;
+    if (f.size > 4_000_000) { toast.error("الصورة كبيرة — حدّها 4MB"); return; }
+    const r = new FileReader();
+    r.onload = () => { setS({ ...s, customBgImage: String(r.result) }); toast.success("تم تحديث خلفية الموقع"); };
+    r.readAsDataURL(f);
+  }
+
+  function onVid(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    const big = files.find((f) => f.size > 15_000_000);
+    if (big) { toast.error(`الفيديو ${big.name} أكبر من 15MB — اضغطه أولاً`); return; }
+    Promise.all(files.map((f) => new Promise<string>((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result));
+      r.onerror = () => rej(r.error);
+      r.readAsDataURL(f);
+    }))).then((urls) => {
+      const next = [...(s.customVideos ?? []), ...urls.map((url, i) => ({
+        id: `${Date.now()}-${i}`, url, title: vidTitle || undefined,
+      }))];
+      setS({ ...s, customVideos: next });
+      setVidTitle("");
+      toast.success(`أُضيفت ${urls.length} فيديو`);
+    }).catch(() => toast.error("فشل قراءة الفيديوهات"));
+    e.target.value = "";
+  }
+
+  function removeVid(id: string) {
+    setS({ ...s, customVideos: (s.customVideos ?? []).filter((v) => v.id !== id) });
+  }
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-border bg-card p-5">
+        <h3 className="text-base font-black">🖼️ خلفية الموقع الشفافة</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          ارفع صورة (PNG شفافة مفضّلة) لتظهر كخلفية ثابتة خلف كل الصفحات وتعطي الموقع حيوية وهوية.
+        </p>
+
+        {s.customBgImage && (
+          <div className="mt-4 overflow-hidden rounded-xl border border-border">
+            <img src={s.customBgImage} alt="bg" className="max-h-56 w-full object-contain bg-[conic-gradient(at_50%_50%,#0001_25%,transparent_0_50%,#0001_0_75%,transparent_0)] bg-[length:24px_24px]" />
+          </div>
+        )}
+
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button onClick={() => bgRef.current?.click()}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-black text-primary-foreground">
+            <Upload className="size-3.5" /> {s.customBgImage ? "تغيير الصورة" : "رفع صورة الخلفية"}
+          </button>
+          {s.customBgImage && (
+            <button onClick={() => setS({ ...s, customBgImage: "" })}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-destructive/10 px-3 py-2 text-xs font-black text-destructive">
+              <Trash2 className="size-3.5" /> إزالة
+            </button>
+          )}
+          <input ref={bgRef} type="file" accept="image/*" className="hidden" onChange={onBg} />
+
+          <label className="ms-auto inline-flex items-center gap-2 text-xs font-bold text-muted-foreground">
+            شفافية:
+            <input type="range" min={0} max={100} value={Math.round((s.customBgOpacity ?? 0.18) * 100)}
+              onChange={(e) => setS({ ...s, customBgOpacity: Number(e.target.value) / 100 })} />
+            <span className="w-8 text-end text-foreground">{Math.round((s.customBgOpacity ?? 0.18) * 100)}%</span>
+          </label>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-border bg-card p-5">
+        <h3 className="text-base font-black">🎬 شريط فيديوهات الواجهة</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          ارفع فيديوهات تعريفية لطابعة الليزر أثناء العمل على الجدران والأرضيات — تظهر للزبائن أعلى الصفحة الرئيسية.
+          يُفضّل MP4 أقل من 15MB لكل فيديو.
+        </p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <input value={vidTitle} onChange={(e) => setVidTitle(e.target.value)}
+            placeholder="عنوان اختياري (مثلاً: طباعة جدار 3D)"
+            className="flex-1 min-w-[200px] rounded-xl bg-muted px-3 py-2 text-sm" />
+          <button onClick={() => vidRef.current?.click()}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-black text-primary-foreground">
+            <Video className="size-3.5" /> رفع فيديو/فيديوهات
+          </button>
+          <input ref={vidRef} type="file" accept="video/*" multiple className="hidden" onChange={onVid} />
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {(s.customVideos ?? []).map((v) => (
+            <div key={v.id} className="overflow-hidden rounded-xl border border-border bg-background">
+              <video src={v.url} controls playsInline className="block aspect-video w-full bg-black object-cover" />
+              <div className="flex items-center justify-between gap-2 px-3 py-2">
+                <span className="line-clamp-1 text-xs font-bold">{v.title || "بدون عنوان"}</span>
+                <button onClick={() => removeVid(v.id)}
+                  className="rounded-lg bg-destructive/10 p-1.5 text-destructive">
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+          {(s.customVideos ?? []).length === 0 && (
+            <p className="col-span-full rounded-xl border-2 border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+              لا توجد فيديوهات بعد. ارفع أول فيديو ليبدأ بالظهور للزبائن مباشرة.
+            </p>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
