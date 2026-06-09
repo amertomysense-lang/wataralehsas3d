@@ -20,9 +20,9 @@ export const Route = createFileRoute("/product/$id")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: `${loaderData?.design.name ?? "منتج"} — وتر الإحساس` },
-      { name: "description", content: loaderData?.design.description ?? "تصميم طباعة جدارية فاخرة" },
-      { property: "og:title", content: loaderData?.design.name ?? "منتج" },
+      { title: `${loaderData?.design.title ?? "منتج"} — وتر الإحساس` },
+      { name: "description", content: "تصميم طباعة جدارية فاخرة" },
+      { property: "og:title", content: loaderData?.design.title ?? "منتج" },
       { property: "og:image", content: loaderData?.design.image_url ?? "" },
     ],
   }),
