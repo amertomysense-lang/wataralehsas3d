@@ -57,7 +57,7 @@ function Marketplace() {
     queryKey: ["products"],
     queryFn: async (): Promise<Product[]> => {
       const { data, error } = await supabase
-        .from("products").select("id,name,category,image_url,price")
+        .from("products").select("id,title,type,image_url,price")
         .order("created_at", { ascending: false }).limit(60);
       if (error) return [];
       return (data ?? []) as Product[];
