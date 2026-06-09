@@ -1,25 +1,78 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X } from "lucide-react";
+import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/AdminGate";
 import { logoutAdmin } from "@/lib/admin-gate";
+import { useRegions, usePricing, type Region, type Order } from "@/lib/platform";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "لوحة التحكم — وتر الإحساس" }] }),
   component: () => <AdminGate title="لوحة تحكم المعرض"><AdminPage /></AdminGate>,
 });
 
-type Form = { name: string; description: string; image_url: string; category: string; price: string };
-const EMPTY: Form = { name: "", description: "", image_url: "", category: "", price: "" };
+type Tab = "products" | "regions" | "pricing" | "orders";
 
 function AdminPage() {
+  const [tab, setTab] = useState<Tab>("products");
+
+  return (
+    <div className="min-h-screen bg-background pb-20" dir="rtl">
+      <div className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3">
+          <Link to="/" className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline">
+            <ArrowRight className="size-4" /> المعرض
+          </Link>
+          <button onClick={() => { logoutAdmin(); location.reload(); }}
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive">
+            <LogOut className="size-4" /> خروج
+          </button>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-5xl px-5 pt-6 space-y-6">
+        <div className="rounded-3xl p-6 text-primary-foreground shadow-soft" style={{ background: "var(--gradient-hero)" }}>
+          <h1 className="text-2xl font-black">لوحة إدارة المنصة</h1>
+          <p className="mt-1 text-sm opacity-90">أدر المنتجات، المناطق، الأسعار، والطلبات من مكان واحد.</p>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto">
+          <TabBtn icon={<Package className="size-4" />} label="المنتجات" active={tab === "products"} onClick={() => setTab("products")} />
+          <TabBtn icon={<MapPin className="size-4" />} label="المناطق" active={tab === "regions"} onClick={() => setTab("regions")} />
+          <TabBtn icon={<DollarSign className="size-4" />} label="الأسعار" active={tab === "pricing"} onClick={() => setTab("pricing")} />
+          <TabBtn icon={<ShoppingBag className="size-4" />} label="الطلبات" active={tab === "orders"} onClick={() => setTab("orders")} />
+        </div>
+
+        {tab === "products" && <ProductsTab />}
+        {tab === "regions" && <RegionsTab />}
+        {tab === "pricing" && <PricingTab />}
+        {tab === "orders" && <OrdersTab />}
+      </div>
+    </div>
+  );
+}
+
+function TabBtn({ icon, label, active, onClick }: { icon: React.ReactNode; label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick}
+      className={`inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-bold transition ${
+        active ? "bg-primary text-primary-foreground shadow-soft" : "bg-card text-foreground hover:bg-muted"
+      }`}>
+      {icon} {label}
+    </button>
+  );
+}
+
+/* ============ المنتجات ============ */
+type ProdForm = { name: string; description: string; image_url: string; category: string; price: string };
+const EMPTY_P: ProdForm = { name: "", description: "", image_url: "", category: "", price: "" };
+
+function ProductsTab() {
   const qc = useQueryClient();
-  const [form, setForm] = useState<Form>(EMPTY);
+  const [form, setForm] = useState<ProdForm>(EMPTY_P);
   const [editing, setEditing] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
 
   const { data: designs } = useQuery({
     queryKey: ["admin-designs"],
@@ -32,25 +85,17 @@ function AdminPage() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name || !form.image_url) {
-      toast.error("الاسم ورابط الصورة مطلوبان");
-      return;
-    }
-    setSaving(true);
+    if (!form.name || !form.image_url) { toast.error("الاسم والصورة مطلوبان"); return; }
     const payload = {
-      name: form.name,
-      description: form.description || null,
-      image_url: form.image_url,
-      category: form.category || null,
-      price: form.price ? Number(form.price) : null,
+      name: form.name, description: form.description || null, image_url: form.image_url,
+      category: form.category || null, price: form.price ? Number(form.price) : null,
     };
     const res = editing
       ? await supabase.from("designs").update(payload).eq("id", editing)
       : await supabase.from("designs").insert(payload);
-    setSaving(false);
     if (res.error) { toast.error(res.error.message); return; }
     toast.success(editing ? "تم التحديث" : "تمت الإضافة");
-    setForm(EMPTY); setEditing(null);
+    setForm(EMPTY_P); setEditing(null);
     qc.invalidateQueries({ queryKey: ["admin-designs"] });
     qc.invalidateQueries({ queryKey: ["designs"] });
   }
@@ -59,92 +104,231 @@ function AdminPage() {
     if (!confirm("حذف هذا التصميم؟")) return;
     const { error } = await supabase.from("designs").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success("تم الحذف");
     qc.invalidateQueries({ queryKey: ["admin-designs"] });
     qc.invalidateQueries({ queryKey: ["designs"] });
   }
 
-  function startEdit(d: Design) {
-    setEditing(d.id);
-    setForm({
-      name: d.name,
-      description: d.description ?? "",
-      image_url: d.image_url,
-      category: d.category ?? "",
-      price: d.price != null ? String(d.price) : "",
-    });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
   return (
-    <div className="min-h-screen bg-background pb-20" dir="rtl">
-      <div className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3">
-          <Link to="/" className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline">
-            <ArrowRight className="size-4" /> المعرض
-          </Link>
-          <button
-            onClick={() => { logoutAdmin(); location.reload(); }}
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
-          >
-            <LogOut className="size-4" /> خروج
-          </button>
+    <div className="space-y-4">
+      <form onSubmit={save} className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-black">{editing ? "تعديل تصميم" : "إضافة تصميم"}</h2>
+          {editing && (
+            <button type="button" onClick={() => { setEditing(null); setForm(EMPTY_P); }}
+              className="text-xs text-muted-foreground inline-flex items-center gap-1"><X className="size-3" /> إلغاء</button>
+          )}
         </div>
-      </div>
-
-      <div className="mx-auto max-w-5xl px-5 pt-6 space-y-6">
-        <div className="rounded-3xl p-6 text-primary-foreground shadow-soft" style={{ background: "var(--gradient-hero)" }}>
-          <h1 className="text-2xl font-black">لوحة إدارة المعرض</h1>
-          <p className="mt-1 text-sm opacity-90">أضف، عدّل، أو احذف تصاميم المنتجات.</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="اسم المنتج *" />
+          <Input value={form.category} onChange={(v) => setForm({ ...form, category: v })} placeholder="الفئة" />
+          <Input value={form.image_url} onChange={(v) => setForm({ ...form, image_url: v })} placeholder="رابط الصورة *" full />
+          <Input value={form.price} onChange={(v) => setForm({ ...form, price: v })} placeholder="السعر" type="number" />
+          <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="الوصف" rows={2}
+            className="sm:col-span-2 rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
         </div>
+        <button type="submit" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft hover:opacity-90">
+          {editing ? <Save className="size-4" /> : <Plus className="size-4" />}
+          {editing ? "حفظ التعديلات" : "إضافة"}
+        </button>
+      </form>
 
-        <form onSubmit={save} className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black text-foreground">
-              {editing ? "تعديل تصميم" : "إضافة تصميم جديد"}
-            </h2>
-            {editing && (
-              <button type="button" onClick={() => { setEditing(null); setForm(EMPTY); }} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-                <X className="size-3" /> إلغاء
-              </button>
-            )}
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="اسم المنتج *" className="rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
-            <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="الفئة (مثال: غرفة نوم)" className="rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
-            <input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="رابط الصورة *" className="rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring sm:col-span-2" />
-            <input value={form.price} type="number" onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="السعر (ل.س)" className="rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
-            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="الوصف" rows={3} className="rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring sm:col-span-2" />
-          </div>
-          <button disabled={saving} type="submit" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-50">
-            {editing ? <Save className="size-4" /> : <Plus className="size-4" />}
-            {saving ? "جارٍ الحفظ..." : editing ? "حفظ التعديلات" : "إضافة المنتج"}
-          </button>
-        </form>
-
-        <div className="rounded-2xl bg-card p-5 shadow-card border border-border">
-          <h2 className="mb-3 text-sm font-black text-foreground">المنتجات ({designs?.length ?? 0})</h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {designs?.map((d) => (
-              <div key={d.id} className="flex gap-3 rounded-xl border border-border bg-background p-3">
-                <img src={d.image_url} alt={d.name} className="size-16 rounded-lg object-cover bg-muted" />
-                <div className="flex-1 min-w-0">
-                  <p className="line-clamp-1 text-sm font-bold text-foreground">{d.name}</p>
-                  {d.price != null && <p className="text-xs text-primary font-bold">{Number(d.price).toLocaleString("ar")} ل.س</p>}
-                  {d.category && <p className="text-[11px] text-muted-foreground">{d.category}</p>}
-                </div>
-                <div className="flex flex-col gap-1">
-                  <button onClick={() => startEdit(d)} className="rounded-lg bg-muted p-2 text-foreground hover:bg-secondary"><Edit3 className="size-3.5" /></button>
-                  <button onClick={() => remove(d.id)} className="rounded-lg bg-destructive/10 p-2 text-destructive hover:bg-destructive/20"><Trash2 className="size-3.5" /></button>
-                </div>
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border">
+        <h2 className="mb-3 text-sm font-black">المنتجات ({designs?.length ?? 0})</h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {designs?.map((d) => (
+            <div key={d.id} className="flex gap-3 rounded-xl border border-border bg-background p-3">
+              <img src={d.image_url} alt={d.name} className="size-16 rounded-lg object-cover bg-muted" />
+              <div className="flex-1 min-w-0">
+                <p className="line-clamp-1 text-sm font-bold">{d.name}</p>
+                {d.category && <p className="text-[11px] text-muted-foreground">{d.category}</p>}
               </div>
-            ))}
-            {(!designs || designs.length === 0) && (
-              <p className="col-span-full text-center text-sm text-muted-foreground py-8">لا توجد منتجات بعد — أضف الأول من النموذج أعلاه.</p>
-            )}
-          </div>
+              <div className="flex flex-col gap-1">
+                <button onClick={() => { setEditing(d.id); setForm({ name: d.name, description: d.description ?? "", image_url: d.image_url, category: d.category ?? "", price: d.price != null ? String(d.price) : "" }); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  className="rounded-lg bg-muted p-2"><Edit3 className="size-3.5" /></button>
+                <button onClick={() => remove(d.id)} className="rounded-lg bg-destructive/10 p-2 text-destructive"><Trash2 className="size-3.5" /></button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
+  );
+}
+
+/* ============ المناطق ============ */
+type RegForm = { name: string; whatsapp_number: string; assistant_name: string };
+const EMPTY_R: RegForm = { name: "", whatsapp_number: "", assistant_name: "" };
+
+function RegionsTab() {
+  const qc = useQueryClient();
+  const { data: regions } = useRegions();
+  const [form, setForm] = useState<RegForm>(EMPTY_R);
+  const [editing, setEditing] = useState<string | null>(null);
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.name || !form.whatsapp_number) { toast.error("الاسم والرقم مطلوبان"); return; }
+    const payload = { name: form.name, whatsapp_number: form.whatsapp_number.replace(/\D/g, ""), assistant_name: form.assistant_name || null };
+    const res = editing
+      ? await supabase.from("regions").update(payload).eq("id", editing)
+      : await supabase.from("regions").insert(payload);
+    if (res.error) { toast.error(res.error.message); return; }
+    toast.success("تم الحفظ");
+    setForm(EMPTY_R); setEditing(null);
+    qc.invalidateQueries({ queryKey: ["regions"] });
+  }
+
+  async function toggleActive(r: Region) {
+    await supabase.from("regions").update({ is_active: !r.is_active }).eq("id", r.id);
+    qc.invalidateQueries({ queryKey: ["regions"] });
+  }
+
+  async function remove(id: string) {
+    if (!confirm("حذف هذه المنطقة؟")) return;
+    await supabase.from("regions").delete().eq("id", id);
+    qc.invalidateQueries({ queryKey: ["regions"] });
+  }
+
+  return (
+    <div className="space-y-4">
+      <form onSubmit={save} className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <h2 className="text-sm font-black">{editing ? "تعديل منطقة" : "إضافة منطقة جديدة"}</h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Input value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="اسم المنطقة (الدانا)" />
+          <Input value={form.whatsapp_number} onChange={(v) => setForm({ ...form, whatsapp_number: v })} placeholder="واتساب 963xxx" />
+          <Input value={form.assistant_name} onChange={(v) => setForm({ ...form, assistant_name: v })} placeholder="اسم المساعد" />
+        </div>
+        <button type="submit" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft hover:opacity-90">
+          {editing ? <Save className="size-4" /> : <Plus className="size-4" />} {editing ? "حفظ" : "إضافة منطقة"}
+        </button>
+        {editing && <button type="button" onClick={() => { setEditing(null); setForm(EMPTY_R); }} className="text-xs text-muted-foreground">إلغاء</button>}
+      </form>
+
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border">
+        <h2 className="mb-3 text-sm font-black">المناطق ({regions?.length ?? 0})</h2>
+        <div className="space-y-2">
+          {regions?.map((r) => (
+            <div key={r.id} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3">
+              <div className="flex-1">
+                <p className="text-sm font-bold">{r.name} {!r.is_active && <span className="text-xs text-muted-foreground">(معطّلة)</span>}</p>
+                <p className="text-xs text-muted-foreground" dir="ltr">{r.whatsapp_number} · {r.assistant_name ?? "—"}</p>
+              </div>
+              <button onClick={() => toggleActive(r)} className="text-xs rounded-lg bg-muted px-2 py-1">{r.is_active ? "تعطيل" : "تفعيل"}</button>
+              <button onClick={() => { setEditing(r.id); setForm({ name: r.name, whatsapp_number: r.whatsapp_number, assistant_name: r.assistant_name ?? "" }); }}
+                className="rounded-lg bg-muted p-2"><Edit3 className="size-3.5" /></button>
+              <button onClick={() => remove(r.id)} className="rounded-lg bg-destructive/10 p-2 text-destructive"><Trash2 className="size-3.5" /></button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============ الأسعار ============ */
+function PricingTab() {
+  const qc = useQueryClient();
+  const { data: pricing } = usePricing();
+  const [ppm, setPpm] = useState<string>("");
+  const [emb, setEmb] = useState<string>("");
+  const [cur, setCur] = useState<string>("");
+
+  function init() {
+    setPpm(String(pricing?.price_per_meter ?? 25));
+    setEmb(String((pricing?.embossed_premium_rate ?? 0.3) * 100));
+    setCur(pricing?.currency ?? "$");
+  }
+  if (pricing && ppm === "") init();
+
+  async function save() {
+    const { error } = await supabase.from("pricing_config").upsert({
+      id: 1, price_per_meter: Number(ppm), embossed_premium_rate: Number(emb) / 100, currency: cur, updated_at: new Date().toISOString(),
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("تم تحديث الأسعار");
+    qc.invalidateQueries({ queryKey: ["pricing"] });
+  }
+
+  return (
+    <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+      <h2 className="text-sm font-black">إعدادات التسعير</h2>
+      <p className="text-xs text-muted-foreground">يطبق فوراً على المحاكي في كل المنتجات.</p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <label className="block">
+          <span className="text-xs font-bold">السعر/متر²</span>
+          <input type="number" step="0.5" value={ppm} onChange={(e) => setPpm(e.target.value)}
+            className="mt-1 w-full rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+        </label>
+        <label className="block">
+          <span className="text-xs font-bold">نسبة البروز %</span>
+          <input type="number" step="1" value={emb} onChange={(e) => setEmb(e.target.value)}
+            className="mt-1 w-full rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+        </label>
+        <label className="block">
+          <span className="text-xs font-bold">العملة</span>
+          <input value={cur} onChange={(e) => setCur(e.target.value)}
+            className="mt-1 w-full rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+        </label>
+      </div>
+      <button onClick={save} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft hover:opacity-90">
+        <Save className="size-4" /> حفظ
+      </button>
+    </div>
+  );
+}
+
+/* ============ الطلبات ============ */
+function OrdersTab() {
+  const qc = useQueryClient();
+  const { data: orders } = useQuery({
+    queryKey: ["orders"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(200);
+      if (error) throw error;
+      return (data ?? []) as Order[];
+    },
+  });
+
+  async function setStatus(id: string, status: string) {
+    await supabase.from("orders").update({ status }).eq("id", id);
+    qc.invalidateQueries({ queryKey: ["orders"] });
+  }
+
+  return (
+    <div className="rounded-2xl bg-card p-5 shadow-card border border-border">
+      <h2 className="mb-3 text-sm font-black">الطلبات الواردة ({orders?.length ?? 0})</h2>
+      <div className="space-y-2">
+        {orders?.map((o) => (
+          <div key={o.id} className="rounded-xl border border-border bg-background p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold">{o.design_name ?? "—"} · {o.region_name ?? "—"}</p>
+                <p className="text-xs text-muted-foreground">
+                  {o.width}م × {o.height}م {o.embossed ? "· بروز" : ""} · {Number(o.total).toLocaleString("ar")}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">{new Date(o.created_at).toLocaleString("ar")}</p>
+              </div>
+              <select value={o.status} onChange={(e) => setStatus(o.id, e.target.value)}
+                className="rounded-lg bg-muted px-2 py-1 text-xs">
+                <option value="new">جديد</option>
+                <option value="contacted">تم التواصل</option>
+                <option value="done">منجز</option>
+                <option value="cancelled">ملغى</option>
+              </select>
+            </div>
+          </div>
+        ))}
+        {(!orders || orders.length === 0) && <p className="text-center text-sm text-muted-foreground py-8">لا طلبات بعد.</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ============ Helpers ============ */
+function Input({ value, onChange, placeholder, type = "text", full }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string; full?: boolean }) {
+  return (
+    <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} type={type}
+      className={`${full ? "sm:col-span-2 " : ""}rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring`} />
   );
 }
