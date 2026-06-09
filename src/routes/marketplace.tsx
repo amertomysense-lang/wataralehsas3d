@@ -185,9 +185,9 @@ function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolea
       </div>
 
       <div className="relative mt-3 flex flex-wrap gap-1.5">
-        {mods.decor && <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"><Cuboid className="size-3" /> ديكور</span>}
-        {mods.fashion && <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"><Shirt className="size-3" /> أزياء AI</span>}
-        {mods.haircut && <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"><Scissors className="size-3" /> قصّات AI</span>}
+        {mods.decor && <span className="badge-rose"><Cuboid className="size-3" /> ديكور</span>}
+        {mods.fashion && <span className="badge-rose"><Shirt className="size-3" /> أزياء AI</span>}
+        {mods.haircut && <span className="badge-rose"><Scissors className="size-3" /> قصّات AI</span>}
       </div>
 
       <a href={`https://wa.me/${v.whatsapp_number}`} target="_blank" rel="noreferrer"
