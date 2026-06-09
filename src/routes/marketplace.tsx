@@ -3,10 +3,18 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo, useState } from "react";
 import { ShoppingBag, Crown, MessageCircle, Sofa, Shirt, Sparkles } from "lucide-react";
+import { CampaignSection } from "@/components/CampaignSection";
+import { useSettings } from "@/lib/settings";
+import { usePricing } from "@/lib/platform";
 
 type Vendor = {
   id: string; business_name: string; category: string;
   whatsapp_number: string; logo_url: string | null; is_premium: boolean;
+};
+
+type Product = {
+  id: string; name: string; category: string | null;
+  image_url: string; price: number | null;
 };
 
 const DECOR_CATS = ["curtains", "sofa", "furniture", "other"];
@@ -19,6 +27,10 @@ export const Route = createFileRoute("/marketplace")({
 
 function Marketplace() {
   const [tab, setTab] = useState<"decor" | "fashion">("decor");
+  const [settings] = useSettings();
+  const { data: pricing } = usePricing();
+  const currency = pricing?.currency ?? settings.currency;
+
   const { data, isLoading } = useQuery({
     queryKey: ["vendors"],
     queryFn: async (): Promise<Vendor[]> => {
@@ -32,6 +44,17 @@ function Marketplace() {
     },
   });
 
+  const { data: products } = useQuery({
+    queryKey: ["products"],
+    queryFn: async (): Promise<Product[]> => {
+      const { data, error } = await supabase
+        .from("products").select("id,name,category,image_url,price")
+        .order("created_at", { ascending: false }).limit(60);
+      if (error) return [];
+      return (data ?? []) as Product[];
+    },
+  });
+
   const filtered = useMemo(() => {
     const cats = tab === "decor" ? DECOR_CATS : FASHION_CATS;
     return (data ?? []).filter((v) => cats.includes(v.category));
@@ -39,38 +62,65 @@ function Marketplace() {
 
   return (
     <div className="min-h-screen bg-background px-5 py-8" dir="rtl">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-6xl space-y-6">
         <Link to="/workflow" className="text-sm font-bold text-primary hover:underline">← الوحدات</Link>
-        <h1 className="mt-3 text-3xl font-black text-foreground">
-          سوق <span className="text-primary">شركاء الديكور والأزياء</span>
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          تجربة فاخرة لاكتشاف أفضل شركاء المنطقة — تواصل مباشر مع المحل عبر واتساب.
-        </p>
+        <div>
+          <h1 className="mt-1 text-3xl font-black text-foreground">
+            سوق <span className="text-primary">شركاء الديكور والأزياء</span>
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            تجربة فاخرة لاكتشاف أفضل شركاء المنطقة — تواصل مباشر مع المحل عبر واتساب.
+          </p>
+        </div>
+
+        <CampaignSection />
 
         {/* Tabs */}
-        <div className="mt-6 inline-flex rounded-2xl border border-border bg-card p-1">
+        <div className="inline-flex rounded-2xl border border-border bg-card p-1">
           <TabBtn active={tab === "decor"} onClick={() => setTab("decor")}
             icon={<Sofa className="size-4" />} label="عالم الديكور والأثاث" />
           <TabBtn active={tab === "fashion"} onClick={() => setTab("fashion")}
             icon={<Shirt className="size-4" />} label="عالم الأزياء والموضة" />
         </div>
 
-        {isLoading && <p className="mt-8 text-center text-muted-foreground">…تحميل</p>}
+        {isLoading && <p className="text-center text-muted-foreground">…تحميل</p>}
 
         {!isLoading && filtered.length === 0 && (
-          <div className="mt-10 rounded-3xl border-2 border-dashed border-border p-10 text-center">
+          <div className="rounded-3xl border-2 border-dashed border-border p-10 text-center">
             <ShoppingBag className="mx-auto size-10 text-muted-foreground" />
             <p className="mt-3 font-bold">لا يوجد شركاء في هذا العالم بعد</p>
             <p className="mt-1 text-sm text-muted-foreground">أضف شركاء من لوحة الأدمن لعرضهم هنا.</p>
           </div>
         )}
 
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((v) => (
             <VendorCard key={v.id} v={v} />
           ))}
         </div>
+
+        {products && products.length > 0 && (
+          <section className="pt-4">
+            <h2 className="text-xl font-black text-foreground">منتجات مختارة</h2>
+            <p className="mt-1 text-xs text-muted-foreground">الأسعار معروضة بـ <b className="text-primary">{currency}</b> — تتحدث فوراً عند تبديل العملة من الأدمن.</p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {products.map((p) => (
+                <div key={p.id} className="overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-0.5 hover:border-primary/50">
+                  <img src={p.image_url} alt={p.name} className="h-36 w-full object-cover" />
+                  <div className="p-3">
+                    <p className="line-clamp-1 text-sm font-bold">{p.name}</p>
+                    {p.category && <p className="text-[11px] text-muted-foreground">{p.category}</p>}
+                    {p.price != null && (
+                      <p className="mt-2 text-sm font-black text-primary">
+                        {Number(p.price).toLocaleString("ar")} <span className="text-xs opacity-80">{currency}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
