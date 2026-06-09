@@ -23,6 +23,7 @@ import { Route as ApiTryonRouteImport } from './routes/api/tryon'
 import { Route as ApiRemoveBgRouteImport } from './routes/api/remove-bg'
 import { Route as ApiHaircutRouteImport } from './routes/api/haircut'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiAiImageRouteImport } from './routes/api/ai-image'
 
 const WorkflowRoute = WorkflowRouteImport.update({
   id: '/workflow',
@@ -94,6 +95,11 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAiImageRoute = ApiAiImageRouteImport.update({
+  id: '/api/ai-image',
+  path: '/api/ai-image',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/simulator': typeof SimulatorRoute
   '/tryon': typeof TryonRoute
   '/workflow': typeof WorkflowRoute
+  '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
   '/api/haircut': typeof ApiHaircutRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/simulator': typeof SimulatorRoute
   '/tryon': typeof TryonRoute
   '/workflow': typeof WorkflowRoute
+  '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
   '/api/haircut': typeof ApiHaircutRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/simulator': typeof SimulatorRoute
   '/tryon': typeof TryonRoute
   '/workflow': typeof WorkflowRoute
+  '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
   '/api/haircut': typeof ApiHaircutRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/simulator'
     | '/tryon'
     | '/workflow'
+    | '/api/ai-image'
     | '/api/chat'
     | '/api/haircut'
     | '/api/remove-bg'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/simulator'
     | '/tryon'
     | '/workflow'
+    | '/api/ai-image'
     | '/api/chat'
     | '/api/haircut'
     | '/api/remove-bg'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/simulator'
     | '/tryon'
     | '/workflow'
+    | '/api/ai-image'
     | '/api/chat'
     | '/api/haircut'
     | '/api/remove-bg'
@@ -205,6 +217,7 @@ export interface RootRouteChildren {
   SimulatorRoute: typeof SimulatorRoute
   TryonRoute: typeof TryonRoute
   WorkflowRoute: typeof WorkflowRoute
+  ApiAiImageRoute: typeof ApiAiImageRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiHaircutRoute: typeof ApiHaircutRoute
   ApiRemoveBgRoute: typeof ApiRemoveBgRoute
@@ -312,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ai-image': {
+      id: '/api/ai-image'
+      path: '/api/ai-image'
+      fullPath: '/api/ai-image'
+      preLoaderRoute: typeof ApiAiImageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -325,6 +345,7 @@ const rootRouteChildren: RootRouteChildren = {
   SimulatorRoute: SimulatorRoute,
   TryonRoute: TryonRoute,
   WorkflowRoute: WorkflowRoute,
+  ApiAiImageRoute: ApiAiImageRoute,
   ApiChatRoute: ApiChatRoute,
   ApiHaircutRoute: ApiHaircutRoute,
   ApiRemoveBgRoute: ApiRemoveBgRoute,
