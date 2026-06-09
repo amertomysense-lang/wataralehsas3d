@@ -9,7 +9,7 @@ import { logoutAdmin } from "@/lib/admin-gate";
 import { useRegions, usePricing, type Region, type Order } from "@/lib/platform";
 import { exportPlatformSnapshot } from "@/lib/export-snapshot";
 import { parseCSV } from "@/lib/csv-import";
-import { useSettings, DEFAULT_SETTINGS, SYRIAN_PROVINCES, type PlatformSettings } from "@/lib/settings";
+import { useSettings, DEFAULT_SETTINGS, SYRIAN_PROVINCES, CURRENCY_OPTIONS, type PlatformSettings } from "@/lib/settings";
 
 
 export const Route = createFileRoute("/admin")({
