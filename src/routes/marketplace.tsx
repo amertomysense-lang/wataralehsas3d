@@ -32,6 +32,11 @@ function Marketplace() {
   const [settings] = useSettings();
   const { data: pricing } = usePricing();
   const currency = pricing?.currency ?? settings.currency;
+  const [vendorStore] = useVendorStore();
+  const title2 = useStr("marketplace.title_2");
+  const tabDecor = useStr("marketplace.tab_decor");
+  const tabFashion = useStr("marketplace.tab_fashion");
+  const emptyTxt = useStr("marketplace.empty");
 
   const { data, isLoading } = useQuery({
     queryKey: ["vendors"],
@@ -57,10 +62,16 @@ function Marketplace() {
     },
   });
 
+  // فلترة الاشتراك: أخفِ الشركاء المُعطّلين من المالك
+  const activeVendors = useMemo(() => {
+    return (data ?? []).filter((v) => (vendorStore[v.id] ?? DEFAULT_VENDOR_STATE).subscription_active);
+  }, [data, vendorStore]);
+
   const filtered = useMemo(() => {
     const cats = tab === "decor" ? DECOR_CATS : FASHION_CATS;
-    return (data ?? []).filter((v) => cats.includes(v.category));
-  }, [data, tab]);
+    return activeVendors.filter((v) => cats.includes(v.category));
+  }, [activeVendors, tab]);
+
 
   return (
     <div className="min-h-screen bg-background px-5 py-8" dir="rtl">
