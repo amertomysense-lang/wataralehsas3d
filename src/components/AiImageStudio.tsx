@@ -74,11 +74,12 @@ export function AiImageStudio({
       </div>
       {subtitle && <p className="mb-3 text-xs text-muted-foreground leading-relaxed">{subtitle}</p>}
 
-      {presets.length > 0 && (
+      {allPresets.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-2">
-          {presets.map((p) => (
+          {allPresets.map((p) => (
             <button key={p.id} onClick={() => setPreset(preset?.id === p.id ? null : p)}
-              className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition ${preset?.id === p.id ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground/80 hover:border-primary/50"}`}>
+              className={`flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-bold transition ${preset?.id === p.id ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground/80 hover:border-primary/50"}`}>
+              {p.preview && <img src={p.preview} alt="" className="size-5 rounded-full object-cover" />}
               {p.label}
             </button>
           ))}
