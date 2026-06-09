@@ -13,6 +13,7 @@ import { useSettings, DEFAULT_SETTINGS, SYRIAN_PROVINCES, CURRENCY_OPTIONS, SECT
 import { useCmsStrings, DEFAULT_STRINGS } from "@/lib/cms-strings";
 import { useVendorStore, DEFAULT_VENDOR_STATE, generateLoginToken, STATUS_LABELS, type VendorState, type VendorStatus } from "@/lib/vendor-config";
 import { usePaymentRequests, approveRequest, rejectRequest, grantCreditsByDevice, type PaymentPackage, type PaymentRequest } from "@/lib/payments";
+import { BatchImageUploader, type BatchItem } from "@/components/BatchImageUploader";
 
 
 export const Route = createFileRoute("/admin")({
