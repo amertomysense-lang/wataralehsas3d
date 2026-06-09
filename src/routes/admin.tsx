@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal, Type, ToggleLeft } from "lucide-react";
+import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal, Type, ToggleLeft, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/AdminGate";
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/admin")({
   component: () => <AdminGate title="لوحة تحكم المعرض"><AdminPage /></AdminGate>,
 });
 
-type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms";
+type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms" | "quota";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
@@ -60,6 +60,7 @@ function AdminPage() {
           <TabBtn icon={<SettingsIcon className="size-4" />} label="إعدادات شاملة" active={tab === "settings"} onClick={() => setTab("settings")} />
           <TabBtn icon={<SlidersHorizontal className="size-4" />} label="Schema Controller" active={tab === "schema"} onClick={() => setTab("schema")} />
           <TabBtn icon={<Type className="size-4" />} label="نصوص الموقع (CMS)" active={tab === "cms"} onClick={() => setTab("cms")} />
+          <TabBtn icon={<Sparkles className="size-4" />} label="المحاولات والإعلانات" active={tab === "quota"} onClick={() => setTab("quota")} />
         </div>
 
         {tab === "products" && <ProductsTab />}
@@ -70,6 +71,7 @@ function AdminPage() {
         {tab === "settings" && <GlobalSettingsTab />}
         {tab === "schema" && <SchemaControllerTab />}
         {tab === "cms" && <CmsStringsTab />}
+        {tab === "quota" && <QuotaSettingsTab />}
       </div>
     </div>
   );
