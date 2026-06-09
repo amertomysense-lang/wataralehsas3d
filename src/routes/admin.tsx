@@ -9,7 +9,7 @@ import { logoutAdmin } from "@/lib/admin-gate";
 import { useRegions, usePricing, type Region, type Order } from "@/lib/platform";
 import { exportPlatformSnapshot } from "@/lib/export-snapshot";
 import { parseCSV } from "@/lib/csv-import";
-import { useSettings, DEFAULT_SETTINGS, SYRIAN_PROVINCES, type PlatformSettings } from "@/lib/settings";
+import { useSettings, DEFAULT_SETTINGS, SYRIAN_PROVINCES, CURRENCY_OPTIONS, type PlatformSettings } from "@/lib/settings";
 
 
 export const Route = createFileRoute("/admin")({
@@ -30,9 +30,10 @@ function AdminPage() {
             <ArrowRight className="size-4" /> المعرض
           </Link>
           <div className="flex items-center gap-3">
+            <CurrencyQuickSwitch />
             <button onClick={async () => { try { await exportPlatformSnapshot(); toast.success("تم تصدير لقطة المنصة"); } catch (e) { toast.error("فشل التصدير"); } }}
               className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/20">
-              <Download className="size-3.5" /> تصدير الكود/البيانات
+              <Download className="size-3.5" /> تصدير
             </button>
             <button onClick={() => { logoutAdmin(); location.reload(); }}
               className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive">
@@ -309,11 +310,10 @@ function PricingTab() {
         </label>
         <label className="block">
           <span className="text-xs font-bold">العملة</span>
-          <input value={cur} onChange={(e) => setCur(e.target.value)} list="cur-list"
-            className="mt-1 w-full rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
-          <datalist id="cur-list">
-            <option value="$" /><option value="TRY" /><option value="€" /><option value="ل.س" /><option value="SAR" /><option value="AED" />
-          </datalist>
+          <select value={cur} onChange={(e) => setCur(e.target.value)}
+            className="mt-1 w-full rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring">
+            {CURRENCY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
         </label>
       </div>
       <button onClick={save} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft hover:opacity-90">
@@ -344,7 +344,9 @@ function GlobalSettingsTab() {
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="العملة الافتراضية">
-            <input value={draft.currency} onChange={(e) => update("currency", e.target.value)} className="input" />
+            <select value={draft.currency} onChange={(e) => update("currency", e.target.value)} className="input">
+              {CURRENCY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
           </Field>
           <Field label="السعر/متر² الافتراضي">
             <input type="number" step="0.5" value={draft.pricePerMeter} onChange={(e) => update("pricePerMeter", +e.target.value)} className="input" />
@@ -637,6 +639,25 @@ function VendorsTab() {
 }
 
 /* ============ Helpers ============ */
+function CurrencyQuickSwitch() {
+  const [s, setS] = useSettings();
+  return (
+    <label className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-2 py-1 text-[11px] font-bold text-primary">
+      <span className="opacity-70">العملة</span>
+      <select
+        value={s.currency}
+        onChange={(e) => setS({ ...s, currency: e.target.value })}
+        className="bg-transparent outline-none text-primary font-black"
+        title="تبديل العملة الفوري عبر كل الوحدات"
+      >
+        {CURRENCY_OPTIONS.map((c) => (
+          <option key={c.value} value={c.value} className="bg-background text-foreground">{c.label}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function Input({ value, onChange, placeholder, type = "text", full }: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string; full?: boolean }) {
   return (
     <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} type={type}

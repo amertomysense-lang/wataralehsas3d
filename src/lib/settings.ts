@@ -53,6 +53,16 @@ export function useSettings(): [PlatformSettings, (s: PlatformSettings) => void]
   return [s, (n) => { writeSettings(n); setS(n); }];
 }
 
+// قائمة العملات المدعومة عبر واجهة الأدمن
+export const CURRENCY_OPTIONS: { value: string; label: string }[] = [
+  { value: "$", label: "USD ($) — دولار أمريكي" },
+  { value: "TRY", label: "TRY (₺) — ليرة تركية" },
+  { value: "ل.س", label: "ل.س — ليرة سورية" },
+  { value: "€", label: "EUR (€) — يورو" },
+  { value: "SAR", label: "SAR — ريال سعودي" },
+  { value: "AED", label: "AED — درهم إماراتي" },
+];
+
 // الأقاليم السورية المقترحة لتفعيل سريع
 export const SYRIAN_PROVINCES = [
   "الدانا","سرمدا","إدلب","حلب","ريف حلب","دمشق","ريف دمشق",
