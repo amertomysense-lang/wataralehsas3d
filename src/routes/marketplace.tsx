@@ -158,14 +158,14 @@ function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolea
   };
   const mods = state.modules;
   return (
-    <div className={`group relative overflow-hidden rounded-3xl border bg-card p-5 transition hover:-translate-y-1 hover:shadow-soft ${
-      v.is_premium ? "border-primary/60 shadow-[0_0_0_1px_var(--primary)/10]" : "border-border"
+    <div className={`group relative overflow-hidden rounded-3xl border bg-card p-5 transition hover:-translate-y-1 ${
+      v.is_premium ? "ring-gold glow-rose" : "border-border hover:border-primary/40"
     }`}>
       {v.is_premium && (
         <>
-          <div className="pointer-events-none absolute inset-0 opacity-20"
-            style={{ background: "radial-gradient(circle at top left, var(--primary), transparent 60%)" }} />
-          <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[10px] font-black text-primary-foreground shadow-soft">
+          <div className="pointer-events-none absolute inset-0 opacity-25"
+            style={{ background: "radial-gradient(circle at top left, var(--primary-glow), transparent 55%), radial-gradient(circle at bottom right, var(--gold), transparent 65%)" }} />
+          <span className="badge-gold absolute top-3 left-3">
             <Crown className="size-3" /> {state.brand_badge || "شريك مميّز"}
           </span>
         </>
@@ -185,9 +185,9 @@ function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolea
       </div>
 
       <div className="relative mt-3 flex flex-wrap gap-1.5">
-        {mods.decor && <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"><Cuboid className="size-3" /> ديكور</span>}
-        {mods.fashion && <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"><Shirt className="size-3" /> أزياء AI</span>}
-        {mods.haircut && <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"><Scissors className="size-3" /> قصّات AI</span>}
+        {mods.decor && <span className="badge-rose"><Cuboid className="size-3" /> ديكور</span>}
+        {mods.fashion && <span className="badge-rose"><Shirt className="size-3" /> أزياء AI</span>}
+        {mods.haircut && <span className="badge-rose"><Scissors className="size-3" /> قصّات AI</span>}
       </div>
 
       <a href={`https://wa.me/${v.whatsapp_number}`} target="_blank" rel="noreferrer"
