@@ -8,6 +8,7 @@ import { useSettings } from "@/lib/settings";
 import { usePricing } from "@/lib/platform";
 import { useVendorStore, DEFAULT_VENDOR_STATE } from "@/lib/vendor-config";
 import { useStr } from "@/lib/cms-strings";
+import { PriceOrTrialBadge } from "@/components/BatchImageUploader";
 
 type Vendor = {
   id: string; business_name: string; category: string;
