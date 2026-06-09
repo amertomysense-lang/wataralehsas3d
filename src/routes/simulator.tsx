@@ -304,20 +304,33 @@ function Simulator() {
       </div>
 
       <div className="mx-auto max-w-6xl px-5 pb-10">
-        <AiImageStudio
-          section="simulator"
-          title="استوديو تصاميم الجدران بالذكاء الاصطناعي"
-          subtitle="ولّد تصميم جدار/أرضية مخصصاً حسب ذوقك — ارفع صورة غرفتك ليتم التصميم على مقاسها."
-          accent="from-primary to-accent"
-          basePrompt="High-resolution interior wall/floor decorative design, photorealistic, premium material finish"
-          presets={[
-            { id: "rose", label: "حديقة ورود", prompt: "soft pink rose garden mural, romantic warm lighting" },
-            { id: "calli", label: "خط عربي ذهبي", prompt: "elegant golden arabic calligraphy on dark marble" },
-            { id: "marble", label: "رخام فاخر", prompt: "luxurious veined marble texture, ivory and gold" },
-            { id: "3d", label: "كسر 3D", prompt: "dramatic 3D broken wall illusion, depth, cinematic" },
-            { id: "epoxy", label: "إيبوكسي محيطي", prompt: "ocean epoxy resin floor with turquoise waves and sand" },
-          ]}
-        />
+        <details className="group rounded-2xl border border-dashed border-border bg-card/50 p-3">
+          <summary className="cursor-pointer list-none text-xs font-black text-muted-foreground">
+            <span className="inline-flex items-center gap-2">
+              <Wand2 className="size-3.5 text-primary" />
+              استوديو التوليد التخيلي
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px]">ميزة ثانوية · للتسلية</span>
+              <span className="text-primary group-open:hidden">▾ افتح</span>
+              <span className="hidden text-primary group-open:inline">▴ أغلق</span>
+            </span>
+          </summary>
+          <div className="mt-3">
+            <AiImageStudio
+              section="simulator"
+              title="استوديو التوليد التخيلي للجدران"
+              subtitle="ميزة إضافية للتسلية فقط — الأساس هو الدمج الواقعي بالأعلى."
+              accent="from-primary to-accent"
+              basePrompt="High-resolution interior wall/floor decorative design, photorealistic, premium material finish"
+              presets={[
+                { id: "rose", label: "حديقة ورود", prompt: "soft pink rose garden mural, romantic warm lighting" },
+                { id: "calli", label: "خط عربي ذهبي", prompt: "elegant golden arabic calligraphy on dark marble" },
+                { id: "marble", label: "رخام فاخر", prompt: "luxurious veined marble texture, ivory and gold" },
+                { id: "3d", label: "كسر 3D", prompt: "dramatic 3D broken wall illusion, depth, cinematic" },
+                { id: "epoxy", label: "إيبوكسي محيطي", prompt: "ocean epoxy resin floor with turquoise waves and sand" },
+              ]}
+            />
+          </div>
+        </details>
       </div>
     </div>
   );
