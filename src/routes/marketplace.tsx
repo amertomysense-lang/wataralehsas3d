@@ -11,13 +11,13 @@ import { useStr } from "@/lib/cms-strings";
 import { PriceOrTrialBadge } from "@/components/BatchImageUploader";
 
 type Vendor = {
-  id: string; business_name: string; category: string;
-  whatsapp_number: string; logo_url: string | null; is_premium: boolean;
+  id: string; name: string; category: string;
+  phone: string | null; logo_url: string | null; is_premium: boolean;
   cover_image?: string | null; subscription_status?: string | null;
 };
 
 type Product = {
-  id: string; name: string; category: string | null;
+  id: string; title: string; type: string | null;
   image_url: string; price: number | null;
 };
 
