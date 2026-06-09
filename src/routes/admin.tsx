@@ -404,10 +404,10 @@ function SchemaControllerTab() {
         <p className="text-xs text-muted-foreground">مفاتيح تحكم سريعة لأي ظرف تشغيلي مستقبلي دون تعديل الكود.</p>
 
         <div className="grid gap-2 sm:grid-cols-2">
-          <ToggleRow label="إظهار قسم حملة الإطلاق" value={s.showMarketingBanner} onChange={() => toggle("showMarketingBanner")} />
-          <ToggleRow label="إظهار خدمة الأسطول السريع" value={s.fleetMobilizationEnabled} onChange={() => toggle("fleetMobilizationEnabled")} />
-          <ToggleRow label="تسجيل تجارب AI Try-On" value={s.aiTryOnLogging} onChange={() => toggle("aiTryOnLogging")} />
-          <ToggleRow label="تفعيل المزامنة الأوفلاين" value={s.enableOfflineSync} onChange={() => toggle("enableOfflineSync")} />
+          <QuotaToggleRow label="إظهار قسم حملة الإطلاق" value={s.showMarketingBanner} onChange={() => toggle("showMarketingBanner")} />
+          <QuotaToggleRow label="إظهار خدمة الأسطول السريع" value={s.fleetMobilizationEnabled} onChange={() => toggle("fleetMobilizationEnabled")} />
+          <QuotaToggleRow label="تسجيل تجارب AI Try-On" value={s.aiTryOnLogging} onChange={() => toggle("aiTryOnLogging")} />
+          <QuotaToggleRow label="تفعيل المزامنة الأوفلاين" value={s.enableOfflineSync} onChange={() => toggle("enableOfflineSync")} />
         </div>
       </div>
 
@@ -438,7 +438,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function ToggleRow({ label, value, onChange }: { label: string; value: boolean; onChange: () => void }) {
+function QuotaToggleRow({ label, value, onChange }: { label: string; value: boolean; onChange: () => void }) {
   return (
     <button onClick={onChange}
       className={`flex items-center justify-between rounded-xl border-2 px-3 py-3 text-xs font-bold transition ${value ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-foreground/80"}`}>
@@ -785,11 +785,11 @@ function QuotaSettingsTab() {
           onChange={(v) => set({ adRewardEnabled: v })}
         />
         <div className="grid gap-3 sm:grid-cols-3">
-          <NumberRow label="محاولات لكل إعلان" value={s.adBonusAttempts} min={1} max={10}
+          <QuotaNumberRow label="محاولات لكل إعلان" value={s.adBonusAttempts} min={1} max={10}
             disabled={!s.adRewardEnabled} onChange={(v) => set({ adBonusAttempts: v })} compact />
-          <NumberRow label="الحد الأقصى يومياً" value={s.adMaxDaily} min={0} max={50}
+          <QuotaNumberRow label="الحد الأقصى يومياً" value={s.adMaxDaily} min={0} max={50}
             disabled={!s.adRewardEnabled} onChange={(v) => set({ adMaxDaily: v })} compact />
-          <NumberRow label="مدة الإعلان (ثانية)" value={s.adSeconds} min={5} max={60}
+          <QuotaNumberRow label="مدة الإعلان (ثانية)" value={s.adSeconds} min={5} max={60}
             disabled={!s.adRewardEnabled} onChange={(v) => set({ adSeconds: v })} compact />
         </div>
       </div>
@@ -797,7 +797,7 @@ function QuotaSettingsTab() {
   );
 }
 
-function ToggleRow({ label, desc, checked, onChange }: { label: string; desc?: string; checked: boolean; onChange: (v: boolean) => void }) {
+function QuotaToggleRow({ label, desc, checked, onChange }: { label: string; desc?: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <label className="flex items-start gap-3 cursor-pointer">
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
@@ -810,7 +810,7 @@ function ToggleRow({ label, desc, checked, onChange }: { label: string; desc?: s
   );
 }
 
-function NumberRow({ label, value, min, max, onChange, disabled, compact }: {
+function QuotaNumberRow({ label, value, min, max, onChange, disabled, compact }: {
   label: string; value: number; min: number; max: number; onChange: (v: number) => void; disabled?: boolean; compact?: boolean;
 }) {
   return (
