@@ -2,10 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo, useState } from "react";
-import { ShoppingBag, Crown, MessageCircle, Sofa, Shirt, Sparkles } from "lucide-react";
+import { ShoppingBag, Crown, MessageCircle, Sofa, Shirt, Sparkles, Cuboid, Scissors } from "lucide-react";
 import { CampaignSection } from "@/components/CampaignSection";
 import { useSettings } from "@/lib/settings";
 import { usePricing } from "@/lib/platform";
+import { useVendorStore, DEFAULT_VENDOR_STATE } from "@/lib/vendor-config";
+import { useStr } from "@/lib/cms-strings";
 
 type Vendor = {
   id: string; business_name: string; category: string;
@@ -30,6 +32,11 @@ function Marketplace() {
   const [settings] = useSettings();
   const { data: pricing } = usePricing();
   const currency = pricing?.currency ?? settings.currency;
+  const [vendorStore] = useVendorStore();
+  const title2 = useStr("marketplace.title_2");
+  const tabDecor = useStr("marketplace.tab_decor");
+  const tabFashion = useStr("marketplace.tab_fashion");
+  const emptyTxt = useStr("marketplace.empty");
 
   const { data, isLoading } = useQuery({
     queryKey: ["vendors"],
@@ -55,10 +62,16 @@ function Marketplace() {
     },
   });
 
+  // فلترة الاشتراك: أخفِ الشركاء المُعطّلين من المالك
+  const activeVendors = useMemo(() => {
+    return (data ?? []).filter((v) => (vendorStore[v.id] ?? DEFAULT_VENDOR_STATE).subscription_active);
+  }, [data, vendorStore]);
+
   const filtered = useMemo(() => {
     const cats = tab === "decor" ? DECOR_CATS : FASHION_CATS;
-    return (data ?? []).filter((v) => cats.includes(v.category));
-  }, [data, tab]);
+    return activeVendors.filter((v) => cats.includes(v.category));
+  }, [activeVendors, tab]);
+
 
   return (
     <div className="min-h-screen bg-background px-5 py-8" dir="rtl">
@@ -66,7 +79,7 @@ function Marketplace() {
         <Link to="/workflow" className="text-sm font-bold text-primary hover:underline">← الوحدات</Link>
         <div>
           <h1 className="mt-1 text-3xl font-black text-foreground">
-            سوق <span className="text-primary">شركاء الديكور والأزياء</span>
+            {useStr("marketplace.title_1")} <span className="text-primary">{title2}</span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             تجربة فاخرة لاكتشاف أفضل شركاء المنطقة — تواصل مباشر مع المحل عبر واتساب.
@@ -75,12 +88,11 @@ function Marketplace() {
 
         <CampaignSection />
 
-        {/* Tabs */}
         <div className="inline-flex rounded-2xl border border-border bg-card p-1">
           <TabBtn active={tab === "decor"} onClick={() => setTab("decor")}
-            icon={<Sofa className="size-4" />} label="عالم الديكور والأثاث" />
+            icon={<Sofa className="size-4" />} label={tabDecor} />
           <TabBtn active={tab === "fashion"} onClick={() => setTab("fashion")}
-            icon={<Shirt className="size-4" />} label="عالم الأزياء والموضة" />
+            icon={<Shirt className="size-4" />} label={tabFashion} />
         </div>
 
         {isLoading && <p className="text-center text-muted-foreground">…تحميل</p>}
@@ -88,16 +100,17 @@ function Marketplace() {
         {!isLoading && filtered.length === 0 && (
           <div className="rounded-3xl border-2 border-dashed border-border p-10 text-center">
             <ShoppingBag className="mx-auto size-10 text-muted-foreground" />
-            <p className="mt-3 font-bold">لا يوجد شركاء في هذا العالم بعد</p>
+            <p className="mt-3 font-bold">{emptyTxt}</p>
             <p className="mt-1 text-sm text-muted-foreground">أضف شركاء من لوحة الأدمن لعرضهم هنا.</p>
           </div>
         )}
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((v) => (
-            <VendorCard key={v.id} v={v} />
+            <VendorCard key={v.id} v={v} state={vendorStore[v.id] ?? DEFAULT_VENDOR_STATE} />
           ))}
         </div>
+
 
         {products && products.length > 0 && (
           <section className="pt-4">
@@ -138,11 +151,12 @@ function TabBtn({ active, onClick, icon, label }:
   );
 }
 
-function VendorCard({ v }: { v: Vendor }) {
+function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolean; fashion: boolean; haircut: boolean }; subscription_active: boolean; brand_badge?: string } }) {
   const catLabel: Record<string, string> = {
     curtains: "ستائر فاخرة", sofa: "كنب وأرائك", furniture: "أثاث منزلي",
     fashion: "أزياء وموضة", other: "متنوع",
   };
+  const mods = state.modules;
   return (
     <div className={`group relative overflow-hidden rounded-3xl border bg-card p-5 transition hover:-translate-y-1 hover:shadow-soft ${
       v.is_premium ? "border-primary/60 shadow-[0_0_0_1px_var(--primary)/10]" : "border-border"
@@ -152,7 +166,7 @@ function VendorCard({ v }: { v: Vendor }) {
           <div className="pointer-events-none absolute inset-0 opacity-20"
             style={{ background: "radial-gradient(circle at top left, var(--primary), transparent 60%)" }} />
           <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[10px] font-black text-primary-foreground shadow-soft">
-            <Crown className="size-3" /> شريك مميّز
+            <Crown className="size-3" /> {state.brand_badge || "شريك مميّز"}
           </span>
         </>
       )}
@@ -169,6 +183,13 @@ function VendorCard({ v }: { v: Vendor }) {
           <p className="text-xs text-muted-foreground">{catLabel[v.category] ?? v.category}</p>
         </div>
       </div>
+
+      <div className="relative mt-3 flex flex-wrap gap-1.5">
+        {mods.decor && <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"><Cuboid className="size-3" /> ديكور</span>}
+        {mods.fashion && <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"><Shirt className="size-3" /> أزياء AI</span>}
+        {mods.haircut && <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"><Scissors className="size-3" /> قصّات AI</span>}
+      </div>
+
       <a href={`https://wa.me/${v.whatsapp_number}`} target="_blank" rel="noreferrer"
         className="relative mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
         <MessageCircle className="size-4" /> تواصل واتساب

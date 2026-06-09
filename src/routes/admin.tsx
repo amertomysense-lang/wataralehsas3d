@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal, Type, ToggleLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/AdminGate";
@@ -10,6 +10,8 @@ import { useRegions, usePricing, type Region, type Order } from "@/lib/platform"
 import { exportPlatformSnapshot } from "@/lib/export-snapshot";
 import { parseCSV } from "@/lib/csv-import";
 import { useSettings, DEFAULT_SETTINGS, SYRIAN_PROVINCES, CURRENCY_OPTIONS, type PlatformSettings } from "@/lib/settings";
+import { useCmsStrings, DEFAULT_STRINGS } from "@/lib/cms-strings";
+import { useVendorStore, DEFAULT_VENDOR_STATE, type VendorState } from "@/lib/vendor-config";
 
 
 export const Route = createFileRoute("/admin")({
@@ -17,7 +19,7 @@ export const Route = createFileRoute("/admin")({
   component: () => <AdminGate title="لوحة تحكم المعرض"><AdminPage /></AdminGate>,
 });
 
-type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema";
+type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
@@ -57,6 +59,7 @@ function AdminPage() {
           <TabBtn icon={<ShoppingBag className="size-4" />} label="الطلبات" active={tab === "orders"} onClick={() => setTab("orders")} />
           <TabBtn icon={<SettingsIcon className="size-4" />} label="إعدادات شاملة" active={tab === "settings"} onClick={() => setTab("settings")} />
           <TabBtn icon={<SlidersHorizontal className="size-4" />} label="Schema Controller" active={tab === "schema"} onClick={() => setTab("schema")} />
+          <TabBtn icon={<Type className="size-4" />} label="نصوص الموقع (CMS)" active={tab === "cms"} onClick={() => setTab("cms")} />
         </div>
 
         {tab === "products" && <ProductsTab />}
@@ -66,6 +69,7 @@ function AdminPage() {
         {tab === "orders" && <OrdersTab />}
         {tab === "settings" && <GlobalSettingsTab />}
         {tab === "schema" && <SchemaControllerTab />}
+        {tab === "cms" && <CmsStringsTab />}
       </div>
     </div>
   );
@@ -619,19 +623,119 @@ function VendorsTab() {
         </div>
 
         <div className="space-y-2">
-          {vendors?.map(v => (
-            <div key={v.id} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3">
-              {v.logo_url && <img src={v.logo_url} className="size-10 rounded-lg object-cover bg-muted" />}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold">{v.business_name} {v.is_premium && <span className="text-[10px] text-primary">★</span>}</p>
-                <p className="text-[11px] text-muted-foreground" dir="ltr">{v.category} · {v.whatsapp_number}</p>
+          {vendors?.map(v => <VendorRowEditor key={v.id} v={v} onEdit={() => { setEditing(v.id); setForm({ business_name: v.business_name, category: v.category, whatsapp_number: v.whatsapp_number, logo_url: v.logo_url ?? "", is_premium: v.is_premium, region_id: v.region_id ?? "" }); }} onRemove={() => remove(v.id)} />)}
+          {(!vendors || vendors.length === 0) && <p className="text-center text-xs text-muted-foreground py-6">لا شركاء بعد. أضف أول شريك ليظهر في السوق.</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VendorRowEditor({ v, onEdit, onRemove }: { v: VendorRow; onEdit: () => void; onRemove: () => void }) {
+  const [store, setOne] = useVendorStore();
+  const state: VendorState = store[v.id] ?? DEFAULT_VENDOR_STATE;
+  const toggleMod = (k: keyof VendorState["modules"]) => setOne(v.id, { ...state, modules: { ...state.modules, [k]: !state.modules[k] } });
+  const toggleSub = () => setOne(v.id, { ...state, subscription_active: !state.subscription_active });
+
+  return (
+    <div className={`rounded-xl border bg-background p-3 ${state.subscription_active ? "border-border" : "border-destructive/40 opacity-70"}`}>
+      <div className="flex items-center gap-3">
+        {v.logo_url && <img src={v.logo_url} className="size-10 rounded-lg object-cover bg-muted" />}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold">{v.business_name} {v.is_premium && <span className="text-[10px] text-primary">★</span>}</p>
+          <p className="text-[11px] text-muted-foreground" dir="ltr">{v.category} · {v.whatsapp_number}</p>
+        </div>
+        <button onClick={onEdit} className="rounded-lg bg-muted p-2"><Edit3 className="size-3.5" /></button>
+        <button onClick={onRemove} className="rounded-lg bg-destructive/10 p-2 text-destructive"><Trash2 className="size-3.5" /></button>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="text-[10px] font-bold text-muted-foreground">الوحدات:</span>
+        <ModBtn label="ديكور" on={state.modules.decor} onClick={() => toggleMod("decor")} />
+        <ModBtn label="أزياء AI" on={state.modules.fashion} onClick={() => toggleMod("fashion")} />
+        <ModBtn label="قصّات AI" on={state.modules.haircut} onClick={() => toggleMod("haircut")} />
+        <span className="ml-auto" />
+        <button onClick={toggleSub}
+          className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-black ${state.subscription_active ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"}`}>
+          <ToggleLeft className="size-3" /> اشتراك {state.subscription_active ? "مفعّل (ظاهر)" : "موقوف (مخفي)"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ModBtn({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick}
+      className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold transition ${on ? "border-primary bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>
+      {on ? "✓" : "○"} {label}
+    </button>
+  );
+}
+
+/* ============ CMS Strings — Zero-Code Content Editor ============ */
+function CmsStringsTab() {
+  const [strings, setStrings] = useCmsStrings();
+  const [draft, setDraft] = useState<Record<string, string>>(strings);
+  const [filter, setFilter] = useState("");
+  const [newKey, setNewKey] = useState("");
+  const [newVal, setNewVal] = useState("");
+
+  // مزامنة عند تغيّر فعلي
+  if (Object.keys(draft).length === 0 && Object.keys(strings).length > 0) setDraft(strings);
+
+  const keys = Object.keys({ ...DEFAULT_STRINGS, ...draft }).filter(k => k.includes(filter) || (draft[k] ?? "").includes(filter));
+
+  function update(k: string, v: string) { setDraft({ ...draft, [k]: v }); }
+  function remove(k: string) {
+    const next = { ...draft }; delete next[k]; setDraft(next);
+  }
+  function save() { setStrings(draft); toast.success("تم حفظ نصوص الموقع — تظهر فوراً"); }
+  function reset() { setDraft(DEFAULT_STRINGS); setStrings(DEFAULT_STRINGS); toast.info("استعادة افتراضية"); }
+  function add() {
+    if (!newKey.trim()) return;
+    setDraft({ ...draft, [newKey.trim()]: newVal });
+    setNewKey(""); setNewVal("");
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-black">محرّر نصوص الموقع (Zero-Code CMS)</h2>
+            <p className="text-xs text-muted-foreground mt-1">عدّل أي زر، عنوان، أو وصف عربي دون لمس الكود — يطبّق فوراً.</p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={save} className="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground"><Save className="inline size-3" /> حفظ</button>
+            <button onClick={reset} className="rounded-lg bg-muted px-3 py-1.5 text-xs font-bold">استعادة</button>
+          </div>
+        </div>
+
+        <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="بحث بالمفتاح أو النص…"
+          className="w-full rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          {keys.map((k) => (
+            <div key={k} className="rounded-xl border border-border bg-background p-3">
+              <div className="flex items-center justify-between gap-2">
+                <code className="text-[10px] font-bold text-primary">{k}</code>
+                <button onClick={() => remove(k)} className="text-destructive"><Trash2 className="size-3" /></button>
               </div>
-              <button onClick={() => { setEditing(v.id); setForm({ business_name: v.business_name, category: v.category, whatsapp_number: v.whatsapp_number, logo_url: v.logo_url ?? "", is_premium: v.is_premium, region_id: v.region_id ?? "" }); }}
-                className="rounded-lg bg-muted p-2"><Edit3 className="size-3.5" /></button>
-              <button onClick={() => remove(v.id)} className="rounded-lg bg-destructive/10 p-2 text-destructive"><Trash2 className="size-3.5" /></button>
+              <textarea rows={2} value={draft[k] ?? DEFAULT_STRINGS[k] ?? ""} onChange={(e) => update(k, e.target.value)}
+                className="mt-1 w-full rounded-lg bg-muted px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-ring" />
             </div>
           ))}
-          {(!vendors || vendors.length === 0) && <p className="text-center text-xs text-muted-foreground py-6">لا شركاء بعد. أضف أول شريك ليظهر في السوق.</p>}
+        </div>
+      </div>
+
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-2">
+        <h3 className="text-sm font-black">إضافة مفتاح نصي جديد</h3>
+        <div className="grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
+          <input value={newKey} onChange={(e) => setNewKey(e.target.value)} placeholder="مثال: home.cta_extra"
+            className="rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <input value={newVal} onChange={(e) => setNewVal(e.target.value)} placeholder="النص المعروض"
+            className="rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <button onClick={add} className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"><Plus className="inline size-3" /> إضافة</button>
         </div>
       </div>
     </div>
