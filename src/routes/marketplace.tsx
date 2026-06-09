@@ -9,6 +9,7 @@ import { usePricing } from "@/lib/platform";
 import { useVendorStore, DEFAULT_VENDOR_STATE } from "@/lib/vendor-config";
 import { useStr } from "@/lib/cms-strings";
 import { PriceOrTrialBadge } from "@/components/BatchImageUploader";
+import { useCategories, idsForTab, labelOf } from "@/lib/categories";
 
 type Vendor = {
   id: string; name: string; category: string;
@@ -20,9 +21,6 @@ type Product = {
   id: string; title: string; type: string | null;
   image_url: string; price: number | null;
 };
-
-const DECOR_CATS = ["curtains", "sofa", "furniture", "other"];
-const FASHION_CATS = ["fashion"];
 
 export const Route = createFileRoute("/marketplace")({
   head: () => ({ meta: [{ title: "سوق الشركاء — وتر الإحساس" }] }),
