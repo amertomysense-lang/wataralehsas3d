@@ -62,7 +62,7 @@ function Simulator() {
       width, height, embossed,
       designName: active?.name ?? "تصميم مخصص",
       designUrl: active?.url ?? "",
-      total: grandTotal, currency: pricing.currency,
+      total: grandTotal, currency,
     });
     const r = await insertOrderOrQueue({
       region_id: region.id, region_name: region.name,
@@ -84,6 +84,10 @@ function Simulator() {
           <h1 className="text-sm font-black text-foreground">محاكي الجدران والأرضيات</h1>
           <span className="w-12" />
         </div>
+      </div>
+
+      <div className="mx-auto max-w-6xl px-5 pt-6">
+        <CampaignSection compact />
       </div>
 
       <div className="mx-auto grid max-w-6xl gap-5 px-5 py-6 lg:grid-cols-[1fr_360px]">
