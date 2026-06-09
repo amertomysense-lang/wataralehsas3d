@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Cuboid, ShoppingBag, Shirt, ArrowLeft } from "lucide-react";
+import { Cuboid, ShoppingBag, Shirt, Scissors, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/workflow")({
   head: () => ({ meta: [{ title: "اختر تجربتك — وتر الإحساس" }] }),
@@ -9,10 +9,12 @@ export const Route = createFileRoute("/workflow")({
 const modules = [
   { to: "/simulator" as const, icon: <Cuboid className="size-7" />, title: "محاكي الجدران والأرضيات",
     desc: "ارفع صورة الغرفة وجرّب طبقات الخط العربي، الرخام، الإيبوكسي وكسر الجدران 3D.", badge: "Module A" },
-  { to: "/marketplace" as const, icon: <ShoppingBag className="size-7" />, title: "سوق شركاء الديكور",
-    desc: "ستائر، أرائك وأثاث من شركاء معتمدين تُدمج فوق محاكاة الجدار مباشرة.", badge: "Module B" },
+  { to: "/marketplace" as const, icon: <ShoppingBag className="size-7" />, title: "سوق شركاء الديكور والأزياء",
+    desc: "ستائر، أرائك، أثاث وبوتيكات أزياء من شركاء معتمدين.", badge: "Module B" },
   { to: "/tryon" as const, icon: <Shirt className="size-7" />, title: "غرفة تجربة الأزياء AI",
-    desc: "ارفع صورتك واختر قطعة من بوتيك الشريك — ترى النتيجة فوراً وتحجزها عبر واتساب.", badge: "Module C" },
+    desc: "ارفع صورتك واختر قطعة من بوتيك الشريك — ترى النتيجة فوراً.", badge: "Module C" },
+  { to: "/haircut" as const, icon: <Scissors className="size-7" />, title: "تجربة قصات الشعر AI",
+    desc: "للرجال والنساء — اختر قصّة ولون شعر وشاهد نفسك قبل الصالون.", badge: "Module E" },
 ];
 
 function Workflow() {
@@ -23,9 +25,9 @@ function Workflow() {
         <h1 className="mt-4 text-3xl sm:text-4xl font-black text-foreground">
           اختر <span className="text-primary">تجربتك</span>
         </h1>
-        <p className="mt-2 text-muted-foreground">ثلاث وحدات احترافية — كلٌ منها تعمل بشكل مستقل.</p>
+        <p className="mt-2 text-muted-foreground">أربع وحدات احترافية — كلٌ منها تعمل بشكل مستقل.</p>
 
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {modules.map((m) => (
             <Link key={m.to} to={m.to}
               className="group relative overflow-hidden rounded-3xl border border-border bg-card p-6 transition hover:-translate-y-1 hover:border-primary/50 hover:shadow-soft">
