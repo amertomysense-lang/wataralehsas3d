@@ -13,7 +13,7 @@ export const Route = createFileRoute("/vendor")({
 });
 
 type Vendor = {
-  id: string; business_name: string; category: string; whatsapp_number: string;
+  id: string; name: string; category: string; phone: string;
   logo_url: string | null; cover_image?: string | null; video_url?: string | null;
   map_location?: string | null; bio?: string | null; login_token?: string | null;
   subscription_status?: string | null; is_premium: boolean;
@@ -117,7 +117,7 @@ function VendorDashboard({ vendorId }: { vendorId: string }) {
           <div className="flex items-center gap-2">
             <Store className="size-5 text-primary" />
             <div>
-              <p className="text-sm font-black">{vendor.business_name}</p>
+              <p className="text-sm font-black">{vendor.name}</p>
               <p className="text-[10px] text-muted-foreground">لوحة تحكم الشريك</p>
             </div>
           </div>
@@ -135,7 +135,7 @@ function VendorDashboard({ vendorId }: { vendorId: string }) {
         )}
 
         <div className="rounded-3xl p-6 text-primary-foreground shadow-soft" style={{ background: "var(--gradient-hero)" }}>
-          <h1 className="text-xl font-black">أهلاً، {vendor.business_name}</h1>
+          <h1 className="text-xl font-black">أهلاً، {vendor.name}</h1>
           <p className="mt-1 text-sm opacity-90">أنت تدير معرضك بنفسك — التغييرات تنعكس فوراً في صفحة السوق.</p>
         </div>
 
@@ -167,8 +167,8 @@ function TabBtn({ label, active, onClick, icon }: { label: string; active: boole
 /* ============ بطاقة المعرض ============ */
 function ProfileTab({ vendor, onSaved }: { vendor: Vendor; onSaved: () => void }) {
   const [form, setForm] = useState({
-    business_name: vendor.business_name,
-    whatsapp_number: vendor.whatsapp_number,
+    name: vendor.name,
+    phone: vendor.phone,
     bio: vendor.bio ?? "",
     logo_url: vendor.logo_url ?? "",
     cover_image: vendor.cover_image ?? "",
@@ -194,10 +194,10 @@ function ProfileTab({ vendor, onSaved }: { vendor: Vendor; onSaved: () => void }
       )}
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="اسم المعرض">
-          <input value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} className="input" />
+          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input" />
         </Field>
         <Field label="رقم الواتساب">
-          <input value={form.whatsapp_number} dir="ltr" onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })} className="input" />
+          <input value={form.phone} dir="ltr" onChange={(e) => setForm({ ...form, phone: e.target.value })} className="input" />
         </Field>
         <Field label="رابط الشعار">
           <input value={form.logo_url} dir="ltr" onChange={(e) => setForm({ ...form, logo_url: e.target.value })} className="input" />
@@ -260,7 +260,7 @@ function ProductsTab({ vendor }: { vendor: Vendor }) {
     if (vendor.category === "fashion") {
       const { error } = await supabase.from("fashion_items").insert({
         vendor_id: vendor.id, item_name: form.name, image_url: form.image_url,
-        price: form.price ? Number(form.price) : null, vendor_whatsapp: vendor.whatsapp_number,
+        price: form.price ? Number(form.price) : null, vendor_whatsapp: vendor.phone,
       });
       if (error) { toast.error(error.message); return; }
     } else {
@@ -328,7 +328,7 @@ function BatchUploadToProducts({ vendor }: { vendor: Vendor }) {
     if (fashion) {
       const rows = items.map((it) => ({
         vendor_id: vendor.id, item_name: it.name || "تصميم", image_url: it.dataUrl,
-        price: null, vendor_whatsapp: vendor.whatsapp_number,
+        price: null, vendor_whatsapp: vendor.phone,
       }));
       const { error } = await supabase.from("fashion_items").insert(rows);
       if (error) throw error;

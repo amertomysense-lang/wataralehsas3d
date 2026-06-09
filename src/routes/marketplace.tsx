@@ -47,7 +47,7 @@ function Marketplace() {
         .from("vendors")
         .select("*")
         .order("is_premium", { ascending: false })
-        .order("business_name");
+        .order("name");
       if (error) return [];
       return (data ?? []) as Vendor[];
     },

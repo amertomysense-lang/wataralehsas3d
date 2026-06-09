@@ -7,7 +7,7 @@ import { useOnlineSync } from "@/lib/offline-sync";
 import { useVendorStore, DEFAULT_VENDOR_STATE } from "@/lib/vendor-config";
 
 type Vendor = {
-  id: string; business_name: string; category: string; whatsapp_number: string;
+  id: string; name: string; category: string; phone: string;
   logo_url: string | null; cover_image?: string | null; is_premium: boolean;
   subscription_status?: string | null;
 };
@@ -177,14 +177,14 @@ function WingDrawer({ wingKey, onClose }: { wingKey: WingKey; onClose: () => voi
             <div className="grid gap-3 sm:grid-cols-2">
               {active.map((v) => (
                 <div key={v.id} className="overflow-hidden rounded-2xl border border-border bg-card">
-                  {v.cover_image && <img src={v.cover_image} alt={v.business_name} className="h-28 w-full object-cover" />}
+                  {v.cover_image && <img src={v.cover_image} alt={v.name} className="h-28 w-full object-cover" />}
                   <div className="flex items-center gap-3 p-3">
                     {v.logo_url && <img src={v.logo_url} alt="" className="size-10 rounded-xl object-cover" />}
                     <div className="flex-1 min-w-0">
-                      <p className="line-clamp-1 text-sm font-black">{v.business_name}</p>
+                      <p className="line-clamp-1 text-sm font-black">{v.name}</p>
                       {v.is_premium && <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary"><Crown className="size-3" /> Premium</span>}
                     </div>
-                    <a href={`https://wa.me/${v.whatsapp_number.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer"
+                    <a href={`https://wa.me/${v.phone.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer"
                       className="rounded-xl bg-primary/10 p-2 text-primary"><MessageCircle className="size-4" /></a>
                   </div>
                 </div>
