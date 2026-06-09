@@ -79,7 +79,7 @@ function Marketplace() {
         <Link to="/workflow" className="text-sm font-bold text-primary hover:underline">← الوحدات</Link>
         <div>
           <h1 className="mt-1 text-3xl font-black text-foreground">
-            سوق <span className="text-primary">شركاء الديكور والأزياء</span>
+            {useStr("marketplace.title_1")} <span className="text-primary">{title2}</span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             تجربة فاخرة لاكتشاف أفضل شركاء المنطقة — تواصل مباشر مع المحل عبر واتساب.
@@ -88,12 +88,11 @@ function Marketplace() {
 
         <CampaignSection />
 
-        {/* Tabs */}
         <div className="inline-flex rounded-2xl border border-border bg-card p-1">
           <TabBtn active={tab === "decor"} onClick={() => setTab("decor")}
-            icon={<Sofa className="size-4" />} label="عالم الديكور والأثاث" />
+            icon={<Sofa className="size-4" />} label={tabDecor} />
           <TabBtn active={tab === "fashion"} onClick={() => setTab("fashion")}
-            icon={<Shirt className="size-4" />} label="عالم الأزياء والموضة" />
+            icon={<Shirt className="size-4" />} label={tabFashion} />
         </div>
 
         {isLoading && <p className="text-center text-muted-foreground">…تحميل</p>}
@@ -101,16 +100,17 @@ function Marketplace() {
         {!isLoading && filtered.length === 0 && (
           <div className="rounded-3xl border-2 border-dashed border-border p-10 text-center">
             <ShoppingBag className="mx-auto size-10 text-muted-foreground" />
-            <p className="mt-3 font-bold">لا يوجد شركاء في هذا العالم بعد</p>
+            <p className="mt-3 font-bold">{emptyTxt}</p>
             <p className="mt-1 text-sm text-muted-foreground">أضف شركاء من لوحة الأدمن لعرضهم هنا.</p>
           </div>
         )}
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((v) => (
-            <VendorCard key={v.id} v={v} />
+            <VendorCard key={v.id} v={v} state={vendorStore[v.id] ?? DEFAULT_VENDOR_STATE} />
           ))}
         </div>
+
 
         {products && products.length > 0 && (
           <section className="pt-4">
