@@ -13,6 +13,7 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { FloatingChat } from "../components/FloatingChat";
+import { SiteBackground } from "../components/SiteBackground";
 import { registerImageSW } from "../lib/register-sw";
 
 function NotFoundComponent() {
@@ -127,6 +128,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <SiteBackground />
       <Outlet />
       <FloatingChat />
       <Toaster position="top-center" richColors dir="rtl" />
