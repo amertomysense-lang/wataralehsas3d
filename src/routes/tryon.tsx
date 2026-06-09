@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { Upload, Shirt, Sparkles, MessageCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { consumeQuota, useQuota, DAILY_LIMIT } from "@/lib/quota";
+import { QuotaModal } from "@/components/QuotaModal";
 
 type FashionItem = {
   id: string; vendor_id: string | null; item_name: string;
@@ -21,6 +23,8 @@ function TryOn() {
   const [garment, setGarment] = useState<FashionItem | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [quotaOpen, setQuotaOpen] = useState(false);
+  const remaining = useQuota();
 
   const { data: items } = useQuery({
     queryKey: ["fashion_items"],
@@ -40,6 +44,7 @@ function TryOn() {
 
   async function runTryOn() {
     if (!person || !garment) { toast.error("ارفع صورتك واختر قطعة"); return; }
+    if (!consumeQuota()) { setQuotaOpen(true); return; }
     setBusy(true); setResult(null);
     try {
       const res = await fetch("/api/tryon", {
@@ -102,9 +107,13 @@ function TryOn() {
           </div>
         </div>
 
+        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-bold text-primary">
+          <Sparkles className="size-3.5" /> محاولات AI المتبقّية اليوم: {remaining}/{DAILY_LIMIT}
+        </div>
+
         <button onClick={runTryOn} disabled={busy || !person || !garment}
           className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-6 py-4 text-base font-black text-primary-foreground shadow-soft disabled:opacity-50">
-          {busy ? <><Loader2 className="size-5 animate-spin" /> جاري التجهيز…</> : <><Sparkles className="size-5" /> جرّبها افتراضياً</>}
+          {busy ? <><Loader2 className="size-5 animate-spin" /> جاري التجهيز…</> : <><Sparkles className="size-5" /> جرّبها افتراضياً ({remaining}/{DAILY_LIMIT})</>}
         </button>
 
         {result && (
@@ -125,6 +134,7 @@ function TryOn() {
           <Shirt className="mb-1 inline size-3.5" /> يستخدم نموذج IDM-VTON مفتوح المصدر عبر Replicate. للتفعيل أضف مفتاح <code>REPLICATE_API_TOKEN</code>.
         </p>
       </div>
+      <QuotaModal open={quotaOpen} onClose={() => setQuotaOpen(false)} />
     </div>
   );
 }

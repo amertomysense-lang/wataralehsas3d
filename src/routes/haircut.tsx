@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Upload, Loader2, Scissors, Sparkles } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { Upload, Loader2, Scissors, Sparkles, Download, RotateCcw, Move } from "lucide-react";
 import { toast } from "sonner";
 import { useStr } from "@/lib/cms-strings";
 import { supabase } from "@/integrations/supabase/client";
 import { readSettings } from "@/lib/settings";
+import { consumeQuota, useQuota, DAILY_LIMIT } from "@/lib/quota";
+import { QuotaModal } from "@/components/QuotaModal";
 
 export const Route = createFileRoute("/haircut")({
   head: () => ({ meta: [{ title: "تجربة قصات الشعر AI — وتر الإحساس" }] }),
@@ -33,24 +35,116 @@ const COLORS = [
   { id: "ash", label: "رمادي بارد", hex: "#9a9a9a" },
 ];
 
+type Tx = { x: number; y: number; scale: number; rotate: number };
+const INIT_TX: Tx = { x: 0, y: -40, scale: 1, rotate: 0 };
+
 function HaircutStudio() {
   const t = (k: string) => useStr(k);
   const [person, setPerson] = useState<string | null>(null);
   const [style, setStyle] = useState<Style | null>(null);
   const [color, setColor] = useState(COLORS[0]);
   const [gender, setGender] = useState<"m" | "f" | "u">("u");
+  const [tx, setTx] = useState<Tx>(INIT_TX);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [quotaOpen, setQuotaOpen] = useState(false);
+  const remaining = useQuota();
+
+  const stageRef = useRef<HTMLDivElement>(null);
+  const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const startDist = useRef(0);
+  const startTx = useRef<Tx>(INIT_TX);
+  const startMid = useRef({ x: 0, y: 0 });
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]; if (!f) return;
     const r = new FileReader();
-    r.onload = () => setPerson(r.result as string);
+    r.onload = () => { setPerson(r.result as string); setTx(INIT_TX); setResult(null); };
     r.readAsDataURL(f);
   }
 
-  async function run() {
+  function onPointerDown(e: React.PointerEvent) {
+    (e.target as Element).setPointerCapture(e.pointerId);
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    startTx.current = tx;
+    if (pointers.current.size === 2) {
+      const [a, b] = Array.from(pointers.current.values());
+      startDist.current = Math.hypot(a.x - b.x, a.y - b.y);
+      startMid.current = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    } else {
+      startMid.current = { x: e.clientX, y: e.clientY };
+    }
+  }
+  function onPointerMove(e: React.PointerEvent) {
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size === 2) {
+      const [a, b] = Array.from(pointers.current.values());
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      const s = startDist.current ? d / startDist.current : 1;
+      setTx({
+        ...startTx.current,
+        scale: Math.max(0.3, Math.min(3, startTx.current.scale * s)),
+        x: startTx.current.x + (mid.x - startMid.current.x),
+        y: startTx.current.y + (mid.y - startMid.current.y),
+      });
+    } else if (pointers.current.size === 1) {
+      setTx({
+        ...startTx.current,
+        x: startTx.current.x + (e.clientX - startMid.current.x),
+        y: startTx.current.y + (e.clientY - startMid.current.y),
+      });
+    }
+  }
+  function onPointerUp(e: React.PointerEvent) {
+    pointers.current.delete(e.pointerId);
+  }
+  function onWheel(e: React.WheelEvent) {
+    e.preventDefault();
+    setTx((p) => ({ ...p, scale: Math.max(0.3, Math.min(3, p.scale * (e.deltaY < 0 ? 1.08 : 0.93))) }));
+  }
+
+  async function exportCanvas() {
     if (!person || !style) { toast.error("ارفع صورة واختر قصّة"); return; }
+    setBusy(true);
+    try {
+      const stage = stageRef.current!;
+      const W = stage.clientWidth, H = stage.clientHeight;
+      const canvas = document.createElement("canvas");
+      canvas.width = W * 2; canvas.height = H * 2;
+      const ctx = canvas.getContext("2d")!;
+      ctx.scale(2, 2);
+
+      const personImg = await loadImg(person);
+      drawCover(ctx, personImg, 0, 0, W, H);
+
+      const hairImg = await loadImg(style.preview);
+      const hw = 280 * tx.scale, hh = 280 * tx.scale;
+      ctx.save();
+      ctx.translate(W / 2 + tx.x, H / 2 + tx.y);
+      ctx.rotate((tx.rotate * Math.PI) / 180);
+      ctx.globalAlpha = 0.92;
+      ctx.drawImage(hairImg, -hw / 2, -hh / 2, hw, hh);
+      // tint overlay
+      ctx.globalCompositeOperation = "multiply";
+      ctx.fillStyle = color.hex;
+      ctx.fillRect(-hw / 2, -hh / 2, hw, hh);
+      ctx.restore();
+
+      const url = canvas.toDataURL("image/jpeg", 0.92);
+      setResult(url);
+      const a = document.createElement("a");
+      a.href = url; a.download = `watar-haircut-${Date.now()}.jpg`; a.click();
+      toast.success("تم الحفظ — بدون أي استهلاك للسيرفر");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally { setBusy(false); }
+  }
+
+  async function runAI() {
+    if (!person || !style) { toast.error("ارفع صورة واختر قصّة"); return; }
+    if (!consumeQuota()) { setQuotaOpen(true); return; }
     setBusy(true); setResult(null);
     try {
       const res = await fetch("/api/haircut", {
@@ -81,29 +175,112 @@ function HaircutStudio() {
           <Scissors className="inline size-7 text-primary" /> {t("haircut.title_1")}{" "}
           <span className="text-primary">{t("haircut.title_2")}</span>
         </h1>
-        <p className="mt-2 text-muted-foreground">شاهد نفسك بقصة جديدة قبل الذهاب للصالون — للرجال والنساء.</p>
+        <p className="mt-2 text-muted-foreground">
+          محرّر فوري على جهازك — حرّك القصّة بإصبعك، كبّر وصغّر، بدون أي تكلفة سيرفر.
+        </p>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {/* Upload */}
+        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-bold text-primary">
+          <Sparkles className="size-3.5" />
+          محاولات AI المتبقّية اليوم: {remaining}/{DAILY_LIMIT}
+        </div>
+
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          {/* Stage */}
           <div className="rounded-3xl border border-border bg-card p-4">
-            <p className="mb-2 text-xs font-black text-primary">صورة الوجه</p>
-            <label className="relative block h-64 cursor-pointer overflow-hidden rounded-2xl bg-muted">
-              {person ? <img src={person} className="size-full object-cover" alt="" /> : (
-                <div className="grid size-full place-items-center text-center">
+            <p className="mb-2 text-xs font-black text-primary">معاينة فورية — اسحب ودبّس بإصبعين</p>
+            <div
+              ref={stageRef}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
+              onWheel={onWheel}
+              className="relative h-80 touch-none select-none overflow-hidden rounded-2xl bg-muted"
+              style={{ touchAction: "none" }}
+            >
+              {person ? (
+                <>
+                  <img src={person} alt="" className="size-full object-cover pointer-events-none" />
+                  {style && (
+                    <img
+                      src={style.preview}
+                      alt=""
+                      draggable={false}
+                      className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 object-contain"
+                      style={{
+                        transform: `translate(-50%, -50%) translate(${tx.x}px, ${tx.y}px) scale(${tx.scale}) rotate(${tx.rotate}deg)`,
+                        mixBlendMode: "multiply",
+                        filter: `drop-shadow(0 0 0 ${color.hex})`,
+                        opacity: 0.92,
+                      }}
+                    />
+                  )}
+                  {style && (
+                    <div
+                      className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 mix-blend-color"
+                      style={{
+                        transform: `translate(-50%, -50%) translate(${tx.x}px, ${tx.y}px) scale(${tx.scale}) rotate(${tx.rotate}deg)`,
+                        background: color.hex, opacity: 0.7,
+                        WebkitMaskImage: `url(${style.preview})`,
+                        WebkitMaskSize: "contain", WebkitMaskRepeat: "no-repeat", WebkitMaskPosition: "center",
+                        maskImage: `url(${style.preview})`,
+                        maskSize: "contain", maskRepeat: "no-repeat", maskPosition: "center",
+                      }}
+                    />
+                  )}
+                  {!style && (
+                    <div className="absolute inset-0 grid place-items-center text-xs text-muted-foreground">
+                      <span className="rounded-full bg-background/80 px-3 py-1.5 font-bold">اختر قصّة من اليسار</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <label className="grid size-full cursor-pointer place-items-center text-center">
                   <div>
                     <Upload className="mx-auto size-8 text-primary" />
                     <p className="mt-2 text-sm font-bold">{t("haircut.upload_hint")}</p>
                   </div>
-                </div>
+                  <input type="file" accept="image/*" className="hidden" onChange={onFile} />
+                </label>
               )}
-              <input type="file" accept="image/*" className="hidden" onChange={onFile} />
-            </label>
+            </div>
 
-            <div className="mt-3 inline-flex rounded-xl border border-border bg-background p-1 text-xs font-bold">
+            {person && (
+              <div className="mt-3 grid grid-cols-4 gap-2 text-xs font-bold">
+                <button onClick={() => setTx((p) => ({ ...p, scale: p.scale * 1.1 }))} className="rounded-lg border border-border py-1.5">+ تكبير</button>
+                <button onClick={() => setTx((p) => ({ ...p, scale: p.scale * 0.9 }))} className="rounded-lg border border-border py-1.5">− تصغير</button>
+                <button onClick={() => setTx((p) => ({ ...p, rotate: p.rotate + 10 }))} className="rounded-lg border border-border py-1.5">↻ دوران</button>
+                <button onClick={() => setTx(INIT_TX)} className="rounded-lg border border-border py-1.5 inline-flex items-center justify-center gap-1">
+                  <RotateCcw className="size-3" /> صفر
+                </button>
+              </div>
+            )}
+            {person && (
+              <label className="mt-3 inline-flex cursor-pointer items-center gap-2 text-xs font-bold text-primary">
+                <Move className="size-3.5" /> تغيير الصورة
+                <input type="file" accept="image/*" className="hidden" onChange={onFile} />
+              </label>
+            )}
+          </div>
+
+          {/* Styles + Colors */}
+          <div className="rounded-3xl border border-border bg-card p-4">
+            <div className="inline-flex rounded-xl border border-border bg-background p-1 text-xs font-bold">
               {([["u","الكل"],["m","رجال"],["f","نساء"]] as const).map(([g, l]) => (
                 <button key={g} onClick={() => setGender(g)}
                   className={`px-3 py-1.5 rounded-lg ${gender === g ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
                   {l}
+                </button>
+              ))}
+            </div>
+
+            <p className="mt-3 mb-2 text-xs font-black text-primary">القصّات الترند</p>
+            <div className="grid h-56 grid-cols-3 gap-2 overflow-y-auto">
+              {visible.map((s) => (
+                <button key={s.id} onClick={() => setStyle(s)}
+                  className={`relative overflow-hidden rounded-xl border-2 transition ${style?.id === s.id ? "border-primary" : "border-border"}`}>
+                  <img src={s.preview} alt={s.label} className="h-24 w-full object-cover" />
+                  <p className="truncate px-1 py-1 text-[10px] font-bold bg-background/80">{s.label}</p>
                 </button>
               ))}
             </div>
@@ -119,26 +296,18 @@ function HaircutStudio() {
               ))}
             </div>
           </div>
-
-          {/* Styles */}
-          <div className="rounded-3xl border border-border bg-card p-4">
-            <p className="mb-2 text-xs font-black text-primary">القصّات الترند</p>
-            <div className="grid h-80 grid-cols-3 gap-2 overflow-y-auto">
-              {visible.map((s) => (
-                <button key={s.id} onClick={() => setStyle(s)}
-                  className={`relative overflow-hidden rounded-xl border-2 transition ${style?.id === s.id ? "border-primary" : "border-border"}`}>
-                  <img src={s.preview} alt={s.label} className="h-24 w-full object-cover" />
-                  <p className="truncate px-1 py-1 text-[10px] font-bold bg-background/80">{s.label}</p>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
-        <button onClick={run} disabled={busy || !person || !style}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-6 py-4 text-base font-black text-primary-foreground shadow-soft disabled:opacity-50">
-          {busy ? <><Loader2 className="size-5 animate-spin" /> جاري التجهيز…</> : <><Sparkles className="size-5" /> {t("haircut.run")}</>}
-        </button>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <button onClick={exportCanvas} disabled={busy || !person || !style}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-primary bg-card px-6 py-4 text-base font-black text-primary disabled:opacity-50">
+            <Download className="size-5" /> حفظ المعاينة (مجاناً)
+          </button>
+          <button onClick={runAI} disabled={busy || !person || !style}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-6 py-4 text-base font-black text-primary-foreground shadow-soft disabled:opacity-50">
+            {busy ? <><Loader2 className="size-5 animate-spin" /> جاري…</> : <><Sparkles className="size-5" /> توليد AI واقعي ({remaining}/{DAILY_LIMIT})</>}
+          </button>
+        </div>
 
         {result && (
           <div className="mt-6 rounded-3xl border border-primary/30 bg-card p-4">
@@ -148,9 +317,26 @@ function HaircutStudio() {
         )}
 
         <p className="mt-6 rounded-2xl bg-accent/10 px-4 py-3 text-xs text-accent leading-relaxed">
-          يعمل عبر Replicate — أضف <code>REPLICATE_API_TOKEN</code> ويمكن تخصيص النموذج عبر <code>REPLICATE_HAIRCUT_VERSION</code>.
+          المعاينة الفورية تعمل بالكامل على جهازك (Canvas/Mask) — بدون سيرفر. التوليد الواقعي عبر AI يستخدم Replicate
+          ويخضع للحدّ المجاني اليومي.
         </p>
       </div>
+      <QuotaModal open={quotaOpen} onClose={() => setQuotaOpen(false)} />
     </div>
   );
+}
+
+function loadImg(src: string): Promise<HTMLImageElement> {
+  return new Promise((res, rej) => {
+    const i = new Image(); i.crossOrigin = "anonymous";
+    i.onload = () => res(i); i.onerror = rej; i.src = src;
+  });
+}
+
+function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
+  const ir = img.width / img.height, br = w / h;
+  let sx = 0, sy = 0, sw = img.width, sh = img.height;
+  if (ir > br) { sw = img.height * br; sx = (img.width - sw) / 2; }
+  else { sh = img.width / br; sy = (img.height - sh) / 2; }
+  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
