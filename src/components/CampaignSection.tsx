@@ -18,7 +18,7 @@ export function CampaignSection({ compact = false }: { compact?: boolean }) {
           "radial-gradient(circle at 0% 0%, oklch(0.78 0.16 75 / 0.18) 0, transparent 50%), radial-gradient(circle at 100% 100%, oklch(0.7 0.14 55 / 0.15) 0, transparent 50%)",
       }} />
       <div className="relative">
-        <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary">
+        <div className="badge-gold">
           <Sparkles className="size-3.5" /> حملة إطلاق أبو وتر · قريباً جداً
         </div>
         <h2 className={`mt-4 font-black leading-tight bg-gradient-to-l from-primary via-primary-glow to-accent bg-clip-text text-transparent ${compact ? "text-xl sm:text-2xl" : "text-2xl sm:text-4xl"}`}>
