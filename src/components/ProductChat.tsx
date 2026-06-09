@@ -50,7 +50,7 @@ export function ProductChat({
           messages: next,
           productContext: {
             name: design.title,
-            description: null,
+            
             category: design.type,
             price: design.price,
           },
