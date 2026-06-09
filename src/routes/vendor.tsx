@@ -6,6 +6,7 @@ import { ArrowRight, KeyRound, LogOut, Save, Upload, Plus, Trash2, Image as Imag
 import { supabase } from "@/integrations/supabase/client";
 import { readVendorSession, setVendorSession, clearVendorSession } from "@/lib/vendor-config";
 import { BatchImageUploader, PriceOrTrialBadge, type BatchItem } from "@/components/BatchImageUploader";
+import { useCategories } from "@/lib/categories";
 
 export const Route = createFileRoute("/vendor")({
   head: () => ({ meta: [{ title: "بوابة الشركاء — وتر الإحساس" }] }),
@@ -307,15 +308,13 @@ function ProductsTab({ vendor }: { vendor: Vendor }) {
   );
 }
 
-const VENDOR_TYPE_LABELS: Record<string, string> = {
-  curtains: "ستائر", sofa: "كنب", furniture: "أثاث",
-  fashion: "أزياء", haircut: "قصّات شعر", other: "أخرى",
-};
-
 function BatchUploadToProducts({ vendor }: { vendor: Vendor }) {
   const qc = useQueryClient();
-  const TYPES = Object.keys(VENDOR_TYPE_LABELS);
-  const [type, setType] = useState<string>(vendor.category && TYPES.includes(vendor.category) ? vendor.category : "other");
+  const [cats] = useCategories();
+  const TYPES = cats.map((c) => c.id);
+  const [type, setType] = useState<string>(
+    vendor.category && TYPES.includes(vendor.category) ? vendor.category : (TYPES[0] ?? "other")
+  );
   async function handle(items: BatchItem[]) {
     if (!items.length) return;
     const rows = items.map((it) => ({
@@ -329,13 +328,13 @@ function BatchUploadToProducts({ vendor }: { vendor: Vendor }) {
   return (
     <div className="surface-card p-5 space-y-3">
       <h2 className="text-sm font-black">رفع جماعي ذكي (حتى 100 صورة)</h2>
-      <p className="text-[11px] text-muted-foreground">اختر النوع ثم اسحب الصور — تُضغط وتُرفع تلقائياً بدون أيّ بيانات إجبارية.</p>
+      <p className="text-[11px] text-muted-foreground">اختر الفئة ثم اسحب الصور — تُضغط وتُرفع تلقائياً بدون أيّ بيانات إجبارية.</p>
       <div className="flex flex-wrap gap-2">
-        {TYPES.map((c) => (
-          <button key={c} type="button" onClick={() => setType(c)}
+        {cats.map((c) => (
+          <button key={c.id} type="button" onClick={() => setType(c.id)}
             className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition ${
-              type === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary/50"
-            }`}>{VENDOR_TYPE_LABELS[c]}</button>
+              type === c.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary/50"
+            }`}>{c.label}</button>
         ))}
       </div>
       <BatchImageUploader onUploaded={handle} />
