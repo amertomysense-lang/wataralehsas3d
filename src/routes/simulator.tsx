@@ -163,6 +163,34 @@ function Simulator() {
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onUpload} />
           </div>
 
+          {/* AI Projection — إسقاط واقعي */}
+          <div className="mt-4 rounded-2xl border border-primary/30 bg-gradient-to-tr from-primary/5 via-card to-accent/5 p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 text-xs font-black text-primary">
+                <Wand2 className="size-4" /> الإسقاط الواقعي بالذكاء
+              </div>
+              <div className="ms-auto inline-flex rounded-lg bg-background p-1 text-[11px] font-bold">
+                {([["wall", "جدار"], ["floor", "أرضية"], ["ceiling", "سقف"]] as const).map(([k, l]) => (
+                  <button key={k} onClick={() => setSurface(k)}
+                    className={`px-2.5 py-1 rounded-md ${surface === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{l}</button>
+                ))}
+              </div>
+            </div>
+            <button onClick={runAiProjection} disabled={aiBusy || !bg || !active}
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-primary to-primary-glow px-4 py-3 text-sm font-black text-primary-foreground shadow-soft disabled:opacity-50">
+              {aiBusy ? <><Loader2 className="size-4 animate-spin" /> جارٍ الإسقاط الواقعي…</> : <><Wand2 className="size-4" /> ادمج بواقعية AI</>}
+            </button>
+            {aiResult && (
+              <div className="mt-3 overflow-hidden rounded-xl border border-primary/30">
+                <img src={aiResult} alt="result" className="w-full" />
+                <button onClick={downloadResult}
+                  className="inline-flex w-full items-center justify-center gap-2 bg-primary px-3 py-2 text-xs font-black text-primary-foreground">
+                  <Download className="size-3.5" /> تنزيل النتيجة
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="mt-4">
             <div className="mb-2 flex items-center gap-2 text-sm font-bold text-foreground">
               <Layers className="size-4 text-primary" /> الطبقات الجاهزة
