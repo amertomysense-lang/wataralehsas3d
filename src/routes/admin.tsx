@@ -148,7 +148,7 @@ function ProductsTab() {
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="text-sm font-black">المنتجات ({designs?.length ?? 0})</h2>
           <CSVImportButton
-            table="designs"
+            table="products"
             sample="name,description,image_url,category,price"
             map={(row) => ({
               name: row.name, description: row.description || null,
