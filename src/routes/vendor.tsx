@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ArrowRight, KeyRound, LogOut, Save, Upload, Plus, Trash2, Image as ImageIcon, MapPin, Video, Store, Edit3, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { readVendorSession, setVendorSession, clearVendorSession } from "@/lib/vendor-config";
+import { BatchImageUploader, PriceOrTrialBadge, type BatchItem } from "@/components/BatchImageUploader";
 
 export const Route = createFileRoute("/vendor")({
   head: () => ({ meta: [{ title: "بوابة الشركاء — وتر الإحساس" }] }),
