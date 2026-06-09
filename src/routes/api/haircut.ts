@@ -6,10 +6,12 @@ export const Route = createFileRoute("/api/haircut")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        try {
         const { person, style, color, hairstyle_url } = (await request.json()) as {
           person: string; style?: string; color?: string; hairstyle_url?: string;
         };
         if (!person) return json({ error: "missing person image" }, 400);
+
 
         const styleText = (style?.trim() || "modern stylish haircut").replace(/\s+/g, " ");
         const colorText = color?.trim() ? `, hair color: ${color.trim()}` : "";
