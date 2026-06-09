@@ -30,9 +30,10 @@ function AdminPage() {
             <ArrowRight className="size-4" /> المعرض
           </Link>
           <div className="flex items-center gap-3">
+            <CurrencyQuickSwitch />
             <button onClick={async () => { try { await exportPlatformSnapshot(); toast.success("تم تصدير لقطة المنصة"); } catch (e) { toast.error("فشل التصدير"); } }}
               className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/20">
-              <Download className="size-3.5" /> تصدير الكود/البيانات
+              <Download className="size-3.5" /> تصدير
             </button>
             <button onClick={() => { logoutAdmin(); location.reload(); }}
               className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive">
