@@ -23,6 +23,8 @@ function TryOn() {
   const [garment, setGarment] = useState<FashionItem | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [quotaOpen, setQuotaOpen] = useState(false);
+  const remaining = useQuota();
 
   const { data: items } = useQuery({
     queryKey: ["fashion_items"],
