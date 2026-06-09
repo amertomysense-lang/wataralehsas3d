@@ -187,7 +187,8 @@ function HaircutStudio() {
     } finally { setBusy(false); }
   }
 
-  const visible = STYLES.filter((s) => gender === "u" || s.gender === gender || s.gender === "u");
+  const allStyles = [...STYLES, ...customs];
+  const visible = allStyles.filter((s) => gender === "u" || s.gender === gender || s.gender === "u");
 
   return (
     <div className="min-h-screen bg-background px-5 py-8" dir="rtl">
@@ -257,13 +258,22 @@ function HaircutStudio() {
                   )}
                 </>
               ) : (
-                <label className="grid size-full cursor-pointer place-items-center text-center">
-                  <div>
-                    <Upload className="mx-auto size-8 text-primary" />
-                    <p className="mt-2 text-sm font-bold">{tUploadHint}</p>
+                <div className="grid size-full place-items-center text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <Upload className="size-8 text-primary" />
+                    <p className="text-sm font-bold">{tUploadHint}</p>
+                    <div className="flex gap-2">
+                      <label className="cursor-pointer rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground inline-flex items-center gap-1.5">
+                        <Upload className="size-3.5" /> من الاستوديو
+                        <input type="file" accept="image/*" className="hidden" onChange={onFile} />
+                      </label>
+                      <label className="cursor-pointer rounded-xl border-2 border-primary px-3 py-2 text-xs font-bold text-primary inline-flex items-center gap-1.5">
+                        <Camera className="size-3.5" /> التقط الآن
+                        <input type="file" accept="image/*" capture="environment" className="hidden" onChange={onFile} />
+                      </label>
+                    </div>
                   </div>
-                  <input type="file" accept="image/*" className="hidden" onChange={onFile} />
-                </label>
+                </div>
               )}
             </div>
 
@@ -278,10 +288,16 @@ function HaircutStudio() {
               </div>
             )}
             {person && (
-              <label className="mt-3 inline-flex cursor-pointer items-center gap-2 text-xs font-bold text-primary">
-                <Move className="size-3.5" /> تغيير الصورة
-                <input type="file" accept="image/*" className="hidden" onChange={onFile} />
-              </label>
+              <div className="mt-3 flex flex-wrap gap-3 text-xs font-bold text-primary">
+                <label className="inline-flex cursor-pointer items-center gap-1.5">
+                  <Move className="size-3.5" /> تغيير الصورة
+                  <input type="file" accept="image/*" className="hidden" onChange={onFile} />
+                </label>
+                <label className="inline-flex cursor-pointer items-center gap-1.5">
+                  <Camera className="size-3.5" /> التقط جديدة
+                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={onFile} />
+                </label>
+              </div>
             )}
           </div>
 
@@ -327,14 +343,31 @@ function HaircutStudio() {
           </button>
           <button onClick={runAI} disabled={busy || !person || !style}
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-6 py-4 text-base font-black text-primary-foreground shadow-soft disabled:opacity-50">
-            {busy ? <><Loader2 className="size-5 animate-spin" /> جاري…</> : <><Sparkles className="size-5" /> توليد AI واقعي ({remaining}/{DAILY_LIMIT})</>}
+            {busy ? <><Loader2 className="size-5 animate-spin" /> جاري…</> : <><Sparkles className="size-5" /> توليد AI واقعي ({remLabel})</>}
           </button>
         </div>
 
+        {readSettings().paidEnabled && !unlimited && (
+          <button onClick={() => setPayOpen(true)}
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-xs font-black text-primary">
+            <Wallet className="size-4" /> احصل على محاولات إضافية عبر شام كاش
+          </button>
+        )}
+
         {result && (
           <div className="mt-6 rounded-3xl border border-primary/30 bg-card p-4">
-            <p className="mb-2 text-sm font-bold text-primary">النتيجة</p>
+            <p className="mb-3 text-sm font-bold text-primary">النتيجة</p>
             <img src={result} alt="result" className="w-full rounded-2xl" />
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <button onClick={() => saveImageToDevice(result, `watar-haircut-${Date.now()}.jpg`)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-black text-primary-foreground">
+                <Download className="size-4" /> حفظ على الهاتف
+              </button>
+              <button onClick={() => shareImageWhatsApp(result, "إطلالتي الجديدة من وتر الإحساس ✨")}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-primary px-4 py-2.5 text-sm font-black text-primary">
+                <Share2 className="size-4" /> مشاركة
+              </button>
+            </div>
           </div>
         )}
 
@@ -344,6 +377,7 @@ function HaircutStudio() {
         </p>
       </div>
       <QuotaModal open={quotaOpen} onClose={() => setQuotaOpen(false)} />
+      <PaymentModal open={payOpen} onClose={() => setPayOpen(false)} />
     </div>
   );
 }
