@@ -80,10 +80,15 @@ export const Route = createFileRoute("/api/haircut")({
           const j = await p.json();
           status = j.status; out = j.output;
         }
-        if (status !== "succeeded") return json({ error: `status=${status}` }, 500);
+        if (status !== "succeeded") return json({ error: `status=${status}`, fallback: true }, 200);
         const url = Array.isArray(out) ? out[0] : out;
         return json({ result_url: url });
+        } catch (e) {
+          console.error("/api/haircut failed:", e);
+          return json({ error: e instanceof Error ? e.message : String(e), fallback: true }, 200);
+        }
       },
+
     },
   },
 });
