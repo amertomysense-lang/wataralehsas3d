@@ -16,6 +16,7 @@ import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MarketingToolRouteImport } from './routes/marketing-tool'
 import { Route as HaircutRouteImport } from './routes/haircut'
+import { Route as BulkUploadStudioRouteImport } from './routes/bulk-upload-studio'
 import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -23,6 +24,7 @@ import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as ApiTryonRouteImport } from './routes/api/tryon'
 import { Route as ApiRemoveBgRouteImport } from './routes/api/remove-bg'
 import { Route as ApiHaircutRouteImport } from './routes/api/haircut'
+import { Route as ApiDecorProjectRouteImport } from './routes/api/decor-project'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiAiImageRouteImport } from './routes/api/ai-image'
 
@@ -61,6 +63,11 @@ const HaircutRoute = HaircutRouteImport.update({
   path: '/haircut',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BulkUploadStudioRoute = BulkUploadStudioRouteImport.update({
+  id: '/bulk-upload-studio',
+  path: '/bulk-upload-studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AssistantRoute = AssistantRouteImport.update({
   id: '/assistant',
   path: '/assistant',
@@ -96,6 +103,11 @@ const ApiHaircutRoute = ApiHaircutRouteImport.update({
   path: '/api/haircut',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDecorProjectRoute = ApiDecorProjectRouteImport.update({
+  id: '/api/decor-project',
+  path: '/api/decor-project',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -111,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
+  '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/haircut': typeof HaircutRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/marketplace': typeof MarketplaceRoute
@@ -120,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/workflow': typeof WorkflowRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/haircut': typeof ApiHaircutRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/tryon': typeof ApiTryonRoute
@@ -129,6 +143,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
+  '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/haircut': typeof HaircutRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/marketplace': typeof MarketplaceRoute
@@ -138,6 +153,7 @@ export interface FileRoutesByTo {
   '/workflow': typeof WorkflowRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/haircut': typeof ApiHaircutRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/tryon': typeof ApiTryonRoute
@@ -148,6 +164,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
+  '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/haircut': typeof HaircutRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/marketplace': typeof MarketplaceRoute
@@ -157,6 +174,7 @@ export interface FileRoutesById {
   '/workflow': typeof WorkflowRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/haircut': typeof ApiHaircutRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/tryon': typeof ApiTryonRoute
@@ -168,6 +186,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/assistant'
+    | '/bulk-upload-studio'
     | '/haircut'
     | '/marketing-tool'
     | '/marketplace'
@@ -177,6 +196,7 @@ export interface FileRouteTypes {
     | '/workflow'
     | '/api/ai-image'
     | '/api/chat'
+    | '/api/decor-project'
     | '/api/haircut'
     | '/api/remove-bg'
     | '/api/tryon'
@@ -186,6 +206,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/assistant'
+    | '/bulk-upload-studio'
     | '/haircut'
     | '/marketing-tool'
     | '/marketplace'
@@ -195,6 +216,7 @@ export interface FileRouteTypes {
     | '/workflow'
     | '/api/ai-image'
     | '/api/chat'
+    | '/api/decor-project'
     | '/api/haircut'
     | '/api/remove-bg'
     | '/api/tryon'
@@ -204,6 +226,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/assistant'
+    | '/bulk-upload-studio'
     | '/haircut'
     | '/marketing-tool'
     | '/marketplace'
@@ -213,6 +236,7 @@ export interface FileRouteTypes {
     | '/workflow'
     | '/api/ai-image'
     | '/api/chat'
+    | '/api/decor-project'
     | '/api/haircut'
     | '/api/remove-bg'
     | '/api/tryon'
@@ -223,6 +247,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AssistantRoute: typeof AssistantRoute
+  BulkUploadStudioRoute: typeof BulkUploadStudioRoute
   HaircutRoute: typeof HaircutRoute
   MarketingToolRoute: typeof MarketingToolRoute
   MarketplaceRoute: typeof MarketplaceRoute
@@ -232,6 +257,7 @@ export interface RootRouteChildren {
   WorkflowRoute: typeof WorkflowRoute
   ApiAiImageRoute: typeof ApiAiImageRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiDecorProjectRoute: typeof ApiDecorProjectRoute
   ApiHaircutRoute: typeof ApiHaircutRoute
   ApiRemoveBgRoute: typeof ApiRemoveBgRoute
   ApiTryonRoute: typeof ApiTryonRoute
@@ -289,6 +315,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HaircutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bulk-upload-studio': {
+      id: '/bulk-upload-studio'
+      path: '/bulk-upload-studio'
+      fullPath: '/bulk-upload-studio'
+      preLoaderRoute: typeof BulkUploadStudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/assistant': {
       id: '/assistant'
       path: '/assistant'
@@ -338,6 +371,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHaircutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/decor-project': {
+      id: '/api/decor-project'
+      path: '/api/decor-project'
+      fullPath: '/api/decor-project'
+      preLoaderRoute: typeof ApiDecorProjectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -359,6 +399,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AssistantRoute: AssistantRoute,
+  BulkUploadStudioRoute: BulkUploadStudioRoute,
   HaircutRoute: HaircutRoute,
   MarketingToolRoute: MarketingToolRoute,
   MarketplaceRoute: MarketplaceRoute,
@@ -368,6 +409,7 @@ const rootRouteChildren: RootRouteChildren = {
   WorkflowRoute: WorkflowRoute,
   ApiAiImageRoute: ApiAiImageRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiDecorProjectRoute: ApiDecorProjectRoute,
   ApiHaircutRoute: ApiHaircutRoute,
   ApiRemoveBgRoute: ApiRemoveBgRoute,
   ApiTryonRoute: ApiTryonRoute,

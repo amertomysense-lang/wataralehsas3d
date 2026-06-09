@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { aiEditImage } from "@/lib/ai-image-edit.server";
 
-// تجربة الأزياء — يفضّل Lovable AI (Nano Banana 2) عند توفّر المفتاح،
-// ويستخدم Replicate كبديل اختياري عند إضافة REPLICATE_API_TOKEN.
+// تجربة الأزياء — فصل جسم + قفل وجه + إعادة لفّ القماش حول العضلات
 export const Route = createFileRoute("/api/tryon")({
   server: {
     handlers: {
@@ -12,14 +11,17 @@ export const Route = createFileRoute("/api/tryon")({
         };
         if (!person || !garment_url) return json({ error: "missing inputs" }, 400);
 
-        const desc = (garment_desc || "the provided garment").trim();
+        const desc = (garment_desc || "the garment shown in the second image").trim();
+
+        // برومبت محترف يحاكي IDM-VTON / segmentation mask + drape physics
         const prompt = [
-          `Dress the same person from the first image with: ${desc}.`,
-          `Use the second image as the garment reference — match color, pattern, texture, neckline and silhouette faithfully.`,
-          `Keep the face 100% identical (geometry, eyes, nose, mouth, skin, freckles, hair, expression, pose).`,
-          `Do NOT alter or beautify the face. Preserve background, lighting and camera angle.`,
-          `Replace ONLY the clothing on the torso/body. Output: photorealistic, clean edges, single subject, no watermark.`,
-          `Return the edited image only.`,
+          `Virtual try-on photo edit. INPUT 1 = real person (human_img). INPUT 2 = garment reference (garm_img).`,
+          `TASK: Dress the person from INPUT 1 with the garment from INPUT 2 (${desc}).`,
+          `BODY SEGMENTATION: Detect the person's body silhouette precisely. Fully discard the old clothing textures, prints, seams and shadows. Do NOT blend the new garment on top of the old one.`,
+          `GARMENT SYNTHESIS: Reproduce the garment's exact color, pattern repeats, fabric texture, weave, sheen, neckline, sleeves, hem length, buttons, zippers and silhouette as in INPUT 2. Warp the fabric realistically around shoulders, chest, waist, hips, arms and any muscle/body contours, with natural folds, creases, fabric drape weight, and gravity-correct wrinkles. Zero clipping artifacts. Sleeves must end at the wrists naturally; hems must follow the pose.`,
+          `STRICT IDENTITY LOCK: Preserve 100% of the face, eyes, nose, mouth, lips, jawline, skin tone, freckles, hair, age and expression. Preserve the person's pose, hands, fingers, body proportions, height and ethnicity. Do NOT beautify or alter the face.`,
+          `CONTEXT LOCK: Keep the original background, lighting direction, color temperature, shadows, camera angle and framing identical. Lighting on the garment must match the scene.`,
+          `OUTPUT: One photorealistic image, sharp, natural film grain, no watermark, no text, no duplicate person, no mannequin artifacts. Return ONLY the edited image.`,
         ].join(" ");
 
         if (process.env.LOVABLE_API_KEY) {

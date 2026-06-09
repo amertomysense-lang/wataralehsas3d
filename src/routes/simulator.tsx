@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import { Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X } from "lucide-react";
+import { Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X, Wand2, Loader2, Download } from "lucide-react";
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
 import { toast } from "sonner";
@@ -34,6 +34,9 @@ function Simulator() {
   const [shipping, setShipping] = useState<"self" | "company">("self");
   const [km, setKm] = useState(15);
   const [sending, setSending] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiResult, setAiResult] = useState<string | null>(null);
+  const [surface, setSurface] = useState<"wall" | "floor" | "ceiling">("wall");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: regions } = useRegions();
@@ -51,9 +54,41 @@ function Simulator() {
     const f = e.target.files?.[0];
     if (!f) return;
     const r = new FileReader();
-    r.onload = () => setBg(r.result as string);
+    r.onload = () => { setBg(r.result as string); setAiResult(null); };
     r.readAsDataURL(f);
   }
+
+  async function runAiProjection() {
+    if (!bg) { toast.error("ارفع صورة الغرفة أولاً"); return; }
+    if (!active) { toast.error("اختر طبقة تصميم"); return; }
+    setAiBusy(true); setAiResult(null);
+    try {
+      const res = await fetch("/api/decor-project", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room: bg,
+          design: active.url,
+          design_desc: active.name,
+          surface,
+          embossed,
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || "فشل الدمج");
+      setAiResult(j.result_url);
+      toast.success("تمّ الإسقاط الواقعي بالذكاء الاصطناعي");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "تعذّر الدمج، حاول لاحقاً");
+    } finally { setAiBusy(false); }
+  }
+
+  function downloadResult() {
+    if (!aiResult) return;
+    const a = document.createElement("a");
+    a.href = aiResult; a.download = `watar-room-${Date.now()}.jpg`; a.click();
+  }
+
 
   async function sendOrder() {
     if (!region || !pricing) { toast.error("اختر المنطقة"); return; }
@@ -126,6 +161,34 @@ function Simulator() {
               </button>
             )}
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onUpload} />
+          </div>
+
+          {/* AI Projection — إسقاط واقعي */}
+          <div className="mt-4 rounded-2xl border border-primary/30 bg-gradient-to-tr from-primary/5 via-card to-accent/5 p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 text-xs font-black text-primary">
+                <Wand2 className="size-4" /> الإسقاط الواقعي بالذكاء
+              </div>
+              <div className="ms-auto inline-flex rounded-lg bg-background p-1 text-[11px] font-bold">
+                {([["wall", "جدار"], ["floor", "أرضية"], ["ceiling", "سقف"]] as const).map(([k, l]) => (
+                  <button key={k} onClick={() => setSurface(k)}
+                    className={`px-2.5 py-1 rounded-md ${surface === k ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{l}</button>
+                ))}
+              </div>
+            </div>
+            <button onClick={runAiProjection} disabled={aiBusy || !bg || !active}
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-primary to-primary-glow px-4 py-3 text-sm font-black text-primary-foreground shadow-soft disabled:opacity-50">
+              {aiBusy ? <><Loader2 className="size-4 animate-spin" /> جارٍ الإسقاط الواقعي…</> : <><Wand2 className="size-4" /> ادمج بواقعية AI</>}
+            </button>
+            {aiResult && (
+              <div className="mt-3 overflow-hidden rounded-xl border border-primary/30">
+                <img src={aiResult} alt="result" className="w-full" />
+                <button onClick={downloadResult}
+                  className="inline-flex w-full items-center justify-center gap-2 bg-primary px-3 py-2 text-xs font-black text-primary-foreground">
+                  <Download className="size-3.5" /> تنزيل النتيجة
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="mt-4">
