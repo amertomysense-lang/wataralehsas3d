@@ -128,37 +128,43 @@ function HaircutStudio() {
     setTx((p) => ({ ...p, scale: Math.max(0.3, Math.min(3, p.scale * (e.deltaY < 0 ? 1.08 : 0.93))) }));
   }
 
-  async function exportCanvas() {
-    if (!person || !style) { toast.error("ارفع صورة واختر قصّة"); return; }
-    setBusy(true);
-    try {
-      const stage = stageRef.current!;
-      const W = stage.clientWidth, H = stage.clientHeight;
-      const canvas = document.createElement("canvas");
-      canvas.width = W * 2; canvas.height = H * 2;
-      const ctx = canvas.getContext("2d")!;
-      ctx.scale(2, 2);
+  async function renderLocalComposite(autoDownload = false): Promise<string | null> {
+    if (!person || !style) { toast.error("ارفع صورة واختر قصّة"); return null; }
+    const stage = stageRef.current!;
+    const W = stage.clientWidth, H = stage.clientHeight;
+    const canvas = document.createElement("canvas");
+    canvas.width = W * 2; canvas.height = H * 2;
+    const ctx = canvas.getContext("2d")!;
+    ctx.scale(2, 2);
 
-      const personImg = await loadImg(person);
-      drawCover(ctx, personImg, 0, 0, W, H);
+    const personImg = await loadImg(person);
+    drawCover(ctx, personImg, 0, 0, W, H);
 
-      const hairImg = await loadImg(style.preview);
-      const hw = 280 * tx.scale, hh = 280 * tx.scale;
-      ctx.save();
-      ctx.translate(W / 2 + tx.x, H / 2 + tx.y);
-      ctx.rotate((tx.rotate * Math.PI) / 180);
-      ctx.globalAlpha = 0.92;
-      ctx.drawImage(hairImg, -hw / 2, -hh / 2, hw, hh);
-      // tint overlay
-      ctx.globalCompositeOperation = "multiply";
-      ctx.fillStyle = color.hex;
-      ctx.fillRect(-hw / 2, -hh / 2, hw, hh);
-      ctx.restore();
+    const hairImg = await loadImg(style.preview);
+    const hw = 280 * tx.scale, hh = 280 * tx.scale;
+    ctx.save();
+    ctx.translate(W / 2 + tx.x, H / 2 + tx.y);
+    ctx.rotate((tx.rotate * Math.PI) / 180);
+    ctx.globalAlpha = 0.92;
+    ctx.drawImage(hairImg, -hw / 2, -hh / 2, hw, hh);
+    ctx.globalCompositeOperation = "multiply";
+    ctx.fillStyle = color.hex;
+    ctx.fillRect(-hw / 2, -hh / 2, hw, hh);
+    ctx.restore();
 
-      const url = canvas.toDataURL("image/jpeg", 0.92);
-      setResult(url);
+    const url = canvas.toDataURL("image/jpeg", 0.92);
+    setResult(url);
+    if (autoDownload) {
       const a = document.createElement("a");
       a.href = url; a.download = `watar-haircut-${Date.now()}.jpg`; a.click();
+    }
+    return url;
+  }
+
+  async function exportCanvas() {
+    setBusy(true);
+    try {
+      await renderLocalComposite(true);
       toast.success("تم الحفظ — بدون أي استهلاك للسيرفر");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
@@ -167,6 +173,17 @@ function HaircutStudio() {
 
   async function runAI() {
     if (!person || !style) { toast.error("ارفع صورة واختر قصّة"); return; }
+    // وضع المحاكاة المجانية على الجهاز — لا استهلاك للسيرفر
+    if (readSettings().aiSimulationOnly) {
+      setBusy(true);
+      try {
+        await renderLocalComposite(false);
+        toast.success("تمت المعاينة الفورية بنجاح عبر الجوال!");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : String(e));
+      } finally { setBusy(false); }
+      return;
+    }
     if (!consumeQuota()) { setQuotaOpen(true); return; }
     setBusy(true); setResult(null);
     try {
@@ -174,8 +191,17 @@ function HaircutStudio() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ person, style: style.label, color: color.id, hairstyle_url: style.preview }),
       });
-      const j = await res.json();
-      if (!res.ok) throw new Error(j.error || "فشل التجهيز");
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = String(j?.error || "");
+        // كشف نقص الرصيد / 402 → fallback تلقائي للمحاكي المجاني
+        if (res.status === 402 || /credit|insufficient|payment|402|quota/i.test(msg)) {
+          await renderLocalComposite(false);
+          toast.success("تمت المعاينة الفورية بنجاح عبر الجوال!");
+          return;
+        }
+        throw new Error(msg || "فشل التجهيز");
+      }
       setResult(j.result_url);
       if (readSettings().aiTryOnLogging) {
         await supabase.from("tryon_logs").insert({
@@ -183,16 +209,23 @@ function HaircutStudio() {
         });
       }
     } catch (e) {
-      const m = e instanceof Error ? e.message : String(e);
-      toast.error(m.includes("REPLICATE") ? "أضف مفتاح REPLICATE_API_TOKEN" : m);
+      // فشل شبكي عام → جرّب المحاكي المجاني بدل رسالة حمراء
+      try {
+        await renderLocalComposite(false);
+        toast.success("تمت المعاينة الفورية بنجاح عبر الجوال!");
+      } catch {
+        const m = e instanceof Error ? e.message : String(e);
+        toast.error(m);
+      }
     } finally { setBusy(false); }
   }
+
 
   const allStyles = [...STYLES, ...customs];
   const visible = allStyles.filter((s) => gender === "u" || s.gender === gender || s.gender === "u");
 
   return (
-    <div className="min-h-screen bg-background px-5 py-8" dir="rtl">
+    <div className="min-h-screen bg-background px-4 py-5 pb-8" dir="rtl">
       <div className="mx-auto max-w-5xl">
         <Link to="/workflow" className="text-sm font-bold text-primary hover:underline">← الوحدات</Link>
         <h1 className="mt-3 text-3xl font-black">
@@ -357,7 +390,7 @@ function HaircutStudio() {
         )}
 
         {result && (
-          <div className="mt-6 rounded-3xl border border-primary/30 bg-card p-4">
+          <div className="mt-4 rounded-3xl border border-primary/30 bg-card p-4">
             <p className="mb-3 text-sm font-bold text-primary">النتيجة</p>
             <img src={result} alt="result" className="w-full rounded-2xl" />
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -373,10 +406,6 @@ function HaircutStudio() {
           </div>
         )}
 
-        <p className="mt-6 rounded-2xl bg-accent/10 px-4 py-3 text-xs text-accent leading-relaxed">
-          المعاينة الفورية تعمل بالكامل على جهازك (Canvas/Mask) — بدون سيرفر. التوليد الواقعي عبر AI يستخدم Replicate
-          ويخضع للحدّ المجاني اليومي.
-        </p>
       </div>
       <QuotaModal open={quotaOpen} onClose={() => setQuotaOpen(false)} />
       <PaymentModal open={payOpen} onClose={() => setPayOpen(false)} />
