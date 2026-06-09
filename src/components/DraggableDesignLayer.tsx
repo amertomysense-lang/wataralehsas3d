@@ -8,7 +8,7 @@ type Props = {
   name?: string;
   box: DesignBox;
   onChange: (b: DesignBox) => void;
-  container: React.RefObject<HTMLDivElement>;
+  container: React.RefObject<HTMLDivElement | null>;
 };
 
 /**
