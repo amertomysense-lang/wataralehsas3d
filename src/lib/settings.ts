@@ -11,6 +11,24 @@ export type CustomHaircut = {
   prompt?: string;
 };
 
+export type DesignSection = "haircut" | "simulator" | "marketing" | "tryon";
+
+export const SECTION_LABELS: Record<DesignSection, string> = {
+  haircut: "قصّات الشعر",
+  simulator: "محاكي الجدران/الأرضيات",
+  marketing: "أداة التسويق",
+  tryon: "تجربة الأزياء",
+};
+
+export type CustomDesign = {
+  id: string;
+  section: DesignSection;
+  label: string;
+  prompt: string;
+  preview?: string;
+  createdAt: number;
+};
+
 export type PlatformSettings = {
   currency: string;
   fuelPerKm: number;
