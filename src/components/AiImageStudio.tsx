@@ -122,6 +122,8 @@ export function AiImageStudio({
       </button>
       <p className="mt-2 text-center text-[11px] text-muted-foreground">المحاولات المتبقية: {isFinite(remaining) ? remaining : "∞"}</p>
 
+      {busy && <AiLoungeBanner className="mt-4" />}
+
       {result && (
         <div className="mt-5 rounded-2xl border-2 border-primary/40 bg-card p-3">
           <img src={result} alt="result" className="w-full rounded-xl" />
