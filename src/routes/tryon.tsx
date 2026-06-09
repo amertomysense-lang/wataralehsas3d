@@ -107,9 +107,13 @@ function TryOn() {
           </div>
         </div>
 
+        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-bold text-primary">
+          <Sparkles className="size-3.5" /> محاولات AI المتبقّية اليوم: {remaining}/{DAILY_LIMIT}
+        </div>
+
         <button onClick={runTryOn} disabled={busy || !person || !garment}
           className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-6 py-4 text-base font-black text-primary-foreground shadow-soft disabled:opacity-50">
-          {busy ? <><Loader2 className="size-5 animate-spin" /> جاري التجهيز…</> : <><Sparkles className="size-5" /> جرّبها افتراضياً</>}
+          {busy ? <><Loader2 className="size-5 animate-spin" /> جاري التجهيز…</> : <><Sparkles className="size-5" /> جرّبها افتراضياً ({remaining}/{DAILY_LIMIT})</>}
         </button>
 
         {result && (
