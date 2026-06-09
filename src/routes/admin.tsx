@@ -86,9 +86,9 @@ function ProductsTab() {
   const [editing, setEditing] = useState<string | null>(null);
 
   const { data: designs } = useQuery({
-    queryKey: ["admin-designs"],
+    queryKey: ["admin-products"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("designs").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("products").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Design[];
     },
@@ -102,21 +102,21 @@ function ProductsTab() {
       category: form.category || null, price: form.price ? Number(form.price) : null,
     };
     const res = editing
-      ? await supabase.from("designs").update(payload).eq("id", editing)
-      : await supabase.from("designs").insert(payload);
+      ? await supabase.from("products").update(payload).eq("id", editing)
+      : await supabase.from("products").insert(payload);
     if (res.error) { toast.error(res.error.message); return; }
     toast.success(editing ? "تم التحديث" : "تمت الإضافة");
     setForm(EMPTY_P); setEditing(null);
-    qc.invalidateQueries({ queryKey: ["admin-designs"] });
-    qc.invalidateQueries({ queryKey: ["designs"] });
+    qc.invalidateQueries({ queryKey: ["admin-products"] });
+    qc.invalidateQueries({ queryKey: ["products"] });
   }
 
   async function remove(id: string) {
     if (!confirm("حذف هذا التصميم؟")) return;
-    const { error } = await supabase.from("designs").delete().eq("id", id);
+    const { error } = await supabase.from("products").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
-    qc.invalidateQueries({ queryKey: ["admin-designs"] });
-    qc.invalidateQueries({ queryKey: ["designs"] });
+    qc.invalidateQueries({ queryKey: ["admin-products"] });
+    qc.invalidateQueries({ queryKey: ["products"] });
   }
 
   return (
@@ -148,14 +148,14 @@ function ProductsTab() {
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="text-sm font-black">المنتجات ({designs?.length ?? 0})</h2>
           <CSVImportButton
-            table="designs"
+            table="products"
             sample="name,description,image_url,category,price"
             map={(row) => ({
               name: row.name, description: row.description || null,
               image_url: row.image_url, category: row.category || null,
               price: row.price ? Number(row.price) : null,
             })}
-            onDone={() => { qc.invalidateQueries({ queryKey: ["admin-designs"] }); qc.invalidateQueries({ queryKey: ["designs"] }); }}
+            onDone={() => { qc.invalidateQueries({ queryKey: ["admin-products"] }); qc.invalidateQueries({ queryKey: ["products"] }); }}
           />
         </div>
 

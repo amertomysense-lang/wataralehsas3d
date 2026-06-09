@@ -10,7 +10,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/product/$id")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
-      .from("designs")
+      .from("products")
       .select("*")
       .eq("id", params.id)
       .maybeSingle();
