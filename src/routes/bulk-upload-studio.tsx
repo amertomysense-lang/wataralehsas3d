@@ -31,15 +31,38 @@ function BulkUploadStudio() {
   const [cats] = useCategories();
   const [selected, setSelected] = useState<string>(cats[0]?.id ?? "other");
   const [savedCount, setSavedCount] = useState(0);
+  const [storageMode, setStorageMode] = useState<"storage" | "inline">("storage");
+
+  async function uploadOneToStorage(dataUrl: string, name: string): Promise<string> {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const safe = (name || "design").replace(/[^a-zA-Z0-9-_]/g, "_").slice(0, 40);
+    const path = `${selected}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}.webp`;
+    const { error } = await supabase.storage
+      .from("design-layers")
+      .upload(path, blob, { contentType: "image/webp", upsert: false, cacheControl: "31536000" });
+    if (error) throw error;
+    const { data } = supabase.storage.from("design-layers").getPublicUrl(path);
+    return data.publicUrl;
+  }
 
   async function handle(items: BatchItem[]) {
     if (!items.length) return;
-    const rows = items.map((it) => ({
-      title: it.name || "تصميم",
-      image_url: it.dataUrl,
-      price: null,
-      type: selected,
-    }));
+    const rows: { title: string; image_url: string; price: number | null; type: string }[] = [];
+    let useStorage = storageMode === "storage";
+    for (const it of items) {
+      let url = it.dataUrl;
+      if (useStorage) {
+        try {
+          url = await uploadOneToStorage(it.dataUrl, it.name);
+        } catch {
+          useStorage = false;
+          setStorageMode("inline");
+          toast.message("سطل التخزين design-layers غير مفعّل — حفظ مضمّن مؤقتاً. شغّل 006_design_layers_bucket.sql لتفعيل مكتبة الـ ٥٠٠٠ صورة.");
+        }
+      }
+      rows.push({ title: it.name || "تصميم", image_url: url, price: null, type: selected });
+    }
     const { error } = await supabase.from("products").insert(rows);
     if (error) throw error;
     setSavedCount((n) => n + items.length);
@@ -114,15 +137,21 @@ function BulkUploadStudio() {
           <h2 className="mb-3 text-sm font-black text-foreground">٢) ارفع الصور — اسحبها وأفلتها</h2>
           <BatchImageUploader
             onUploaded={handle}
-            maxFiles={100}
+            maxFiles={500}
             maxWidthPx={1400}
             maxSizeMB={0.45}
-            hint="اختر أو اسحب الصور — كل صورة تُضغط إلى WebP أقل من 450KB وتُحفظ ضمن الفئة المختارة."
+            hint="حتى ٥٠٠ صورة بالدفعة الواحدة — كرّر العملية للوصول إلى ٥٠٠٠+ صورة. الصور تُرفع كطبقات جاهزة لتجربة الزبائن."
           />
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 font-bold ${storageMode === "storage" ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}`}>
+              {storageMode === "storage" ? "✓ التخزين السحابي مفعّل (design-layers)" : "⚠ شغّل 006_design_layers_bucket.sql لتفعيل التخزين الكبير"}
+            </span>
+            <span className="text-muted-foreground">الإجمالي المحفوظ في الجلسة: {savedCount.toLocaleString("ar")}</span>
+          </div>
         </section>
 
         <p className="mt-5 rounded-2xl bg-accent/10 px-4 py-3 text-xs text-accent leading-relaxed">
-          💡 نصيحة: يمكنك تبديل الفئة بين كل دفعة لتنظيم كتالوجك في خطوة واحدة. الصور تظهر فوراً في المعرض وفي محاكي الديكور أو غرفة الأزياء حسب فئتها.
+          💡 لإطلاق مكتبة ٥٠٠٠ صورة من الشركة المصنّعة: نفّذ مرة واحدة ملف <code className="rounded bg-background/60 px-1.5 py-0.5 font-mono">supabase-migrations/006_design_layers_bucket.sql</code> ثم ارفع هنا على دفعات ٥٠٠. كل صورة تظهر فوراً كطبقة قابلة للدمج الواقعي في المحاكي/غرفة الأزياء/استوديو القصّات.
         </p>
       </div>
     </div>
