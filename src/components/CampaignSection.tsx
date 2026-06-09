@@ -51,7 +51,7 @@ export function CampaignSection({ compact = false }: { compact?: boolean }) {
           ))}
         </div>
 
-        {readSettings().fleetMobilizationEnabled && (
+        {showFleet && (
           <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-accent/40 bg-accent/5 p-4 sm:flex-row sm:items-center">
             <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-accent/20 text-accent">
               <Truck className="size-6" />
