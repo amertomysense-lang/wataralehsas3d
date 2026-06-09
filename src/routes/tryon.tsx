@@ -62,7 +62,7 @@ function TryOn() {
       });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      toast.error(msg.includes("REPLICATE") ? "خدمة AI غير مفعّلة — أضف مفتاح Replicate" : msg);
+      toast.error("تعذّر التجهيز حالياً — حاول مرة أخرى بعد قليل." + (msg ? "" : ""));
     } finally {
       setBusy(false);
     }
@@ -77,7 +77,7 @@ function TryOn() {
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="rounded-3xl border border-border bg-card p-4">
-            <p className="mb-2 text-xs font-black text-primary">SLOT A — صورتك</p>
+            <p className="mb-2 text-xs font-black text-primary">صورتك</p>
             <label className="relative block h-64 cursor-pointer overflow-hidden rounded-2xl bg-muted">
               {person ? <img src={person} className="size-full object-cover" alt="" /> : (
                 <div className="grid size-full place-items-center text-center">
@@ -92,7 +92,7 @@ function TryOn() {
           </div>
 
           <div className="rounded-3xl border border-border bg-card p-4">
-            <p className="mb-2 text-xs font-black text-primary">SLOT B — اختر القطعة</p>
+            <p className="mb-2 text-xs font-black text-primary">اختر القطعة</p>
             <div className="grid h-64 grid-cols-3 gap-2 overflow-y-auto">
               {items?.length ? items.map((it) => (
                 <button key={it.id} onClick={() => setGarment(it)}
@@ -134,7 +134,7 @@ function TryOn() {
         )}
 
         <p className="mt-6 rounded-2xl bg-accent/10 px-4 py-3 text-xs text-accent leading-relaxed">
-          <Shirt className="mb-1 inline size-3.5" /> يستخدم نموذج IDM-VTON مفتوح المصدر عبر Replicate. للتفعيل أضف مفتاح <code>REPLICATE_API_TOKEN</code>.
+          <Shirt className="mb-1 inline size-3.5" /> معالجة فاخرة بالذكاء الاصطناعي مع الحفاظ الكامل على ملامح وجهك.
         </p>
 
         <div className="mt-8">

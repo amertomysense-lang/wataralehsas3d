@@ -412,15 +412,15 @@ function SchemaControllerTab() {
   return (
     <div className="space-y-4">
       <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
-        <h2 className="text-sm font-black">Advanced Configuration · Schema Controller</h2>
-        <p className="text-xs text-muted-foreground">مفاتيح تحكم سريعة لأي ظرف تشغيلي مستقبلي دون تعديل الكود.</p>
+        <h2 className="text-sm font-black">إعدادات متقدّمة للمنصّة</h2>
+        <p className="text-xs text-muted-foreground">مفاتيح تحكم سريعة لتشغيل الأقسام ووضع الذكاء الاصطناعي دون تعديل الكود.</p>
 
         <div className="grid gap-2 sm:grid-cols-2">
           <QuotaToggleRow label="إظهار قسم حملة الإطلاق" value={s.showMarketingBanner} onChange={() => toggle("showMarketingBanner")} />
           <QuotaToggleRow label="إظهار خدمة الأسطول السريع" value={s.fleetMobilizationEnabled} onChange={() => toggle("fleetMobilizationEnabled")} />
-          <QuotaToggleRow label="تسجيل تجارب AI Try-On" value={s.aiTryOnLogging} onChange={() => toggle("aiTryOnLogging")} />
-          <QuotaToggleRow label="تفعيل المزامنة الأوفلاين" value={s.enableOfflineSync} onChange={() => toggle("enableOfflineSync")} />
-          <QuotaToggleRow label="وضع تشغيل الذكاء الاصطناعي — محاكاة مجانية على الجهاز (إيقاف = خادم Replicate الحي)" value={s.aiSimulationOnly} onChange={() => toggle("aiSimulationOnly")} />
+          <QuotaToggleRow label="تسجيل تجارب تجربة الأزياء" value={s.aiTryOnLogging} onChange={() => toggle("aiTryOnLogging")} />
+          <QuotaToggleRow label="تفعيل المزامنة بدون إنترنت" value={s.enableOfflineSync} onChange={() => toggle("enableOfflineSync")} />
+          <QuotaToggleRow label="وضع المعاينة الفورية على الجهاز (إيقاف = ذكاء اصطناعي حقيقي عبر بوّابة Lovable)" value={s.aiSimulationOnly} onChange={() => toggle("aiSimulationOnly")} />
         </div>
 
       </div>
