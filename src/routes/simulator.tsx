@@ -41,6 +41,7 @@ function Simulator() {
   const fileRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<DesignBox>(resetBox());
+  const [warpMode, setWarpMode] = useState(true); // الإسقاط بالمنظور بأربع نقاط — افتراضي
 
   const { data: regions } = useRegions();
   const { data: pricing } = usePricing();
