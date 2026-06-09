@@ -63,7 +63,7 @@ function AdminPage() {
           <TabBtn icon={<Type className="size-4" />} label="نصوص الموقع (CMS)" active={tab === "cms"} onClick={() => setTab("cms")} />
           <TabBtn icon={<Sparkles className="size-4" />} label="المحاولات والإعلانات" active={tab === "quota"} onClick={() => setTab("quota")} />
           <TabBtn icon={<Wallet className="size-4" />} label="الاشتراكات والدفع" active={tab === "payments"} onClick={() => setTab("payments")} />
-          <TabBtn icon={<Scissors className="size-4" />} label="قصّات الشعر" active={tab === "haircuts"} onClick={() => setTab("haircuts")} />
+          <TabBtn icon={<Scissors className="size-4" />} label="معرض التصاميم AI" active={tab === "haircuts"} onClick={() => setTab("haircuts")} />
         </div>
 
         {tab === "products" && <ProductsTab />}
