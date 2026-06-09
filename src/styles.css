@@ -43,53 +43,54 @@
 
 :root {
   --radius: 1.1rem;
-  --background: oklch(0.16 0.012 60);
-  --foreground: oklch(0.97 0.01 80);
-  --card: oklch(0.21 0.014 60);
-  --card-foreground: oklch(0.97 0.01 80);
-  --popover: oklch(0.21 0.014 60);
-  --popover-foreground: oklch(0.97 0.01 80);
-  --primary: oklch(0.78 0.16 75);
-  --primary-foreground: oklch(0.16 0.02 60);
-  --primary-glow: oklch(0.86 0.18 85);
-  --secondary: oklch(0.26 0.015 60);
-  --secondary-foreground: oklch(0.97 0.01 80);
-  --muted: oklch(0.24 0.014 60);
-  --muted-foreground: oklch(0.72 0.018 80);
-  --accent: oklch(0.7 0.14 55);
-  --accent-foreground: oklch(0.14 0.02 60);
+  /* 🌹 Rose Garden — وردي دافئ مع لمسات ذهبية */
+  --background: oklch(0.14 0.018 12);
+  --foreground: oklch(0.97 0.012 20);
+  --card: oklch(0.19 0.024 14);
+  --card-foreground: oklch(0.97 0.012 20);
+  --popover: oklch(0.19 0.024 14);
+  --popover-foreground: oklch(0.97 0.012 20);
+  --primary: oklch(0.66 0.19 5);
+  --primary-foreground: oklch(0.99 0.008 20);
+  --primary-glow: oklch(0.78 0.16 350);
+  --secondary: oklch(0.26 0.03 12);
+  --secondary-foreground: oklch(0.97 0.012 20);
+  --muted: oklch(0.23 0.026 12);
+  --muted-foreground: oklch(0.74 0.022 20);
+  --accent: oklch(0.78 0.13 75);
+  --accent-foreground: oklch(0.14 0.02 12);
   --destructive: oklch(0.65 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
   --success: oklch(0.7 0.14 155);
-  --success-foreground: oklch(0.14 0.02 60);
+  --success-foreground: oklch(0.14 0.02 12);
   --border: oklch(1 0 0 / 0.1);
   --input: oklch(1 0 0 / 0.12);
-  --ring: oklch(0.78 0.16 75);
+  --ring: oklch(0.78 0.16 350);
 }
 
 .dark {
-  --background: oklch(0.16 0.012 60);
-  --foreground: oklch(0.97 0.01 80);
-  --card: oklch(0.21 0.014 60);
-  --card-foreground: oklch(0.97 0.01 80);
-  --popover: oklch(0.21 0.014 60);
-  --popover-foreground: oklch(0.97 0.01 80);
-  --primary: oklch(0.78 0.16 75);
-  --primary-foreground: oklch(0.16 0.02 60);
-  --primary-glow: oklch(0.86 0.18 85);
-  --secondary: oklch(0.26 0.015 60);
-  --secondary-foreground: oklch(0.97 0.01 80);
-  --muted: oklch(0.24 0.014 60);
-  --muted-foreground: oklch(0.72 0.018 80);
-  --accent: oklch(0.7 0.14 55);
-  --accent-foreground: oklch(0.14 0.02 60);
+  --background: oklch(0.14 0.018 12);
+  --foreground: oklch(0.97 0.012 20);
+  --card: oklch(0.19 0.024 14);
+  --card-foreground: oklch(0.97 0.012 20);
+  --popover: oklch(0.19 0.024 14);
+  --popover-foreground: oklch(0.97 0.012 20);
+  --primary: oklch(0.66 0.19 5);
+  --primary-foreground: oklch(0.99 0.008 20);
+  --primary-glow: oklch(0.78 0.16 350);
+  --secondary: oklch(0.26 0.03 12);
+  --secondary-foreground: oklch(0.97 0.012 20);
+  --muted: oklch(0.23 0.026 12);
+  --muted-foreground: oklch(0.74 0.022 20);
+  --accent: oklch(0.78 0.13 75);
+  --accent-foreground: oklch(0.14 0.02 12);
   --destructive: oklch(0.65 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
   --success: oklch(0.7 0.14 155);
-  --success-foreground: oklch(0.14 0.02 60);
+  --success-foreground: oklch(0.14 0.02 12);
   --border: oklch(1 0 0 / 0.1);
   --input: oklch(1 0 0 / 0.12);
-  --ring: oklch(0.78 0.16 75);
+  --ring: oklch(0.78 0.16 350);
 }
 
 @layer base {
@@ -100,6 +101,11 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 12% 8%, oklch(0.66 0.19 5 / 0.18) 0, transparent 42%),
+      radial-gradient(circle at 88% 92%, oklch(0.78 0.16 350 / 0.14) 0, transparent 40%),
+      radial-gradient(circle at 50% 50%, oklch(0.78 0.13 75 / 0.06) 0, transparent 60%);
+    background-attachment: fixed;
   }
 }
 
@@ -107,3 +113,12 @@
 .animate-float { animation: float 3s ease-in-out infinite; }
 @keyframes fade-up { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
 .animate-fade-up { animation: fade-up 0.4s ease-out both; }
+
+/* بتلات ورد متساقطة برفق — للزينة في الخلفيات الكبيرة */
+@keyframes petal-fall {
+  0% { transform: translate(0, -10vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.8; }
+  100% { transform: translate(40px, 110vh) rotate(360deg); opacity: 0; }
+}
+.animate-petal { animation: petal-fall 12s linear infinite; }
+
