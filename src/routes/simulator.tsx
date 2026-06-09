@@ -162,6 +162,7 @@ function Simulator() {
                     box={{ ...box, opacity: active.opacity }}
                     onChange={(b) => setBox(b)}
                     container={stageRef}
+                    embossed={embossed}
                   />
                 )}
               </>
