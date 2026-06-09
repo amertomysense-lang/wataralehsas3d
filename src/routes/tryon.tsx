@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { consumeQuota, useQuota, DAILY_LIMIT } from "@/lib/quota";
 import { QuotaModal } from "@/components/QuotaModal";
 import { AiImageStudio } from "@/components/AiImageStudio";
+import { AiLoungeBanner } from "@/components/AiLoungeBanner";
 
 type FashionItem = {
   id: string; vendor_id: string | null; item_name: string;
