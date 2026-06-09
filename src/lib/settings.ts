@@ -46,6 +46,10 @@ export type PlatformSettings = {
   adMaxDaily: number;
   adSeconds: number;
 
+  // وضع تشغيل الذكاء الاصطناعي: false = خادم Replicate الحي / true = محاكاة مجانية على الجهاز
+  aiSimulationOnly: boolean;
+
+
   // الاشتراكات المدفوعة عبر شام كاش
   paidEnabled: boolean;
   shamCashNumber: string;
