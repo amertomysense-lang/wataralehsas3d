@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload } from "lucide-react";
+import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/AdminGate";
@@ -9,6 +9,7 @@ import { logoutAdmin } from "@/lib/admin-gate";
 import { useRegions, usePricing, type Region, type Order } from "@/lib/platform";
 import { exportPlatformSnapshot } from "@/lib/export-snapshot";
 import { parseCSV } from "@/lib/csv-import";
+import { useSettings, DEFAULT_SETTINGS, SYRIAN_PROVINCES, type PlatformSettings } from "@/lib/settings";
 
 
 export const Route = createFileRoute("/admin")({
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/admin")({
   component: () => <AdminGate title="لوحة تحكم المعرض"><AdminPage /></AdminGate>,
 });
 
-type Tab = "products" | "regions" | "pricing" | "orders" | "vendors";
+type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
@@ -53,6 +54,8 @@ function AdminPage() {
           <TabBtn icon={<DollarSign className="size-4" />} label="الأسعار" active={tab === "pricing"} onClick={() => setTab("pricing")} />
           <TabBtn icon={<Store className="size-4" />} label="السوق" active={tab === "vendors"} onClick={() => setTab("vendors")} />
           <TabBtn icon={<ShoppingBag className="size-4" />} label="الطلبات" active={tab === "orders"} onClick={() => setTab("orders")} />
+          <TabBtn icon={<SettingsIcon className="size-4" />} label="إعدادات شاملة" active={tab === "settings"} onClick={() => setTab("settings")} />
+          <TabBtn icon={<SlidersHorizontal className="size-4" />} label="Schema Controller" active={tab === "schema"} onClick={() => setTab("schema")} />
         </div>
 
         {tab === "products" && <ProductsTab />}
@@ -60,6 +63,8 @@ function AdminPage() {
         {tab === "pricing" && <PricingTab />}
         {tab === "vendors" && <VendorsTab />}
         {tab === "orders" && <OrdersTab />}
+        {tab === "settings" && <GlobalSettingsTab />}
+        {tab === "schema" && <SchemaControllerTab />}
       </div>
     </div>
   );
