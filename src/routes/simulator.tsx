@@ -185,12 +185,12 @@ function Simulator() {
               <button onClick={() => setShipping("self")}
                 className={`flex items-center justify-between rounded-lg border-2 px-3 py-2 text-xs font-bold transition ${shipping === "self" ? "border-primary bg-primary/10" : "border-border"}`}>
                 <span>تأمين النقل من طرفك</span>
-                <span className="text-success">0.00 {pricing?.currency ?? "$"}</span>
+                <span className="text-success">0.00 {currency}</span>
               </button>
               <button onClick={() => setShipping("company")}
                 className={`flex items-center justify-between rounded-lg border-2 px-3 py-2 text-xs font-bold transition ${shipping === "company" ? "border-primary bg-primary/10" : "border-border"}`}>
                 <span>سيارة الشركة المدعومة</span>
-                <span className="text-primary">0.30 {pricing?.currency ?? "$"} / كم</span>
+                <span className="text-primary">{settings.fuelPerKm} {currency} / كم</span>
               </button>
               {shipping === "company" && (
                 <>
@@ -209,7 +209,7 @@ function Simulator() {
 
           <div className="rounded-2xl p-4 text-primary-foreground" style={{ background: "var(--gradient-brand)" }}>
             <p className="text-xs opacity-90">الإجمالي المقدّر</p>
-            <p className="mt-1 text-3xl font-black">{grandTotal.toLocaleString("ar")} {pricing?.currency ?? "$"}</p>
+            <p className="mt-1 text-3xl font-black">{grandTotal.toLocaleString("ar")} {currency}</p>
             <p className="mt-1 text-[11px] opacity-80">
               طباعة: {baseTotal.toLocaleString("ar")} + شحن: {shippingCost.toLocaleString("ar")}
             </p>
