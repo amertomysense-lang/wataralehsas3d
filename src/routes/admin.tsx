@@ -1,19 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag } from "lucide-react";
+import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/AdminGate";
 import { logoutAdmin } from "@/lib/admin-gate";
 import { useRegions, usePricing, type Region, type Order } from "@/lib/platform";
+import { exportPlatformSnapshot } from "@/lib/export-snapshot";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "لوحة التحكم — وتر الإحساس" }] }),
   component: () => <AdminGate title="لوحة تحكم المعرض"><AdminPage /></AdminGate>,
 });
 
-type Tab = "products" | "regions" | "pricing" | "orders";
+type Tab = "products" | "regions" | "pricing" | "orders" | "vendors";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
@@ -25,10 +26,16 @@ function AdminPage() {
           <Link to="/" className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline">
             <ArrowRight className="size-4" /> المعرض
           </Link>
-          <button onClick={() => { logoutAdmin(); location.reload(); }}
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive">
-            <LogOut className="size-4" /> خروج
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={async () => { try { await exportPlatformSnapshot(); toast.success("تم تصدير لقطة المنصة"); } catch (e) { toast.error("فشل التصدير"); } }}
+              className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/20">
+              <Download className="size-3.5" /> تصدير الكود/البيانات
+            </button>
+            <button onClick={() => { logoutAdmin(); location.reload(); }}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive">
+              <LogOut className="size-4" /> خروج
+            </button>
+          </div>
         </div>
       </div>
 
@@ -42,12 +49,14 @@ function AdminPage() {
           <TabBtn icon={<Package className="size-4" />} label="المنتجات" active={tab === "products"} onClick={() => setTab("products")} />
           <TabBtn icon={<MapPin className="size-4" />} label="المناطق" active={tab === "regions"} onClick={() => setTab("regions")} />
           <TabBtn icon={<DollarSign className="size-4" />} label="الأسعار" active={tab === "pricing"} onClick={() => setTab("pricing")} />
+          <TabBtn icon={<Store className="size-4" />} label="السوق" active={tab === "vendors"} onClick={() => setTab("vendors")} />
           <TabBtn icon={<ShoppingBag className="size-4" />} label="الطلبات" active={tab === "orders"} onClick={() => setTab("orders")} />
         </div>
 
         {tab === "products" && <ProductsTab />}
         {tab === "regions" && <RegionsTab />}
         {tab === "pricing" && <PricingTab />}
+        {tab === "vendors" && <VendorsTab />}
         {tab === "orders" && <OrdersTab />}
       </div>
     </div>
