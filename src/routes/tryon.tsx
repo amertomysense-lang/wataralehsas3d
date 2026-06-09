@@ -72,8 +72,8 @@ function TryOn() {
     <div className="min-h-screen bg-background px-5 py-8" dir="rtl">
       <div className="mx-auto max-w-5xl">
         <Link to="/workflow" className="text-sm font-bold text-primary hover:underline">← الوحدات</Link>
-        <h1 className="mt-3 text-3xl font-black">غرفة <span className="text-primary">تجربة الأزياء AI</span></h1>
-        <p className="mt-2 text-muted-foreground">ارفع صورتك، اختر قطعة من الكتالوج، وشاهد نفسك ترتديها فوراً.</p>
+        <h1 className="mt-3 text-3xl font-black">دمج <span className="text-primary">واقعي للأزياء AI</span></h1>
+        <p className="mt-2 text-muted-foreground">صورتك + قطعة الكتالوج = إطلالة حقيقية بثنيات طبيعية وحفاظ كامل على وجهك.</p>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="rounded-3xl border border-border bg-card p-4">
@@ -115,7 +115,7 @@ function TryOn() {
 
         <button onClick={runTryOn} disabled={busy || !person || !garment}
           className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-6 py-4 text-base font-black text-primary-foreground shadow-soft disabled:opacity-50">
-          {busy ? <><Loader2 className="size-5 animate-spin" /> جاري التجهيز…</> : <><Sparkles className="size-5" /> جرّبها افتراضياً ({remaining}/{DAILY_LIMIT})</>}
+          {busy ? <><Loader2 className="size-5 animate-spin" /> جاري الدمج الواقعي…</> : <><Sparkles className="size-5" /> ادمج بواقعية على جسمي</>}
         </button>
         {busy && <AiLoungeBanner className="mt-4" />}
 
@@ -133,24 +133,33 @@ function TryOn() {
           </div>
         )}
 
-        <p className="mt-6 rounded-2xl bg-accent/10 px-4 py-3 text-xs text-accent leading-relaxed">
-          <Shirt className="mb-1 inline size-3.5" /> معالجة فاخرة بالذكاء الاصطناعي مع الحفاظ الكامل على ملامح وجهك.
-        </p>
-
         <div className="mt-8">
-          <AiImageStudio
-            section="tryon"
-            title="استوديو الأزياء بالذكاء الاصطناعي"
-            subtitle="ولّد قطعة ملابس جديدة من الخيال — ارفع صورتك واطلب التصميم الذي يخطر ببالك."
-            accent="from-primary to-accent"
-            basePrompt="Photorealistic fashion lookbook image, studio lighting, premium fabric details"
-            presets={[
-              { id: "abaya", label: "عباية فاخرة", prompt: "elegant embroidered black abaya" },
-              { id: "suit", label: "بدلة رسمية", prompt: "tailored modern suit, soft beige" },
-              { id: "dress", label: "فستان ورود", prompt: "floral rose pink evening dress, flowing" },
-              { id: "casual", label: "كاجوال شبابي", prompt: "trendy streetwear outfit" },
-            ]}
-          />
+          <details className="group rounded-2xl border border-dashed border-border bg-card/50 p-3">
+            <summary className="cursor-pointer list-none text-xs font-black text-muted-foreground">
+              <span className="inline-flex items-center gap-2">
+                <Shirt className="size-3.5 text-primary" />
+                استوديو توليد قطع تخيلية
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px]">ميزة ثانوية · للتسلية</span>
+                <span className="text-primary group-open:hidden">▾ افتح</span>
+                <span className="hidden text-primary group-open:inline">▴ أغلق</span>
+              </span>
+            </summary>
+            <div className="mt-3">
+              <AiImageStudio
+                section="tryon"
+                title="استوديو توليد قطع ملابس تخيلية"
+                subtitle="ميزة إضافية للتسلية — الأساس هو الدمج الواقعي بالأعلى."
+                accent="from-primary to-accent"
+                basePrompt="Photorealistic fashion lookbook image, studio lighting, premium fabric details"
+                presets={[
+                  { id: "abaya", label: "عباية فاخرة", prompt: "elegant embroidered black abaya" },
+                  { id: "suit", label: "بدلة رسمية", prompt: "tailored modern suit, soft beige" },
+                  { id: "dress", label: "فستان ورود", prompt: "floral rose pink evening dress, flowing" },
+                  { id: "casual", label: "كاجوال شبابي", prompt: "trendy streetwear outfit" },
+                ]}
+              />
+            </div>
+          </details>
         </div>
       </div>
       <QuotaModal open={quotaOpen} onClose={() => setQuotaOpen(false)} />

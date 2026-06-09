@@ -233,7 +233,7 @@ function HaircutStudio() {
           <span className="text-primary">{tTitle2}</span>
         </h1>
         <p className="mt-2 text-muted-foreground">
-          محرّر فوري على جهازك — حرّك القصّة بإصبعك، كبّر وصغّر، بدون أي تكلفة سيرفر.
+          صورتك الحقيقية + القصّة المختارة = دمج واقعي بـ AI مع قفل كامل لملامح الوجه.
         </p>
 
         <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-bold text-primary">
@@ -377,7 +377,7 @@ function HaircutStudio() {
           </button>
           <button onClick={runAI} disabled={busy || !person || !style}
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-6 py-4 text-base font-black text-primary-foreground shadow-soft disabled:opacity-50">
-            {busy ? <><Loader2 className="size-5 animate-spin" /> جاري…</> : <><Sparkles className="size-5" /> توليد AI واقعي ({remLabel})</>}
+            {busy ? <><Loader2 className="size-5 animate-spin" /> جاري الدمج…</> : <><Sparkles className="size-5" /> ادمج بواقعية AI ({remLabel})</>}
           </button>
         </div>
         {busy && <AiLoungeBanner className="mt-4" />}
