@@ -347,6 +347,7 @@ function HaircutStudio() {
             {busy ? <><Loader2 className="size-5 animate-spin" /> جاري…</> : <><Sparkles className="size-5" /> توليد AI واقعي ({remLabel})</>}
           </button>
         </div>
+        {busy && <AiLoungeBanner className="mt-4" />}
 
         {readSettings().paidEnabled && !unlimited && (
           <button onClick={() => setPayOpen(true)}
