@@ -166,8 +166,8 @@ function ProductsTab() {
 }
 
 /* ============ المناطق ============ */
-type RegForm = { name: string; whatsapp_number: string; assistant_name: string };
-const EMPTY_R: RegForm = { name: "", whatsapp_number: "", assistant_name: "" };
+type RegForm = { name: string; whatsapp_number: string; assistant_name: string; distance_km: string };
+const EMPTY_R: RegForm = { name: "", whatsapp_number: "", assistant_name: "", distance_km: "15" };
 
 function RegionsTab() {
   const qc = useQueryClient();
@@ -178,7 +178,7 @@ function RegionsTab() {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name || !form.whatsapp_number) { toast.error("الاسم والرقم مطلوبان"); return; }
-    const payload = { name: form.name, whatsapp_number: form.whatsapp_number.replace(/\D/g, ""), assistant_name: form.assistant_name || null };
+    const payload = { name: form.name, whatsapp_number: form.whatsapp_number.replace(/\D/g, ""), assistant_name: form.assistant_name || null, distance_km: form.distance_km ? Number(form.distance_km) : null };
     const res = editing
       ? await supabase.from("regions").update(payload).eq("id", editing)
       : await supabase.from("regions").insert(payload);
@@ -203,10 +203,11 @@ function RegionsTab() {
     <div className="space-y-4">
       <form onSubmit={save} className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
         <h2 className="text-sm font-black">{editing ? "تعديل منطقة" : "إضافة منطقة جديدة"}</h2>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-4">
           <Input value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="اسم المنطقة (الدانا)" />
           <Input value={form.whatsapp_number} onChange={(v) => setForm({ ...form, whatsapp_number: v })} placeholder="واتساب 963xxx" />
           <Input value={form.assistant_name} onChange={(v) => setForm({ ...form, assistant_name: v })} placeholder="اسم المساعد" />
+          <Input value={form.distance_km} onChange={(v) => setForm({ ...form, distance_km: v })} placeholder="المسافة كم" type="number" />
         </div>
         <button type="submit" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft hover:opacity-90">
           {editing ? <Save className="size-4" /> : <Plus className="size-4" />} {editing ? "حفظ" : "إضافة منطقة"}
@@ -221,10 +222,10 @@ function RegionsTab() {
             <div key={r.id} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3">
               <div className="flex-1">
                 <p className="text-sm font-bold">{r.name} {!r.is_active && <span className="text-xs text-muted-foreground">(معطّلة)</span>}</p>
-                <p className="text-xs text-muted-foreground" dir="ltr">{r.whatsapp_number} · {r.assistant_name ?? "—"}</p>
+                <p className="text-xs text-muted-foreground" dir="ltr">{r.whatsapp_number} · {r.assistant_name ?? "—"} · {r.distance_km ?? "—"}km</p>
               </div>
               <button onClick={() => toggleActive(r)} className="text-xs rounded-lg bg-muted px-2 py-1">{r.is_active ? "تعطيل" : "تفعيل"}</button>
-              <button onClick={() => { setEditing(r.id); setForm({ name: r.name, whatsapp_number: r.whatsapp_number, assistant_name: r.assistant_name ?? "" }); }}
+              <button onClick={() => { setEditing(r.id); setForm({ name: r.name, whatsapp_number: r.whatsapp_number, assistant_name: r.assistant_name ?? "", distance_km: r.distance_km != null ? String(r.distance_km) : "" }); }}
                 className="rounded-lg bg-muted p-2"><Edit3 className="size-3.5" /></button>
               <button onClick={() => remove(r.id)} className="rounded-lg bg-destructive/10 p-2 text-destructive"><Trash2 className="size-3.5" /></button>
             </div>
