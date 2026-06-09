@@ -390,7 +390,7 @@ function HaircutStudio() {
         )}
 
         {result && (
-          <div className="mt-6 rounded-3xl border border-primary/30 bg-card p-4">
+          <div className="mt-4 rounded-3xl border border-primary/30 bg-card p-4">
             <p className="mb-3 text-sm font-bold text-primary">النتيجة</p>
             <img src={result} alt="result" className="w-full rounded-2xl" />
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -406,10 +406,6 @@ function HaircutStudio() {
           </div>
         )}
 
-        <p className="mt-6 rounded-2xl bg-accent/10 px-4 py-3 text-xs text-accent leading-relaxed">
-          المعاينة الفورية تعمل بالكامل على جهازك (Canvas/Mask) — بدون سيرفر. التوليد الواقعي عبر AI يستخدم Replicate
-          ويخضع للحدّ المجاني اليومي.
-        </p>
       </div>
       <QuotaModal open={quotaOpen} onClose={() => setQuotaOpen(false)} />
       <PaymentModal open={payOpen} onClose={() => setPayOpen(false)} />
