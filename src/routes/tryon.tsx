@@ -72,8 +72,8 @@ function TryOn() {
     <div className="min-h-screen bg-background px-5 py-8" dir="rtl">
       <div className="mx-auto max-w-5xl">
         <Link to="/workflow" className="text-sm font-bold text-primary hover:underline">← الوحدات</Link>
-        <h1 className="mt-3 text-3xl font-black">غرفة <span className="text-primary">تجربة الأزياء AI</span></h1>
-        <p className="mt-2 text-muted-foreground">ارفع صورتك، اختر قطعة من الكتالوج، وشاهد نفسك ترتديها فوراً.</p>
+        <h1 className="mt-3 text-3xl font-black">دمج <span className="text-primary">واقعي للأزياء AI</span></h1>
+        <p className="mt-2 text-muted-foreground">صورتك + قطعة الكتالوج = إطلالة حقيقية بثنيات طبيعية وحفاظ كامل على وجهك.</p>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="rounded-3xl border border-border bg-card p-4">
