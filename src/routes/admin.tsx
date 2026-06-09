@@ -14,6 +14,7 @@ import { useCmsStrings, DEFAULT_STRINGS } from "@/lib/cms-strings";
 import { useVendorStore, DEFAULT_VENDOR_STATE, generateLoginToken, STATUS_LABELS, type VendorState, type VendorStatus } from "@/lib/vendor-config";
 import { usePaymentRequests, approveRequest, rejectRequest, grantCreditsByDevice, type PaymentPackage, type PaymentRequest } from "@/lib/payments";
 import { BatchImageUploader, type BatchItem } from "@/components/BatchImageUploader";
+import { useCategories, labelOf, type Category, type CategoryTab } from "@/lib/categories";
 
 
 export const Route = createFileRoute("/admin")({
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/admin")({
   component: () => <AdminGate title="لوحة تحكم المعرض"><AdminPage /></AdminGate>,
 });
 
-type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms" | "quota" | "payments" | "haircuts";
+type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms" | "quota" | "payments" | "haircuts" | "categories";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
@@ -65,6 +66,7 @@ function AdminPage() {
           <TabBtn icon={<Sparkles className="size-4" />} label="المحاولات والإعلانات" active={tab === "quota"} onClick={() => setTab("quota")} />
           <TabBtn icon={<Wallet className="size-4" />} label="الاشتراكات والدفع" active={tab === "payments"} onClick={() => setTab("payments")} />
           <TabBtn icon={<Scissors className="size-4" />} label="معرض التصاميم AI" active={tab === "haircuts"} onClick={() => setTab("haircuts")} />
+          <TabBtn icon={<Type className="size-4" />} label="الفئات" active={tab === "categories"} onClick={() => setTab("categories")} />
         </div>
 
         {tab === "products" && <ProductsTab />}
@@ -78,6 +80,7 @@ function AdminPage() {
         {tab === "quota" && <QuotaSettingsTab />}
         {tab === "payments" && <PaymentsTab />}
         {tab === "haircuts" && <DesignsTab />}
+        {tab === "categories" && <CategoriesTab />}
       </div>
     </div>
   );
@@ -100,6 +103,7 @@ const EMPTY_P: ProdForm = { title: "", image_url: "", type: "", price: "" };
 
 function ProductsTab() {
   const qc = useQueryClient();
+  const [cats] = useCategories();
   const [form, setForm] = useState<ProdForm>(EMPTY_P);
   const [editing, setEditing] = useState<string | null>(null);
 
@@ -185,7 +189,7 @@ function ProductsTab() {
               <img src={d.image_url} alt={d.title} className="size-16 rounded-lg object-cover bg-muted" />
               <div className="flex-1 min-w-0">
                 <p className="line-clamp-1 text-sm font-bold">{d.title}</p>
-                {d.type && <p className="text-[11px] text-muted-foreground">{CATEGORY_LABELS_AR[d.type] ?? d.type}</p>}
+                {d.type && <p className="text-[11px] text-muted-foreground">{labelOf(cats, d.type)}</p>}
               </div>
               <div className="flex flex-col gap-1">
                 <button onClick={() => { setEditing(d.id); setForm({ title: d.title, image_url: d.image_url, type: d.type ?? "", price: d.price != null ? String(d.price) : "" }); window.scrollTo({ top: 0, behavior: "smooth" }); }}
@@ -541,10 +545,11 @@ function OrdersTab() {
 /* ============ السوق (Vendors) ============ */
 type VendorRow = { id: string; name: string; category: string; phone: string; logo_url: string | null; is_premium: boolean; region_id: string | null; subscription_status?: string | null; login_token?: string | null; cover_image?: string | null };
 type VForm = { name: string; category: string; phone: string; logo_url: string; is_premium: boolean; region_id: string };
-const EMPTY_V: VForm = { name: "", category: "curtains", phone: "", logo_url: "", is_premium: false, region_id: "" };
+const EMPTY_V: VForm = { name: "", category: "", phone: "", logo_url: "", is_premium: false, region_id: "" };
 
 function VendorsTab() {
   const qc = useQueryClient();
+  const [cats] = useCategories();
   const { data: regions } = useRegions();
   const [form, setForm] = useState<VForm>(EMPTY_V);
   const [editing, setEditing] = useState<string | null>(null);
@@ -593,11 +598,10 @@ function VendorsTab() {
           <Input value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="اسم النشاط *" />
           <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
             className="rounded-xl bg-muted px-3 py-2 text-sm outline-none">
-            <option value="curtains">ستائر</option>
-            <option value="sofa">كنب</option>
-            <option value="furniture">أثاث</option>
-            <option value="fashion">أزياء</option>
-            <option value="other">أخرى</option>
+            <option value="">— اختر الفئة —</option>
+            {cats.map((c) => (
+              <option key={c.id} value={c.id}>{c.label}</option>
+            ))}
           </select>
           <Input value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} placeholder="واتساب 963xxx" />
           <Input value={form.logo_url} onChange={(v) => setForm({ ...form, logo_url: v })} placeholder="رابط الشعار" />
@@ -625,7 +629,7 @@ function VendorsTab() {
             sample="name,category,phone,logo_url,is_premium"
             map={(row) => ({
               name: row.name,
-              category: ["curtains","sofa","furniture","fashion","other"].includes(row.category) ? row.category : "other",
+              category: row.category || "other",
               phone: (row.phone || "").replace(/\D/g, ""),
               logo_url: row.logo_url || null,
               is_premium: ["true","1","yes","نعم"].includes((row.is_premium || "").toLowerCase()),
@@ -1267,26 +1271,17 @@ function DesignsTab() {
   );
 }
 
-const CATEGORY_LABELS_AR: Record<string, string> = {
-  curtains: "ستائر",
-  sofa: "كنب",
-  furniture: "أثاث",
-  fashion: "أزياء",
-  haircut: "قصّات شعر",
-  other: "أخرى",
-};
-
 function BulkProductsUploader({ onDone }: { onDone: () => void }) {
-  const [type, setType] = useState<string>("curtains");
-  const cats = Object.keys(CATEGORY_LABELS_AR);
+  const [cats] = useCategories();
+  const [type, setType] = useState<string>(cats[0]?.id ?? "other");
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         {cats.map((c) => (
-          <button key={c} type="button" onClick={() => setType(c)}
+          <button key={c.id} type="button" onClick={() => setType(c.id)}
             className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition ${
-              type === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary/50"
-            }`}>{CATEGORY_LABELS_AR[c]}</button>
+              type === c.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary/50"
+            }`}>{c.label}</button>
         ))}
       </div>
       <BatchImageUploader
@@ -1303,4 +1298,78 @@ function BulkProductsUploader({ onDone }: { onDone: () => void }) {
     </div>
   );
 }
+
+/* ============ إدارة الفئات (طبقة بيانات مرنة) ============ */
+function CategoriesTab() {
+  const [cats, setCats] = useCategories();
+  const [draft, setDraft] = useState<Category>({ id: "", label: "", tab: "decor" });
+
+  function add() {
+    const id = draft.id.trim().toLowerCase().replace(/\s+/g, "_");
+    const label = draft.label.trim();
+    if (!id || !label) { toast.error("المعرّف والاسم العربي مطلوبان"); return; }
+    if (cats.some((c) => c.id === id)) { toast.error("هذا المعرّف موجود مسبقاً"); return; }
+    setCats([...cats, { id, label, tab: draft.tab }]);
+    setDraft({ id: "", label: "", tab: "decor" });
+    toast.success("تمت إضافة الفئة");
+  }
+
+  function update(id: string, patch: Partial<Category>) {
+    setCats(cats.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  }
+
+  function remove(id: string) {
+    if (!confirm("حذف هذه الفئة؟ لن يتأثر المنتجات/الشركاء بل ستظهر فئتهم كما هي.")) return;
+    setCats(cats.filter((c) => c.id !== id));
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-card space-y-3">
+        <h2 className="text-sm font-black">إضافة فئة جديدة</h2>
+        <p className="text-[11px] text-muted-foreground">المعرّف بالإنجليزية (مثل: rugs) — يُحفظ في قاعدة البيانات. الاسم العربي يظهر في الواجهة.</p>
+        <div className="grid gap-2 sm:grid-cols-4">
+          <input value={draft.id} dir="ltr" onChange={(e) => setDraft({ ...draft, id: e.target.value })}
+            placeholder="id (مثال: rugs)" className="rounded-xl bg-muted px-3 py-2 text-sm outline-none" />
+          <input value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })}
+            placeholder="الاسم العربي (مثال: سجّاد)" className="rounded-xl bg-muted px-3 py-2 text-sm outline-none" />
+          <select value={draft.tab} onChange={(e) => setDraft({ ...draft, tab: e.target.value as CategoryTab })}
+            className="rounded-xl bg-muted px-3 py-2 text-sm outline-none">
+            <option value="decor">عالم الديكور</option>
+            <option value="fashion">عالم الأزياء</option>
+          </select>
+          <button onClick={add} className="inline-flex items-center justify-center gap-1 rounded-xl bg-primary px-4 py-2 text-sm font-black text-primary-foreground">
+            <Plus className="size-4" /> إضافة
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+        <h2 className="mb-3 text-sm font-black">الفئات الحالية ({cats.length})</h2>
+        <div className="space-y-2">
+          {cats.map((c) => (
+            <div key={c.id} className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-background p-3">
+              <code className="rounded bg-muted px-2 py-0.5 text-[11px]" dir="ltr">{c.id}</code>
+              <input value={c.label} onChange={(e) => update(c.id, { label: e.target.value })}
+                className="flex-1 min-w-[140px] rounded-lg bg-muted px-2 py-1.5 text-sm outline-none" />
+              <select value={c.tab} onChange={(e) => update(c.id, { tab: e.target.value as CategoryTab })}
+                className="rounded-lg bg-muted px-2 py-1.5 text-xs outline-none">
+                <option value="decor">ديكور</option>
+                <option value="fashion">أزياء</option>
+              </select>
+              <button onClick={() => remove(c.id)} className="rounded-lg bg-destructive/10 p-2 text-destructive">
+                <Trash2 className="size-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <button onClick={() => { if (confirm("استعادة الفئات الافتراضية؟")) { setCats([]); setTimeout(() => location.reload(), 100); } }}
+          className="mt-3 text-[11px] text-muted-foreground hover:text-foreground">
+          استعادة الافتراضي
+        </button>
+      </div>
+    </div>
+  );
+}
+
 

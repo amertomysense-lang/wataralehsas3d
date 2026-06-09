@@ -9,6 +9,7 @@ import { usePricing } from "@/lib/platform";
 import { useVendorStore, DEFAULT_VENDOR_STATE } from "@/lib/vendor-config";
 import { useStr } from "@/lib/cms-strings";
 import { PriceOrTrialBadge } from "@/components/BatchImageUploader";
+import { useCategories, idsForTab, labelOf } from "@/lib/categories";
 
 type Vendor = {
   id: string; name: string; category: string;
@@ -21,9 +22,6 @@ type Product = {
   image_url: string; price: number | null;
 };
 
-const DECOR_CATS = ["curtains", "sofa", "furniture", "other"];
-const FASHION_CATS = ["fashion"];
-
 export const Route = createFileRoute("/marketplace")({
   head: () => ({ meta: [{ title: "سوق الشركاء — وتر الإحساس" }] }),
   component: Marketplace,
@@ -35,6 +33,7 @@ function Marketplace() {
   const { data: pricing } = usePricing();
   const currency = pricing?.currency ?? settings.currency;
   const [vendorStore] = useVendorStore();
+  const [cats] = useCategories();
   const title2 = useStr("marketplace.title_2");
   const tabDecor = useStr("marketplace.tab_decor");
   const tabFashion = useStr("marketplace.tab_fashion");
@@ -75,9 +74,9 @@ function Marketplace() {
   }, [data, vendorStore]);
 
   const filtered = useMemo(() => {
-    const cats = tab === "decor" ? DECOR_CATS : FASHION_CATS;
-    return activeVendors.filter((v) => cats.includes(v.category));
-  }, [activeVendors, tab]);
+    const allowed = new Set(idsForTab(cats, tab));
+    return activeVendors.filter((v) => allowed.has(v.category));
+  }, [activeVendors, tab, cats]);
 
 
   return (
@@ -155,10 +154,7 @@ function TabBtn({ active, onClick, icon, label }:
 }
 
 function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolean; fashion: boolean; haircut: boolean }; subscription_active: boolean; brand_badge?: string } }) {
-  const catLabel: Record<string, string> = {
-    curtains: "ستائر فاخرة", sofa: "كنب وأرائك", furniture: "أثاث منزلي",
-    fashion: "أزياء وموضة", other: "متنوع",
-  };
+  const [cats] = useCategories();
   const mods = state.modules;
   const isIdle = v.subscription_status === "idle";
   return (
@@ -192,7 +188,7 @@ function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolea
           </div>
           <div className="min-w-0">
             <h3 className="truncate text-base font-black text-foreground">{v.name}</h3>
-            <p className="text-xs text-muted-foreground">{catLabel[v.category] ?? v.category}</p>
+            <p className="text-xs text-muted-foreground">{labelOf(cats, v.category)}</p>
           </div>
         </div>
 
