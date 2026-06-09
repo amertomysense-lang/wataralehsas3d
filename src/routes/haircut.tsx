@@ -55,9 +55,11 @@ function HaircutStudio() {
   const [result, setResult] = useState<string | null>(null);
   const [quotaOpen, setQuotaOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const remaining = useQuota();
   const unlimited = isUnlimited();
-  const remLabel = unlimited ? "∞" : String(remaining);
+  const remLabel = mounted ? (unlimited ? "∞" : String(remaining)) : "…";
   // قصّات الأدمن المخصّصة
   const [customs, setCustoms] = useState<Style[]>([]);
   useEffect(() => {
@@ -194,25 +196,26 @@ function HaircutStudio() {
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
         const msg = String(j?.error || "");
-        // كشف نقص الرصيد / 402 → fallback تلقائي للمحاكي المجاني
+        // كشف نقص الرصيد / 402 → تنبيه واضح + وضع المحاكاة التجريبي
         if (res.status === 402 || /credit|insufficient|payment|402|quota/i.test(msg)) {
           await renderLocalComposite(false);
-          toast.success("تمت المعاينة الفورية بنجاح عبر الجوال!");
+          toast.warning("جاري العرض في وضع المحاكاة التجريبي — لنتائج واقعية تواصل مع الإدارة", { duration: 6000 });
           return;
         }
         throw new Error(msg || "فشل التجهيز");
       }
       setResult(j.result_url);
+      toast.success("تمّ الدمج الواقعي بالذكاء الاصطناعي ✨");
       if (readSettings().aiTryOnLogging) {
         await supabase.from("tryon_logs").insert({
           person_url: null, garment_id: null, result_url: j.result_url,
         });
       }
     } catch (e) {
-      // فشل شبكي عام → جرّب المحاكي المجاني بدل رسالة حمراء
+      // فشل شبكي عام → تنبيه واضح + معاينة محلية
       try {
         await renderLocalComposite(false);
-        toast.success("تمت المعاينة الفورية بنجاح عبر الجوال!");
+        toast.warning("جاري العرض في وضع المحاكاة التجريبي — لنتائج واقعية تواصل مع الإدارة", { duration: 6000 });
       } catch {
         const m = e instanceof Error ? e.message : String(e);
         toast.error(m);
@@ -238,7 +241,7 @@ function HaircutStudio() {
 
         <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-bold text-primary">
           <Sparkles className="size-3.5" />
-          {unlimited ? "وصول بلا حدود ✨" : <>محاولات AI المتبقّية: {remLabel}</>}
+          {mounted && unlimited ? "وصول بلا حدود ✨" : <>محاولات AI المتبقّية: {remLabel}</>}
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -372,12 +375,20 @@ function HaircutStudio() {
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <button onClick={exportCanvas} disabled={busy || !person || !style}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-primary bg-card px-6 py-4 text-base font-black text-primary disabled:opacity-50">
-            <Download className="size-5" /> حفظ المعاينة (مجاناً)
+            className="inline-flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-primary/40 bg-card px-6 py-4 text-base font-black text-primary disabled:opacity-50">
+            <span className="inline-flex items-center gap-2"><Download className="size-5" /> معاينة فورية (ملصق)</span>
+            <span className="text-[10px] font-bold text-muted-foreground">عرض سريع لضبط الحجم والموضع — بدون استهلاك</span>
           </button>
           <button onClick={runAI} disabled={busy || !person || !style}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-6 py-4 text-base font-black text-primary-foreground shadow-soft disabled:opacity-50">
-            {busy ? <><Loader2 className="size-5 animate-spin" /> جاري الدمج…</> : <><Sparkles className="size-5" /> ادمج بواقعية AI ({remLabel})</>}
+            className="relative inline-flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-l from-primary via-primary to-accent px-6 py-4 text-base font-black text-primary-foreground shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.6)] disabled:opacity-50">
+            {busy ? (
+              <span className="inline-flex items-center gap-2"><Loader2 className="size-5 animate-spin" /> جاري الدمج الواقعي…</span>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-2"><Sparkles className="size-5" /> توليد بالذكاء الاصطناعي ✨</span>
+                <span className="text-[10px] font-bold opacity-90">دمج حقيقي مع قفل الوجه والبشرة ({remLabel})</span>
+              </>
+            )}
           </button>
         </div>
         {busy && <AiLoungeBanner className="mt-4" />}
