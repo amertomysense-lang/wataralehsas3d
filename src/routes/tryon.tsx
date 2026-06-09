@@ -44,6 +44,7 @@ function TryOn() {
 
   async function runTryOn() {
     if (!person || !garment) { toast.error("ارفع صورتك واختر قطعة"); return; }
+    if (!consumeQuota()) { setQuotaOpen(true); return; }
     setBusy(true); setResult(null);
     try {
       const res = await fetch("/api/tryon", {
