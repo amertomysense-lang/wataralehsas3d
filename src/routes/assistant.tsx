@@ -166,7 +166,7 @@ function RegionVendorsPanel({ regionName }: { regionName: string }) {
     queryKey: ["assistant-vendors", region?.id],
     queryFn: async () => {
       const { data } = await supabase.from("vendors").select("*").eq("region_id", region!.id).order("is_premium", { ascending: false });
-      return (data ?? []) as Array<{ id: string; business_name: string; category: string; whatsapp_number: string; is_premium: boolean }>;
+      return (data ?? []) as Array<{ id: string; name: string; category: string; phone: string; is_premium: boolean }>;
     },
   });
 
@@ -183,8 +183,8 @@ function RegionVendorsPanel({ regionName }: { regionName: string }) {
         {vendors?.map(v => (
           <div key={v.id} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold">{v.business_name}</p>
-              <p className="text-[11px] text-muted-foreground" dir="ltr">{v.category} · {v.whatsapp_number}</p>
+              <p className="text-sm font-bold">{v.name}</p>
+              <p className="text-[11px] text-muted-foreground" dir="ltr">{v.category} · {v.phone}</p>
             </div>
             <button onClick={() => togglePremium(v.id, !v.is_premium)}
               className={`rounded-lg px-2 py-1 text-[11px] font-bold ${v.is_premium ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>

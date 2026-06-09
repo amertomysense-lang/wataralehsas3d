@@ -537,9 +537,9 @@ function OrdersTab() {
 }
 
 /* ============ السوق (Vendors) ============ */
-type VendorRow = { id: string; business_name: string; category: string; whatsapp_number: string; logo_url: string | null; is_premium: boolean; region_id: string | null; subscription_status?: string | null; login_token?: string | null; cover_image?: string | null };
-type VForm = { business_name: string; category: string; whatsapp_number: string; logo_url: string; is_premium: boolean; region_id: string };
-const EMPTY_V: VForm = { business_name: "", category: "curtains", whatsapp_number: "", logo_url: "", is_premium: false, region_id: "" };
+type VendorRow = { id: string; name: string; category: string; phone: string; logo_url: string | null; is_premium: boolean; region_id: string | null; subscription_status?: string | null; login_token?: string | null; cover_image?: string | null };
+type VForm = { name: string; category: string; phone: string; logo_url: string; is_premium: boolean; region_id: string };
+const EMPTY_V: VForm = { name: "", category: "curtains", phone: "", logo_url: "", is_premium: false, region_id: "" };
 
 function VendorsTab() {
   const qc = useQueryClient();
@@ -558,11 +558,11 @@ function VendorsTab() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.business_name || !form.whatsapp_number) { toast.error("الاسم والرقم مطلوبان"); return; }
+    if (!form.name || !form.phone) { toast.error("الاسم والرقم مطلوبان"); return; }
     const payload = {
-      business_name: form.business_name,
+      name: form.name,
       category: form.category,
-      whatsapp_number: form.whatsapp_number.replace(/\D/g, ""),
+      phone: form.phone.replace(/\D/g, ""),
       logo_url: form.logo_url || null,
       is_premium: form.is_premium,
       region_id: form.region_id || null,
@@ -588,7 +588,7 @@ function VendorsTab() {
       <form onSubmit={save} className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
         <h2 className="text-sm font-black">{editing ? "تعديل شريك" : "إضافة شريك للسوق"}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Input value={form.business_name} onChange={(v) => setForm({ ...form, business_name: v })} placeholder="اسم النشاط *" />
+          <Input value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="اسم النشاط *" />
           <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
             className="rounded-xl bg-muted px-3 py-2 text-sm outline-none">
             <option value="curtains">ستائر</option>
@@ -597,7 +597,7 @@ function VendorsTab() {
             <option value="fashion">أزياء</option>
             <option value="other">أخرى</option>
           </select>
-          <Input value={form.whatsapp_number} onChange={(v) => setForm({ ...form, whatsapp_number: v })} placeholder="واتساب 963xxx" />
+          <Input value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} placeholder="واتساب 963xxx" />
           <Input value={form.logo_url} onChange={(v) => setForm({ ...form, logo_url: v })} placeholder="رابط الشعار" />
           <select value={form.region_id} onChange={(e) => setForm({ ...form, region_id: e.target.value })}
             className="rounded-xl bg-muted px-3 py-2 text-sm outline-none">
@@ -620,11 +620,11 @@ function VendorsTab() {
           <h2 className="text-sm font-black">الشركاء ({vendors?.length ?? 0})</h2>
           <CSVImportButton
             table="vendors"
-            sample="business_name,category,whatsapp_number,logo_url,is_premium"
+            sample="name,category,phone,logo_url,is_premium"
             map={(row) => ({
-              business_name: row.business_name,
+              name: row.name,
               category: ["curtains","sofa","furniture","fashion","other"].includes(row.category) ? row.category : "other",
-              whatsapp_number: (row.whatsapp_number || "").replace(/\D/g, ""),
+              phone: (row.phone || "").replace(/\D/g, ""),
               logo_url: row.logo_url || null,
               is_premium: ["true","1","yes","نعم"].includes((row.is_premium || "").toLowerCase()),
             })}
@@ -633,7 +633,7 @@ function VendorsTab() {
         </div>
 
         <div className="space-y-2">
-          {vendors?.map(v => <VendorRowEditor key={v.id} v={v} onEdit={() => { setEditing(v.id); setForm({ business_name: v.business_name, category: v.category, whatsapp_number: v.whatsapp_number, logo_url: v.logo_url ?? "", is_premium: v.is_premium, region_id: v.region_id ?? "" }); }} onRemove={() => remove(v.id)} />)}
+          {vendors?.map(v => <VendorRowEditor key={v.id} v={v} onEdit={() => { setEditing(v.id); setForm({ name: v.name, category: v.category, phone: v.phone, logo_url: v.logo_url ?? "", is_premium: v.is_premium, region_id: v.region_id ?? "" }); }} onRemove={() => remove(v.id)} />)}
           {(!vendors || vendors.length === 0) && <p className="text-center text-xs text-muted-foreground py-6">لا شركاء بعد. أضف أول شريك ليظهر في السوق.</p>}
         </div>
       </div>
@@ -674,8 +674,8 @@ function VendorRowEditor({ v, onEdit, onRemove }: { v: VendorRow; onEdit: () => 
       <div className="flex items-center gap-3">
         {v.logo_url && <img src={v.logo_url} className="size-10 rounded-lg object-cover bg-muted" alt="" />}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold">{v.business_name} {v.is_premium && <span className="text-[10px] text-primary">★</span>}</p>
-          <p className="text-[11px] text-muted-foreground" dir="ltr">{v.category} · {v.whatsapp_number}</p>
+          <p className="text-sm font-bold">{v.name} {v.is_premium && <span className="text-[10px] text-primary">★</span>}</p>
+          <p className="text-[11px] text-muted-foreground" dir="ltr">{v.category} · {v.phone}</p>
           {v.login_token && <p className="text-[10px] font-mono text-primary mt-1" dir="ltr">🔑 {v.login_token}</p>}
         </div>
         <button onClick={generateToken} title="توليد رمز دخول للشريك" className="rounded-lg bg-primary/10 px-2 py-1 text-[10px] font-black text-primary">رمز</button>
