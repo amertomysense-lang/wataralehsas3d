@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import { Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X } from "lucide-react";
+import { Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X, Wand2, Loader2, Download } from "lucide-react";
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
 import { toast } from "sonner";
@@ -34,6 +34,9 @@ function Simulator() {
   const [shipping, setShipping] = useState<"self" | "company">("self");
   const [km, setKm] = useState(15);
   const [sending, setSending] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiResult, setAiResult] = useState<string | null>(null);
+  const [surface, setSurface] = useState<"wall" | "floor" | "ceiling">("wall");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: regions } = useRegions();
@@ -48,6 +51,45 @@ function Simulator() {
   const grandTotal = baseTotal + shippingCost;
 
   function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => { setBg(r.result as string); setAiResult(null); };
+    r.readAsDataURL(f);
+  }
+
+  async function runAiProjection() {
+    if (!bg) { toast.error("ارفع صورة الغرفة أولاً"); return; }
+    if (!active) { toast.error("اختر طبقة تصميم"); return; }
+    setAiBusy(true); setAiResult(null);
+    try {
+      const res = await fetch("/api/decor-project", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room: bg,
+          design: active.url,
+          design_desc: active.name,
+          surface,
+          embossed,
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || "فشل الدمج");
+      setAiResult(j.result_url);
+      toast.success("تمّ الإسقاط الواقعي بالذكاء الاصطناعي");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "تعذّر الدمج، حاول لاحقاً");
+    } finally { setAiBusy(false); }
+  }
+
+  function downloadResult() {
+    if (!aiResult) return;
+    const a = document.createElement("a");
+    a.href = aiResult; a.download = `watar-room-${Date.now()}.jpg`; a.click();
+  }
+
+  function _origUploadStub(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
     const r = new FileReader();
