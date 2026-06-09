@@ -7,8 +7,8 @@ export const Route = createFileRoute("/api/haircut")({
       POST: async ({ request }) => {
         const token = process.env.REPLICATE_API_TOKEN;
         if (!token) {
-          return new Response(JSON.stringify({ error: "REPLICATE_API_TOKEN missing" }), {
-            status: 500, headers: { "Content-Type": "application/json" },
+          return new Response(JSON.stringify({ error: "لتفعيل التوليد بالذكاء الاصطناعي أضف مفتاح REPLICATE_API_TOKEN في إعدادات الأسرار. حتى ذلك الحين استخدم زر «حفظ المعاينة» المجاني." }), {
+            status: 400, headers: { "Content-Type": "application/json" },
           });
         }
         const { person, style, color, hairstyle_url } = (await request.json()) as {
