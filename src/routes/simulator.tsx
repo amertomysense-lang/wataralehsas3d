@@ -45,11 +45,19 @@ function Simulator() {
   const { data: pricing } = usePricing();
   const [settings] = useSettings();
   const region = useMemo(() => regions?.find((r) => r.id === regionId), [regions, regionId]);
-  const currency = pricing?.currency ?? settings.currency;
 
-  const baseTotal = useMemo(() => (pricing ? calcTotal(width, height, embossed, pricing) : 0),
-    [pricing, width, height, embossed]);
-  const shippingCost = shipping === "company" ? km * settings.fuelPerKm : 0;
+  // عملة مزدوجة USD ⇄ TRY — يبدّلها المستخدم وتنعكس على الإجمالي وواتساب
+  const [currencyMode, setCurrencyMode] = useState<"USD" | "TRY">("USD");
+  const TRY_RATE = 32.5; // سعر صرف تقريبي — قابل للتعديل لاحقاً من إعدادات الأدمن
+  const currency = currencyMode === "USD" ? "$" : "₺";
+  const fx = currencyMode === "USD" ? 1 : TRY_RATE;
+
+  const baseTotalUsd = useMemo(
+    () => (pricing ? calcTotal(width, height, embossed, pricing) : 0),
+    [pricing, width, height, embossed],
+  );
+  const baseTotal = baseTotalUsd * fx;
+  const shippingCost = (shipping === "company" ? km * settings.fuelPerKm : 0) * fx;
   const grandTotal = baseTotal + shippingCost;
 
   function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
