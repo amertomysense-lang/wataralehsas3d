@@ -82,6 +82,8 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
   adBonusAttempts: 1,
   adMaxDaily: 5,
   adSeconds: 15,
+  aiSimulationOnly: true,
+
 
   paidEnabled: false,
   shamCashNumber: "",
