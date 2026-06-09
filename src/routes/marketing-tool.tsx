@@ -3,6 +3,7 @@ import { ArrowRight, Upload, Download, Loader2, Image as ImageIcon, Sparkles } f
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { AdminGate } from "@/components/AdminGate";
+import { AiImageStudio } from "@/components/AiImageStudio";
 
 export const Route = createFileRoute("/marketing-tool")({
   head: () => ({
@@ -307,6 +308,21 @@ export default function MarketingToolPage() {
               💡 لخصوصية الورشة: تُحذف الخلفية تلقائياً قبل وضع المنتج على القالب.
             </p>
           </div>
+        </div>
+
+        <div className="mt-8">
+          <AiImageStudio
+            title="استوديو التصاميم التسويقية AI"
+            subtitle="ولّد بوستر/منشور سوشيال جاهز بهوية وتر الإحساس — اكتب الفكرة فقط."
+            accent="from-accent to-primary"
+            basePrompt="Premium social media marketing poster, 1:1, brand identity 'وتر الإحساس', elegant typography, soft rose-garden palette, professional product photography"
+            presets={[
+              { id: "rose", label: "حديقة ورود", prompt: "pink roses, golden bokeh, romantic" },
+              { id: "violet", label: "بنفسجي ملكي", prompt: "royal violet gradient, gold accents" },
+              { id: "minimal", label: "مينيمال كريمي", prompt: "minimal cream background, soft shadows" },
+              { id: "night", label: "ليلي ذهبي", prompt: "dark night with golden light rays" },
+            ]}
+          />
         </div>
       </div>
     </div>
