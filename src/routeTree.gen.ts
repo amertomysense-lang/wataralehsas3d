@@ -14,6 +14,7 @@ import { Route as TryonRouteImport } from './routes/tryon'
 import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MarketingToolRouteImport } from './routes/marketing-tool'
+import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
@@ -44,6 +45,11 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
 const MarketingToolRoute = MarketingToolRouteImport.update({
   id: '/marketing-tool',
   path: '/marketing-tool',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssistantRoute = AssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -80,6 +86,7 @@ const ApiChatRoute = ApiChatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/assistant': typeof AssistantRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/marketplace': typeof MarketplaceRoute
   '/simulator': typeof SimulatorRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/assistant': typeof AssistantRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/marketplace': typeof MarketplaceRoute
   '/simulator': typeof SimulatorRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/assistant': typeof AssistantRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/marketplace': typeof MarketplaceRoute
   '/simulator': typeof SimulatorRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/assistant'
     | '/marketing-tool'
     | '/marketplace'
     | '/simulator'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/assistant'
     | '/marketing-tool'
     | '/marketplace'
     | '/simulator'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/assistant'
     | '/marketing-tool'
     | '/marketplace'
     | '/simulator'
@@ -162,6 +174,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AssistantRoute: typeof AssistantRoute
   MarketingToolRoute: typeof MarketingToolRoute
   MarketplaceRoute: typeof MarketplaceRoute
   SimulatorRoute: typeof SimulatorRoute
@@ -208,6 +221,13 @@ declare module '@tanstack/react-router' {
       path: '/marketing-tool'
       fullPath: '/marketing-tool'
       preLoaderRoute: typeof MarketingToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assistant': {
+      id: '/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AssistantRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -258,6 +278,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AssistantRoute: AssistantRoute,
   MarketingToolRoute: MarketingToolRoute,
   MarketplaceRoute: MarketplaceRoute,
   SimulatorRoute: SimulatorRoute,
