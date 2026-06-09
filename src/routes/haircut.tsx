@@ -72,6 +72,7 @@ function HaircutStudio() {
       window.removeEventListener("storage", sync);
     };
   }, []);
+  const stageRef = useRef<HTMLDivElement>(null);
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const startDist = useRef(0);
   const startTx = useRef<Tx>(INIT_TX);
@@ -202,7 +203,7 @@ function HaircutStudio() {
 
         <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-bold text-primary">
           <Sparkles className="size-3.5" />
-          محاولات AI المتبقّية اليوم: {remaining}/{DAILY_LIMIT}
+          {unlimited ? "وصول بلا حدود ✨" : <>محاولات AI المتبقّية: {remLabel}</>}
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
