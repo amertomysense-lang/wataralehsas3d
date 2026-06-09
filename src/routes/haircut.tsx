@@ -175,8 +175,8 @@ function HaircutStudio() {
       <div className="mx-auto max-w-5xl">
         <Link to="/workflow" className="text-sm font-bold text-primary hover:underline">← الوحدات</Link>
         <h1 className="mt-3 text-3xl font-black">
-          <Scissors className="inline size-7 text-primary" /> {t("haircut.title_1")}{" "}
-          <span className="text-primary">{t("haircut.title_2")}</span>
+          <Scissors className="inline size-7 text-primary" /> {tTitle1}{" "}
+          <span className="text-primary">{tTitle2}</span>
         </h1>
         <p className="mt-2 text-muted-foreground">
           محرّر فوري على جهازك — حرّك القصّة بإصبعك، كبّر وصغّر، بدون أي تكلفة سيرفر.
@@ -241,7 +241,7 @@ function HaircutStudio() {
                 <label className="grid size-full cursor-pointer place-items-center text-center">
                   <div>
                     <Upload className="mx-auto size-8 text-primary" />
-                    <p className="mt-2 text-sm font-bold">{t("haircut.upload_hint")}</p>
+                    <p className="mt-2 text-sm font-bold">{tUploadHint}</p>
                   </div>
                   <input type="file" accept="image/*" className="hidden" onChange={onFile} />
                 </label>
@@ -288,7 +288,7 @@ function HaircutStudio() {
               ))}
             </div>
 
-            <p className="mt-4 mb-2 text-xs font-black text-primary">{t("haircut.color")}</p>
+            <p className="mt-4 mb-2 text-xs font-black text-primary">{tColor}</p>
             <div className="flex flex-wrap gap-2">
               {COLORS.map((c) => (
                 <button key={c.id} onClick={() => setColor(c)}
