@@ -343,12 +343,6 @@ function BatchUploadToProducts({ vendor }: { vendor: Vendor }) {
   );
 }
 
-    <div className="surface-card p-5">
-      <h2 className="mb-3 text-sm font-black">رفع جماعي للتصاميم (بدون أسعار)</h2>
-      <BatchImageUploader onUploaded={handle} hint="ارفع حتى 100 صورة دفعة واحدة — تُربط تلقائياً بفئة معرضك بدون سعر." />
-    </div>
-  );
-}
 
 /* ============ المعرض المرئي ============ */
 function GalleryTab({ vendor }: { vendor: Vendor }) {
