@@ -103,6 +103,7 @@ const EMPTY_P: ProdForm = { title: "", image_url: "", type: "", price: "" };
 
 function ProductsTab() {
   const qc = useQueryClient();
+  const [cats] = useCategories();
   const [form, setForm] = useState<ProdForm>(EMPTY_P);
   const [editing, setEditing] = useState<string | null>(null);
 
@@ -188,7 +189,7 @@ function ProductsTab() {
               <img src={d.image_url} alt={d.title} className="size-16 rounded-lg object-cover bg-muted" />
               <div className="flex-1 min-w-0">
                 <p className="line-clamp-1 text-sm font-bold">{d.title}</p>
-                {d.type && <p className="text-[11px] text-muted-foreground">{CATEGORY_LABELS_AR[d.type] ?? d.type}</p>}
+                {d.type && <p className="text-[11px] text-muted-foreground">{labelOf(cats, d.type)}</p>}
               </div>
               <div className="flex flex-col gap-1">
                 <button onClick={() => { setEditing(d.id); setForm({ title: d.title, image_url: d.image_url, type: d.type ?? "", price: d.price != null ? String(d.price) : "" }); window.scrollTo({ top: 0, behavior: "smooth" }); }}
