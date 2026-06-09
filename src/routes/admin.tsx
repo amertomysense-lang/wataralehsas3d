@@ -906,3 +906,261 @@ function CSVImportButton({ table, sample, map, onDone }: {
   );
 }
 
+
+/* ============ تبويب الاشتراكات والدفع (شام كاش) ============ */
+function PaymentsTab() {
+  const [s, set] = useSettings();
+  const requests = usePaymentRequests();
+  const [manualDevice, setManualDevice] = useState("");
+  const [manualAttempts, setManualAttempts] = useState(100);
+
+  function uploadQR(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => { set({ ...s, shamCashQR: r.result as string }); toast.success("تم تحديث صورة QR"); };
+    r.readAsDataURL(f);
+  }
+
+  function updatePackage(idx: number, patch: Partial<PaymentPackage>) {
+    const next = [...s.paymentPackages];
+    next[idx] = { ...next[idx], ...patch };
+    set({ ...s, paymentPackages: next });
+  }
+  function addPackage() {
+    set({ ...s, paymentPackages: [...s.paymentPackages, { id: "p" + Date.now(), label: "باقة جديدة", attempts: 50, priceUSD: 3, priceSYP: 40000 }] });
+  }
+  function removePackage(idx: number) {
+    set({ ...s, paymentPackages: s.paymentPackages.filter((_, i) => i !== idx) });
+  }
+
+  function onApprove(req: PaymentRequest) {
+    const pkg = s.paymentPackages.find((p) => p.id === req.packageId);
+    const attempts = pkg?.attempts ?? 0;
+    if (approveRequest(req.id, attempts)) {
+      toast.success(`تم تفعيل ${attempts} محاولة للجهاز ${req.deviceId}`);
+    }
+  }
+  function onReject(req: PaymentRequest) {
+    rejectRequest(req.id, "تم الرفض من الأدمن");
+    toast.info("تم رفض الطلب");
+  }
+  function onManualGrant() {
+    if (!manualDevice.trim() || manualAttempts <= 0) return;
+    grantCreditsByDevice(manualDevice.trim().toUpperCase(), manualAttempts);
+    toast.success(`تم منح ${manualAttempts} محاولة للجهاز ${manualDevice.trim().toUpperCase()}`);
+    setManualDevice("");
+  }
+
+  const pending = requests.filter((r) => r.status === "pending");
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <h3 className="text-sm font-black flex items-center gap-2"><Wallet className="size-4 text-primary" /> إعدادات الدفع عبر شام كاش</h3>
+        <AdToggleRow label="تفعيل الاشتراكات المدفوعة" desc="عند التفعيل يرى الزوار خيار الشراء عند نفاد محاولاتهم."
+          checked={s.paidEnabled} onChange={(v: boolean) => set({ ...s, paidEnabled: v })} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-xs font-bold">رقم شام كاش</span>
+            <input value={s.shamCashNumber} onChange={(e) => set({ ...s, shamCashNumber: e.target.value })}
+              placeholder="مثال: 0991234567" className="mt-1 w-full rounded-xl bg-muted px-3 py-2 text-sm" />
+          </label>
+          <label className="block">
+            <span className="text-xs font-bold">اسم المستلم</span>
+            <input value={s.shamCashName} onChange={(e) => set({ ...s, shamCashName: e.target.value })}
+              placeholder="الاسم الكامل" className="mt-1 w-full rounded-xl bg-muted px-3 py-2 text-sm" />
+          </label>
+        </div>
+        <label className="block">
+          <span className="text-xs font-bold">تعليمات الدفع (تظهر للزائر)</span>
+          <textarea value={s.shamCashNotes} onChange={(e) => set({ ...s, shamCashNotes: e.target.value })} rows={2}
+            className="mt-1 w-full rounded-xl bg-muted px-3 py-2 text-sm" />
+        </label>
+        <div>
+          <p className="text-xs font-bold mb-1.5">صورة QR للدفع</p>
+          {s.shamCashQR && <img src={s.shamCashQR} alt="QR" className="mb-2 h-32 w-32 rounded-xl border border-border object-contain bg-white" />}
+          <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/20">
+            <Upload className="size-3.5" /> {s.shamCashQR ? "تغيير الصورة" : "رفع صورة QR"}
+            <input type="file" accept="image/*" className="hidden" onChange={uploadQR} />
+          </label>
+          {s.shamCashQR && (
+            <button onClick={() => set({ ...s, shamCashQR: "" })}
+              className="ms-2 text-xs text-destructive underline">حذف</button>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-black">باقات الاشتراك</h3>
+          <button onClick={addPackage} className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground">
+            <Plus className="size-3.5" /> إضافة باقة
+          </button>
+        </div>
+        <div className="space-y-2">
+          {s.paymentPackages.map((p, i) => (
+            <div key={p.id} className="grid grid-cols-2 sm:grid-cols-5 gap-2 rounded-xl border border-border bg-background p-2.5">
+              <input value={p.label} onChange={(e) => updatePackage(i, { label: e.target.value })}
+                placeholder="الاسم" className="rounded-lg bg-muted px-2 py-1.5 text-xs col-span-2" />
+              <input type="number" value={p.attempts} onChange={(e) => updatePackage(i, { attempts: Number(e.target.value) || 0 })}
+                placeholder="محاولات" className="rounded-lg bg-muted px-2 py-1.5 text-xs" />
+              <input type="number" value={p.priceUSD} onChange={(e) => updatePackage(i, { priceUSD: Number(e.target.value) || 0 })}
+                placeholder="USD" className="rounded-lg bg-muted px-2 py-1.5 text-xs" />
+              <div className="flex gap-1">
+                <input type="number" value={p.priceSYP} onChange={(e) => updatePackage(i, { priceSYP: Number(e.target.value) || 0 })}
+                  placeholder="ل.س" className="flex-1 rounded-lg bg-muted px-2 py-1.5 text-xs" />
+                <button onClick={() => removePackage(i)} className="rounded-lg bg-destructive/10 px-2 text-destructive">
+                  <Trash2 className="size-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <h3 className="text-sm font-black flex items-center gap-2">
+          <Bell className="size-4 text-primary" /> طلبات الدفع المعلّقة
+          {pending.length > 0 && <span className="rounded-full bg-destructive px-2 py-0.5 text-[10px] text-destructive-foreground">{pending.length}</span>}
+        </h3>
+        {requests.length === 0 ? (
+          <p className="text-xs text-muted-foreground">لا توجد طلبات بعد. عندما يدفع زائر سيظهر طلبه هنا.</p>
+        ) : (
+          <div className="space-y-2">
+            {requests.map((r) => {
+              const pkg = s.paymentPackages.find((p) => p.id === r.packageId);
+              return (
+                <div key={r.id} className="rounded-xl border border-border bg-background p-3 text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="font-black text-primary">{r.id} • {pkg?.label ?? r.packageId}</p>
+                      <p className="text-muted-foreground mt-0.5">
+                        {r.userName} — {r.phone} — جهاز: <span className="font-mono">{r.deviceId}</span>
+                      </p>
+                      {r.txRef && <p className="text-muted-foreground">رقم العملية: {r.txRef}</p>}
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {new Date(r.createdAt).toLocaleString("ar")}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        r.status === "approved" ? "bg-emerald-500/15 text-emerald-600" :
+                        r.status === "rejected" ? "bg-destructive/15 text-destructive" :
+                        "bg-amber-500/15 text-amber-600"
+                      }`}>
+                        {r.status === "approved" ? "موافق" : r.status === "rejected" ? "مرفوض" : "معلّق"}
+                      </span>
+                      {r.status === "pending" && (
+                        <>
+                          <button onClick={() => onApprove(r)}
+                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-500 px-2.5 py-1.5 text-[11px] font-bold text-white">
+                            <Check className="size-3" /> موافقة
+                          </button>
+                          <button onClick={() => onReject(r)}
+                            className="inline-flex items-center gap-1 rounded-lg bg-destructive/10 px-2.5 py-1.5 text-[11px] font-bold text-destructive">
+                            <X className="size-3" /> رفض
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <h3 className="text-sm font-black">منح يدوي بكود الجهاز</h3>
+        <p className="text-[11px] text-muted-foreground">
+          إذا تواصل الزائر معك مباشرةً، اطلب منه كود جهازه (يظهر له في شاشة الدفع) وامنح المحاولات يدوياً.
+        </p>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <input value={manualDevice} onChange={(e) => setManualDevice(e.target.value)}
+            placeholder="كود الجهاز DV-XXXXXX" className="rounded-xl bg-muted px-3 py-2 text-sm font-mono" />
+          <input type="number" value={manualAttempts} onChange={(e) => setManualAttempts(Number(e.target.value) || 0)}
+            placeholder="عدد المحاولات" className="rounded-xl bg-muted px-3 py-2 text-sm" />
+          <button onClick={onManualGrant}
+            className="rounded-xl bg-primary px-4 py-2 text-sm font-black text-primary-foreground">منح المحاولات</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============ تبويب قصّات الشعر المخصّصة ============ */
+function HaircutsTab() {
+  const [s, set] = useSettings();
+  const [form, setForm] = useState<{ label: string; gender: "m" | "f" | "u"; preview: string; prompt: string }>({
+    label: "", gender: "u", preview: "", prompt: "",
+  });
+
+  function onImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => setForm((p) => ({ ...p, preview: r.result as string }));
+    r.readAsDataURL(f);
+  }
+  function add() {
+    if (!form.label.trim() || !form.preview) { toast.error("الاسم والصورة مطلوبان"); return; }
+    set({ ...s, customHaircuts: [...s.customHaircuts, {
+      id: "ch" + Date.now(), label: form.label.trim(), gender: form.gender,
+      preview: form.preview, prompt: form.prompt.trim() || undefined,
+    }]});
+    setForm({ label: "", gender: "u", preview: "", prompt: "" });
+    toast.success("تمت إضافة القصّة");
+  }
+  function remove(id: string) {
+    set({ ...s, customHaircuts: s.customHaircuts.filter((c) => c.id !== id) });
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <h3 className="text-sm font-black flex items-center gap-2"><Plus className="size-4 text-primary" /> إضافة قصّة جديدة</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input value={form.label} onChange={(v) => setForm((p) => ({ ...p, label: v }))} placeholder="اسم القصّة (مثال: Crew Cut)" />
+          <select value={form.gender} onChange={(e) => setForm((p) => ({ ...p, gender: e.target.value as "m" | "f" | "u" }))}
+            className="rounded-xl bg-muted px-3 py-2 text-sm">
+            <option value="u">الجميع</option>
+            <option value="m">رجال</option>
+            <option value="f">نساء</option>
+          </select>
+        </div>
+        <Input value={form.prompt} onChange={(v) => setForm((p) => ({ ...p, prompt: v }))} placeholder="برومبت AI إنجليزي (اختياري — لتحسين دقة التوليد)" full />
+        <div className="flex items-center gap-3">
+          {form.preview && <img src={form.preview} alt="" className="h-20 w-20 rounded-xl object-cover border border-border" />}
+          <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-2 text-xs font-bold text-primary">
+            <Upload className="size-3.5" /> {form.preview ? "تغيير الصورة" : "رفع صورة معاينة"}
+            <input type="file" accept="image/*" className="hidden" onChange={onImage} />
+          </label>
+        </div>
+        <button onClick={add}
+          className="w-full rounded-xl bg-gradient-to-l from-primary to-primary-glow px-4 py-2.5 text-sm font-black text-primary-foreground">
+          إضافة إلى المعرض
+        </button>
+      </div>
+
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border">
+        <h3 className="text-sm font-black mb-3">القصّات المخصّصة ({s.customHaircuts.length})</h3>
+        {s.customHaircuts.length === 0 ? (
+          <p className="text-xs text-muted-foreground">لم تضف قصّات بعد.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {s.customHaircuts.map((c) => (
+              <div key={c.id} className="relative overflow-hidden rounded-xl border border-border">
+                <img src={c.preview} alt={c.label} className="h-28 w-full object-cover" />
+                <p className="px-2 py-1.5 text-[11px] font-bold truncate">{c.label}</p>
+                <button onClick={() => remove(c.id)}
+                  className="absolute top-1 left-1 rounded-full bg-destructive p-1.5 text-destructive-foreground hover:scale-110 transition">
+                  <Trash2 className="size-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
