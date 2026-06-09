@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkflowRouteImport } from './routes/workflow'
+import { Route as VendorRouteImport } from './routes/vendor'
 import { Route as TryonRouteImport } from './routes/tryon'
 import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
@@ -28,6 +29,11 @@ import { Route as ApiAiImageRouteImport } from './routes/api/ai-image'
 const WorkflowRoute = WorkflowRouteImport.update({
   id: '/workflow',
   path: '/workflow',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VendorRoute = VendorRouteImport.update({
+  id: '/vendor',
+  path: '/vendor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TryonRoute = TryonRouteImport.update({
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/marketplace': typeof MarketplaceRoute
   '/simulator': typeof SimulatorRoute
   '/tryon': typeof TryonRoute
+  '/vendor': typeof VendorRoute
   '/workflow': typeof WorkflowRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof MarketplaceRoute
   '/simulator': typeof SimulatorRoute
   '/tryon': typeof TryonRoute
+  '/vendor': typeof VendorRoute
   '/workflow': typeof WorkflowRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/marketplace': typeof MarketplaceRoute
   '/simulator': typeof SimulatorRoute
   '/tryon': typeof TryonRoute
+  '/vendor': typeof VendorRoute
   '/workflow': typeof WorkflowRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/simulator'
     | '/tryon'
+    | '/vendor'
     | '/workflow'
     | '/api/ai-image'
     | '/api/chat'
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/simulator'
     | '/tryon'
+    | '/vendor'
     | '/workflow'
     | '/api/ai-image'
     | '/api/chat'
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/simulator'
     | '/tryon'
+    | '/vendor'
     | '/workflow'
     | '/api/ai-image'
     | '/api/chat'
@@ -216,6 +228,7 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   SimulatorRoute: typeof SimulatorRoute
   TryonRoute: typeof TryonRoute
+  VendorRoute: typeof VendorRoute
   WorkflowRoute: typeof WorkflowRoute
   ApiAiImageRoute: typeof ApiAiImageRoute
   ApiChatRoute: typeof ApiChatRoute
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/workflow'
       fullPath: '/workflow'
       preLoaderRoute: typeof WorkflowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vendor': {
+      id: '/vendor'
+      path: '/vendor'
+      fullPath: '/vendor'
+      preLoaderRoute: typeof VendorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tryon': {
@@ -344,6 +364,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   SimulatorRoute: SimulatorRoute,
   TryonRoute: TryonRoute,
+  VendorRoute: VendorRoute,
   WorkflowRoute: WorkflowRoute,
   ApiAiImageRoute: ApiAiImageRoute,
   ApiChatRoute: ApiChatRoute,
@@ -355,13 +376,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

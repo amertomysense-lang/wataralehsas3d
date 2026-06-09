@@ -12,6 +12,7 @@ import { useStr } from "@/lib/cms-strings";
 type Vendor = {
   id: string; business_name: string; category: string;
   whatsapp_number: string; logo_url: string | null; is_premium: boolean;
+  cover_image?: string | null; subscription_status?: string | null;
 };
 
 type Product = {
@@ -62,9 +63,14 @@ function Marketplace() {
     },
   });
 
-  // فلترة الاشتراك: أخفِ الشركاء المُعطّلين من المالك
+  // فلترة الاشتراك: أخفِ الشركاء بحالة hidden/suspended (من العمود الجديد) + احترام التخزين المحلي
   const activeVendors = useMemo(() => {
-    return (data ?? []).filter((v) => (vendorStore[v.id] ?? DEFAULT_VENDOR_STATE).subscription_active);
+    return (data ?? []).filter((v) => {
+      const status = v.subscription_status ?? "active";
+      if (status === "hidden" || status === "suspended") return false;
+      const local = vendorStore[v.id] ?? DEFAULT_VENDOR_STATE;
+      return local.subscription_active;
+    });
   }, [data, vendorStore]);
 
   const filtered = useMemo(() => {
@@ -157,43 +163,53 @@ function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolea
     fashion: "أزياء وموضة", other: "متنوع",
   };
   const mods = state.modules;
+  const isIdle = v.subscription_status === "idle";
   return (
-    <div className={`group relative overflow-hidden rounded-3xl border bg-card p-5 transition hover:-translate-y-1 ${
+    <div className={`group relative overflow-hidden rounded-3xl border bg-card transition hover:-translate-y-1 ${
       v.is_premium ? "ring-gold glow-rose" : "border-border hover:border-primary/40"
-    }`}>
-      {v.is_premium && (
-        <>
-          <div className="pointer-events-none absolute inset-0 opacity-25"
-            style={{ background: "radial-gradient(circle at top left, var(--primary-glow), transparent 55%), radial-gradient(circle at bottom right, var(--gold), transparent 65%)" }} />
+    } ${isIdle ? "grayscale opacity-70" : ""}`}>
+      {v.cover_image && (
+        <div className="relative h-28 w-full overflow-hidden">
+          <img src={v.cover_image} className="size-full object-cover" alt="" />
+          <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
+        </div>
+      )}
+      <div className="p-5">
+        {v.is_premium && (
           <span className="badge-gold absolute top-3 left-3">
             <Crown className="size-3" /> {state.brand_badge || "شريك مميّز"}
           </span>
-        </>
-      )}
-      <div className="relative flex items-center gap-3">
-        <div className="grid size-16 place-items-center rounded-2xl bg-muted ring-1 ring-border">
-          {v.logo_url ? (
-            <img src={v.logo_url} alt={v.business_name} className="size-full rounded-2xl object-cover" />
-          ) : (
-            <Sparkles className="size-6 text-primary" />
-          )}
+        )}
+        {isIdle && (
+          <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+            خامل
+          </span>
+        )}
+        <div className="relative flex items-center gap-3">
+          <div className="grid size-16 place-items-center rounded-2xl bg-muted ring-1 ring-border">
+            {v.logo_url ? (
+              <img src={v.logo_url} alt={v.business_name} className="size-full rounded-2xl object-cover" />
+            ) : (
+              <Sparkles className="size-6 text-primary" />
+            )}
+          </div>
+          <div className="min-w-0">
+            <h3 className="truncate text-base font-black text-foreground">{v.business_name}</h3>
+            <p className="text-xs text-muted-foreground">{catLabel[v.category] ?? v.category}</p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <h3 className="truncate text-base font-black text-foreground">{v.business_name}</h3>
-          <p className="text-xs text-muted-foreground">{catLabel[v.category] ?? v.category}</p>
+
+        <div className="relative mt-3 flex flex-wrap gap-1.5">
+          {mods.decor && <span className="badge-rose"><Cuboid className="size-3" /> ديكور</span>}
+          {mods.fashion && <span className="badge-rose"><Shirt className="size-3" /> أزياء AI</span>}
+          {mods.haircut && <span className="badge-rose"><Scissors className="size-3" /> قصّات AI</span>}
         </div>
-      </div>
 
-      <div className="relative mt-3 flex flex-wrap gap-1.5">
-        {mods.decor && <span className="badge-rose"><Cuboid className="size-3" /> ديكور</span>}
-        {mods.fashion && <span className="badge-rose"><Shirt className="size-3" /> أزياء AI</span>}
-        {mods.haircut && <span className="badge-rose"><Scissors className="size-3" /> قصّات AI</span>}
+        <a href={`https://wa.me/${v.whatsapp_number}`} target="_blank" rel="noreferrer"
+          className="relative mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
+          <MessageCircle className="size-4" /> تواصل واتساب
+        </a>
       </div>
-
-      <a href={`https://wa.me/${v.whatsapp_number}`} target="_blank" rel="noreferrer"
-        className="relative mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
-        <MessageCircle className="size-4" /> تواصل واتساب
-      </a>
     </div>
   );
 }

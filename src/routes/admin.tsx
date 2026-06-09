@@ -11,7 +11,7 @@ import { exportPlatformSnapshot } from "@/lib/export-snapshot";
 import { parseCSV } from "@/lib/csv-import";
 import { useSettings, DEFAULT_SETTINGS, SYRIAN_PROVINCES, CURRENCY_OPTIONS, SECTION_LABELS, type PlatformSettings, type DesignSection } from "@/lib/settings";
 import { useCmsStrings, DEFAULT_STRINGS } from "@/lib/cms-strings";
-import { useVendorStore, DEFAULT_VENDOR_STATE, type VendorState } from "@/lib/vendor-config";
+import { useVendorStore, DEFAULT_VENDOR_STATE, generateLoginToken, STATUS_LABELS, type VendorState, type VendorStatus } from "@/lib/vendor-config";
 import { usePaymentRequests, approveRequest, rejectRequest, grantCreditsByDevice, type PaymentPackage, type PaymentRequest } from "@/lib/payments";
 
 
@@ -534,7 +534,7 @@ function OrdersTab() {
 }
 
 /* ============ السوق (Vendors) ============ */
-type VendorRow = { id: string; business_name: string; category: string; whatsapp_number: string; logo_url: string | null; is_premium: boolean; region_id: string | null };
+type VendorRow = { id: string; business_name: string; category: string; whatsapp_number: string; logo_url: string | null; is_premium: boolean; region_id: string | null; subscription_status?: string | null; login_token?: string | null; cover_image?: string | null };
 type VForm = { business_name: string; category: string; whatsapp_number: string; logo_url: string; is_premium: boolean; region_id: string };
 const EMPTY_V: VForm = { business_name: "", category: "curtains", whatsapp_number: "", logo_url: "", is_premium: false, region_id: "" };
 
@@ -639,19 +639,43 @@ function VendorsTab() {
 }
 
 function VendorRowEditor({ v, onEdit, onRemove }: { v: VendorRow; onEdit: () => void; onRemove: () => void }) {
+  const qc = useQueryClient();
   const [store, setOne] = useVendorStore();
   const state: VendorState = store[v.id] ?? DEFAULT_VENDOR_STATE;
   const toggleMod = (k: keyof VendorState["modules"]) => setOne(v.id, { ...state, modules: { ...state.modules, [k]: !state.modules[k] } });
-  const toggleSub = () => setOne(v.id, { ...state, subscription_active: !state.subscription_active });
+
+  const currentStatus: VendorStatus = (v.subscription_status as VendorStatus) || "active";
+
+  async function setStatus(next: VendorStatus) {
+    const { error } = await supabase.from("vendors").update({ subscription_status: next }).eq("id", v.id);
+    if (error) { toast.error(error.message); return; }
+    setOne(v.id, { ...state, status: next });
+    toast.success(`الحالة: ${STATUS_LABELS[next]}`);
+    qc.invalidateQueries({ queryKey: ["admin-vendors"] });
+    qc.invalidateQueries({ queryKey: ["vendors"] });
+  }
+
+  async function generateToken() {
+    const t = generateLoginToken();
+    const { error } = await supabase.from("vendors").update({ login_token: t }).eq("id", v.id);
+    if (error) { toast.error(error.message); return; }
+    await navigator.clipboard.writeText(t).catch(() => {});
+    toast.success(`نُسخ رمز الدخول: ${t}`);
+    qc.invalidateQueries({ queryKey: ["admin-vendors"] });
+  }
+
+  const dim = currentStatus === "suspended" || currentStatus === "hidden";
 
   return (
-    <div className={`rounded-xl border bg-background p-3 ${state.subscription_active ? "border-border" : "border-destructive/40 opacity-70"}`}>
+    <div className={`rounded-xl border bg-background p-3 ${dim ? "border-destructive/40 opacity-70" : "border-border"}`}>
       <div className="flex items-center gap-3">
-        {v.logo_url && <img src={v.logo_url} className="size-10 rounded-lg object-cover bg-muted" />}
+        {v.logo_url && <img src={v.logo_url} className="size-10 rounded-lg object-cover bg-muted" alt="" />}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold">{v.business_name} {v.is_premium && <span className="text-[10px] text-primary">★</span>}</p>
           <p className="text-[11px] text-muted-foreground" dir="ltr">{v.category} · {v.whatsapp_number}</p>
+          {v.login_token && <p className="text-[10px] font-mono text-primary mt-1" dir="ltr">🔑 {v.login_token}</p>}
         </div>
+        <button onClick={generateToken} title="توليد رمز دخول للشريك" className="rounded-lg bg-primary/10 px-2 py-1 text-[10px] font-black text-primary">رمز</button>
         <button onClick={onEdit} className="rounded-lg bg-muted p-2"><Edit3 className="size-3.5" /></button>
         <button onClick={onRemove} className="rounded-lg bg-destructive/10 p-2 text-destructive"><Trash2 className="size-3.5" /></button>
       </div>
@@ -660,11 +684,21 @@ function VendorRowEditor({ v, onEdit, onRemove }: { v: VendorRow; onEdit: () => 
         <ModBtn label="ديكور" on={state.modules.decor} onClick={() => toggleMod("decor")} />
         <ModBtn label="أزياء AI" on={state.modules.fashion} onClick={() => toggleMod("fashion")} />
         <ModBtn label="قصّات AI" on={state.modules.haircut} onClick={() => toggleMod("haircut")} />
-        <span className="ml-auto" />
-        <button onClick={toggleSub}
-          className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-black ${state.subscription_active ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"}`}>
-          <ToggleLeft className="size-3" /> اشتراك {state.subscription_active ? "مفعّل (ظاهر)" : "موقوف (مخفي)"}
-        </button>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <span className="text-[10px] font-bold text-muted-foreground">الحالة:</span>
+        {(["active","idle","suspended","hidden"] as VendorStatus[]).map((s) => (
+          <button key={s} onClick={() => setStatus(s)}
+            className={`rounded-full px-2.5 py-0.5 text-[10px] font-black transition ${
+              currentStatus === s
+                ? s === "active" ? "bg-success/15 text-success" :
+                  s === "idle" ? "bg-muted text-foreground" :
+                  "bg-destructive/15 text-destructive"
+                : "bg-muted/40 text-muted-foreground hover:text-foreground"
+            }`}>
+            {STATUS_LABELS[s].split(" ")[0]}
+          </button>
+        ))}
       </div>
     </div>
   );
