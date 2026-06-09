@@ -196,25 +196,26 @@ function HaircutStudio() {
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
         const msg = String(j?.error || "");
-        // كشف نقص الرصيد / 402 → fallback تلقائي للمحاكي المجاني
+        // كشف نقص الرصيد / 402 → تنبيه واضح + وضع المحاكاة التجريبي
         if (res.status === 402 || /credit|insufficient|payment|402|quota/i.test(msg)) {
           await renderLocalComposite(false);
-          toast.success("تمت المعاينة الفورية بنجاح عبر الجوال!");
+          toast.warning("جاري العرض في وضع المحاكاة التجريبي — لنتائج واقعية تواصل مع الإدارة", { duration: 6000 });
           return;
         }
         throw new Error(msg || "فشل التجهيز");
       }
       setResult(j.result_url);
+      toast.success("تمّ الدمج الواقعي بالذكاء الاصطناعي ✨");
       if (readSettings().aiTryOnLogging) {
         await supabase.from("tryon_logs").insert({
           person_url: null, garment_id: null, result_url: j.result_url,
         });
       }
     } catch (e) {
-      // فشل شبكي عام → جرّب المحاكي المجاني بدل رسالة حمراء
+      // فشل شبكي عام → تنبيه واضح + معاينة محلية
       try {
         await renderLocalComposite(false);
-        toast.success("تمت المعاينة الفورية بنجاح عبر الجوال!");
+        toast.warning("جاري العرض في وضع المحاكاة التجريبي — لنتائج واقعية تواصل مع الإدارة", { duration: 6000 });
       } catch {
         const m = e instanceof Error ? e.message : String(e);
         toast.error(m);
