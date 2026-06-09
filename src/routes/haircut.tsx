@@ -55,9 +55,11 @@ function HaircutStudio() {
   const [result, setResult] = useState<string | null>(null);
   const [quotaOpen, setQuotaOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const remaining = useQuota();
   const unlimited = isUnlimited();
-  const remLabel = unlimited ? "∞" : String(remaining);
+  const remLabel = mounted ? (unlimited ? "∞" : String(remaining)) : "…";
   // قصّات الأدمن المخصّصة
   const [customs, setCustoms] = useState<Style[]>([]);
   useEffect(() => {
