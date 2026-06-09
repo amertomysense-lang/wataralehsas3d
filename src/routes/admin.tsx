@@ -1268,3 +1268,31 @@ function DesignsTab() {
     </div>
   );
 }
+
+function BulkProductsUploader({ onDone }: { onDone: () => void }) {
+  const [category, setCategory] = useState<string>("curtains");
+  const cats = ["curtains", "sofa", "furniture", "fashion", "haircut", "other"];
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        {cats.map((c) => (
+          <button key={c} type="button" onClick={() => setCategory(c)}
+            className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition ${
+              category === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary/50"
+            }`}>{c}</button>
+        ))}
+      </div>
+      <BatchImageUploader
+        onUploaded={async (items: BatchItem[]) => {
+          if (!items.length) return;
+          const rows = items.map((it) => ({
+            name: it.name || "تصميم", image_url: it.dataUrl, price: null, category, description: null,
+          }));
+          const { error } = await supabase.from("products").insert(rows);
+          if (error) throw error;
+          onDone();
+        }}
+      />
+    </div>
+  );
+}
