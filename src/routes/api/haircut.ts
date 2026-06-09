@@ -43,15 +43,26 @@ export const Route = createFileRoute("/api/haircut")({
         const token = process.env.REPLICATE_API_TOKEN;
         if (!token) return json({ error: "AI service unavailable" }, 503);
 
-        const model = process.env.REPLICATE_HAIRCUT_MODEL || "black-forest-labs/flux-kontext-pro";
+        // نموذج متخصّص بتغيير الشعر مع قفل الوجه — يحافظ على الملامح والبشرة والعينين
+        const model = process.env.REPLICATE_HAIRCUT_MODEL || "flux-kontext-apps/change-haircut";
+        const isChangeHaircut = model.includes("change-haircut");
+        const input = isChangeHaircut
+          ? {
+              input_image: person,
+              haircut: styleText,
+              hair_color: color?.trim() || "No change",
+              aspect_ratio: "match_input_image",
+              output_format: "jpg",
+              safety_tolerance: 2,
+            }
+          : { input_image: person, prompt, output_format: "jpg", safety_tolerance: 2 };
+
         const create = await fetch(
           `https://api.replicate.com/v1/models/${model}/predictions`,
           {
             method: "POST",
             headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Prefer: "wait" },
-            body: JSON.stringify({
-              input: { input_image: person, prompt, output_format: "jpg", safety_tolerance: 2 },
-            }),
+            body: JSON.stringify({ input }),
           },
         );
         const pred = await create.json();
