@@ -9,7 +9,7 @@ import { logoutAdmin } from "@/lib/admin-gate";
 import { useRegions, usePricing, type Region, type Order } from "@/lib/platform";
 import { exportPlatformSnapshot } from "@/lib/export-snapshot";
 import { parseCSV } from "@/lib/csv-import";
-import { useSettings, DEFAULT_SETTINGS, SYRIAN_PROVINCES, CURRENCY_OPTIONS, type PlatformSettings } from "@/lib/settings";
+import { useSettings, DEFAULT_SETTINGS, SYRIAN_PROVINCES, CURRENCY_OPTIONS, SECTION_LABELS, type PlatformSettings, type DesignSection } from "@/lib/settings";
 import { useCmsStrings, DEFAULT_STRINGS } from "@/lib/cms-strings";
 import { useVendorStore, DEFAULT_VENDOR_STATE, type VendorState } from "@/lib/vendor-config";
 import { usePaymentRequests, approveRequest, rejectRequest, grantCreditsByDevice, type PaymentPackage, type PaymentRequest } from "@/lib/payments";
