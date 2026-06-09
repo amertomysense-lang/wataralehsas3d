@@ -33,6 +33,7 @@ function Marketplace() {
   const { data: pricing } = usePricing();
   const currency = pricing?.currency ?? settings.currency;
   const [vendorStore] = useVendorStore();
+  const [cats] = useCategories();
   const title2 = useStr("marketplace.title_2");
   const tabDecor = useStr("marketplace.tab_decor");
   const tabFashion = useStr("marketplace.tab_fashion");
@@ -73,9 +74,9 @@ function Marketplace() {
   }, [data, vendorStore]);
 
   const filtered = useMemo(() => {
-    const cats = tab === "decor" ? DECOR_CATS : FASHION_CATS;
-    return activeVendors.filter((v) => cats.includes(v.category));
-  }, [activeVendors, tab]);
+    const allowed = new Set(idsForTab(cats, tab));
+    return activeVendors.filter((v) => allowed.has(v.category));
+  }, [activeVendors, tab, cats]);
 
 
   return (
