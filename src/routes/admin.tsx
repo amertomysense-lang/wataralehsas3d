@@ -94,9 +94,9 @@ function TabBtn({ icon, label, active, onClick }: { icon: React.ReactNode; label
   );
 }
 
-/* ============ المنتجات ============ */
-type ProdForm = { name: string; description: string; image_url: string; category: string; price: string };
-const EMPTY_P: ProdForm = { name: "", description: "", image_url: "", category: "", price: "" };
+/* ============ المنتجات / التصاميم ============ */
+type ProdForm = { title: string; image_url: string; type: string; price: string };
+const EMPTY_P: ProdForm = { title: "", image_url: "", type: "", price: "" };
 
 function ProductsTab() {
   const qc = useQueryClient();
@@ -114,10 +114,10 @@ function ProductsTab() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name || !form.image_url) { toast.error("الاسم والصورة مطلوبان"); return; }
+    if (!form.image_url) { toast.error("الصورة مطلوبة"); return; }
     const payload = {
-      name: form.name, description: form.description || null, image_url: form.image_url,
-      category: form.category || null, price: form.price ? Number(form.price) : null,
+      title: form.title || "تصميم", image_url: form.image_url,
+      type: form.type || null, price: form.price ? Number(form.price) : null,
     };
     const res = editing
       ? await supabase.from("products").update(payload).eq("id", editing)
@@ -139,22 +139,25 @@ function ProductsTab() {
 
   return (
     <div className="space-y-4">
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <h2 className="text-sm font-black">رفع جماعي للتصاميم — حتى 100 صورة</h2>
+        <p className="text-[11px] text-muted-foreground">اختر الفئة (بالعربية) ثم ارفع — تُضاف بدون أسعار وتظهر شارة "للتجربة والمعاينة الافتراضية".</p>
+        <BulkProductsUploader onDone={() => { qc.invalidateQueries({ queryKey: ["admin-products"] }); qc.invalidateQueries({ queryKey: ["products"] }); }} />
+      </div>
+
       <form onSubmit={save} className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-black">{editing ? "تعديل تصميم" : "إضافة تصميم"}</h2>
+          <h2 className="text-sm font-black">{editing ? "تعديل تصميم" : "إضافة تصميم منفرد (اختياري)"}</h2>
           {editing && (
             <button type="button" onClick={() => { setEditing(null); setForm(EMPTY_P); }}
               className="text-xs text-muted-foreground inline-flex items-center gap-1"><X className="size-3" /> إلغاء</button>
           )}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Input value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="اسم المنتج *" />
-          <Input value={form.category} onChange={(v) => setForm({ ...form, category: v })} placeholder="الفئة" />
+          <Input value={form.title} onChange={(v) => setForm({ ...form, title: v })} placeholder="اسم التصميم (اختياري)" />
+          <Input value={form.type} onChange={(v) => setForm({ ...form, type: v })} placeholder="النوع (ستائر/كنب/أزياء…)" />
           <Input value={form.image_url} onChange={(v) => setForm({ ...form, image_url: v })} placeholder="رابط الصورة *" full />
-          <Input value={form.price} onChange={(v) => setForm({ ...form, price: v })} placeholder="السعر" type="number" />
-          <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-            placeholder="الوصف" rows={2}
-            className="sm:col-span-2 rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          <Input value={form.price} onChange={(v) => setForm({ ...form, price: v })} placeholder="السعر (اختياري)" type="number" />
         </div>
         <button type="submit" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft hover:opacity-90">
           {editing ? <Save className="size-4" /> : <Plus className="size-4" />}
@@ -162,22 +165,15 @@ function ProductsTab() {
         </button>
       </form>
 
-      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
-        <h2 className="text-sm font-black">رفع جماعي للتصاميم — حتى 100 صورة</h2>
-        <p className="text-[11px] text-muted-foreground">اختر الفئة ثم ارفع — تُضاف بدون أسعار ويظهر شارة "للتجربة والمعاينة الافتراضية".</p>
-        <BulkProductsUploader onDone={() => { qc.invalidateQueries({ queryKey: ["admin-products"] }); qc.invalidateQueries({ queryKey: ["products"] }); }} />
-      </div>
-
       <div className="rounded-2xl bg-card p-5 shadow-card border border-border">
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="text-sm font-black">المنتجات ({designs?.length ?? 0})</h2>
+          <h2 className="text-sm font-black">التصاميم ({designs?.length ?? 0})</h2>
           <CSVImportButton
             table="products"
-            sample="name,description,image_url,category,price"
+            sample="title,image_url,type,price"
             map={(row) => ({
-              name: row.name, description: row.description || null,
-              image_url: row.image_url, category: row.category || null,
-              price: row.price ? Number(row.price) : null,
+              title: row.title || "تصميم", image_url: row.image_url,
+              type: row.type || null, price: row.price ? Number(row.price) : null,
             })}
             onDone={() => { qc.invalidateQueries({ queryKey: ["admin-products"] }); qc.invalidateQueries({ queryKey: ["products"] }); }}
           />
@@ -186,13 +182,13 @@ function ProductsTab() {
         <div className="grid gap-3 sm:grid-cols-2">
           {designs?.map((d) => (
             <div key={d.id} className="flex gap-3 rounded-xl border border-border bg-background p-3">
-              <img src={d.image_url} alt={d.name} className="size-16 rounded-lg object-cover bg-muted" />
+              <img src={d.image_url} alt={d.title} className="size-16 rounded-lg object-cover bg-muted" />
               <div className="flex-1 min-w-0">
-                <p className="line-clamp-1 text-sm font-bold">{d.name}</p>
-                {d.category && <p className="text-[11px] text-muted-foreground">{d.category}</p>}
+                <p className="line-clamp-1 text-sm font-bold">{d.title}</p>
+                {d.type && <p className="text-[11px] text-muted-foreground">{CATEGORY_LABELS_AR[d.type] ?? d.type}</p>}
               </div>
               <div className="flex flex-col gap-1">
-                <button onClick={() => { setEditing(d.id); setForm({ name: d.name, description: d.description ?? "", image_url: d.image_url, category: d.category ?? "", price: d.price != null ? String(d.price) : "" }); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                <button onClick={() => { setEditing(d.id); setForm({ title: d.title, image_url: d.image_url, type: d.type ?? "", price: d.price != null ? String(d.price) : "" }); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                   className="rounded-lg bg-muted p-2"><Edit3 className="size-3.5" /></button>
                 <button onClick={() => remove(d.id)} className="rounded-lg bg-destructive/10 p-2 text-destructive"><Trash2 className="size-3.5" /></button>
               </div>
