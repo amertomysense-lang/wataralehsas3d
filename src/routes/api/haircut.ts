@@ -1,44 +1,49 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { aiEditImage } from "@/lib/ai-image-edit.server";
 
-// Haircut عالي الدقة — FLUX Kontext مع قيود هوية وجه صارمة لمنع التشوّه.
+// تحرير قصّة الشعر — يفضّل Lovable AI (Nano Banana 2) عند توفّر المفتاح،
+// ويُستخدم Replicate كبديل اختياري إن أُضيف REPLICATE_API_TOKEN.
 export const Route = createFileRoute("/api/haircut")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env.REPLICATE_API_TOKEN;
-        if (!token) {
-          return json({ error: "أضف REPLICATE_API_TOKEN لتفعيل تجربة قصّات الشعر بالذكاء الاصطناعي." }, 400);
-        }
         const { person, style, color } = (await request.json()) as {
           person: string; style?: string; color?: string;
         };
         if (!person) return json({ error: "missing person image" }, 400);
 
-        const model = process.env.REPLICATE_HAIRCUT_MODEL || "black-forest-labs/flux-kontext-pro";
         const styleText = (style?.trim() || "modern stylish haircut").replace(/\s+/g, " ");
         const colorText = color?.trim() ? `, hair color: ${color.trim()}` : "";
         const prompt = [
-          `Change ONLY the hairstyle of the person in the image to: ${styleText}${colorText}.`,
-          `CRITICAL identity preservation: keep the face 100% identical — same facial geometry, eyes (shape, color, position), eyebrows, nose, mouth, jawline, skin tone, skin texture, freckles, age and expression.`,
-          `Do NOT smooth, retouch, beautify, slim, or alter the face in any way. Do not change ethnicity, gender, or age.`,
-          `Preserve clothing, background, lighting direction, shadows and camera framing exactly.`,
-          `Hair edges must be clean and natural; remove any overlapping noise, glitches or artifacts around the head.`,
-          `Output: photorealistic, natural lighting, sharp detail, no watermark, no extra people, single subject only.`,
+          `Edit the photo: change ONLY the hairstyle of the person to: ${styleText}${colorText}.`,
+          `Keep face geometry, eyes, nose, mouth, jaw, skin tone, freckles and expression 100% identical.`,
+          `Do NOT smooth, retouch, beautify, slim or alter the face. Preserve clothing, background, lighting and framing.`,
+          `Hair edges must be clean and natural. Output: photorealistic, sharp, single subject, no watermark.`,
+          `Return the edited image only.`,
         ].join(" ");
 
+        // 1) المسار المفضّل: Lovable AI Gateway (مغطى برصيد المشروع)
+        if (process.env.LOVABLE_API_KEY) {
+          const r = await aiEditImage(prompt, [person]);
+          if (r.ok) return json({ result_url: r.dataUrl });
+          // إن فشل لأي سبب (402/429/شبكة) ينتقل تلقائياً لـ Replicate إن وُجد
+          if (!process.env.REPLICATE_API_TOKEN) {
+            return json({ error: r.error }, r.status);
+          }
+        }
+
+        // 2) المسار البديل: Replicate (اختياري)
+        const token = process.env.REPLICATE_API_TOKEN;
+        if (!token) return json({ error: "AI service unavailable" }, 503);
+
+        const model = process.env.REPLICATE_HAIRCUT_MODEL || "black-forest-labs/flux-kontext-pro";
         const create = await fetch(
           `https://api.replicate.com/v1/models/${model}/predictions`,
           {
             method: "POST",
             headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Prefer: "wait" },
             body: JSON.stringify({
-              input: {
-                input_image: person,
-                prompt,
-                output_format: "jpg",
-                safety_tolerance: 2,
-                prompt_upsampling: false,
-              },
+              input: { input_image: person, prompt, output_format: "jpg", safety_tolerance: 2 },
             }),
           },
         );

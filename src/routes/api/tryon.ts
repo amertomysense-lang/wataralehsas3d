@@ -1,48 +1,44 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { aiEditImage } from "@/lib/ai-image-edit.server";
 
-// Try-On عالي الدقة — FLUX Kontext (image-edit) مع الحفاظ الصارم على هوية الوجه
-// يتجاوز سلوكيات IDM-VTON غير المتوقعة عبر فرض ضوابط هوية ومعالم وجهية.
+// تجربة الأزياء — يفضّل Lovable AI (Nano Banana 2) عند توفّر المفتاح،
+// ويستخدم Replicate كبديل اختياري عند إضافة REPLICATE_API_TOKEN.
 export const Route = createFileRoute("/api/tryon")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env.REPLICATE_API_TOKEN;
-        if (!token) {
-          return json({ error: "أضف REPLICATE_API_TOKEN لتفعيل التجربة عالية الدقة." }, 500);
-        }
         const { person, garment_url, garment_desc } = (await request.json()) as {
-          person: string;
-          garment_url: string;
-          garment_desc?: string;
+          person: string; garment_url: string; garment_desc?: string;
         };
         if (!person || !garment_url) return json({ error: "missing inputs" }, 400);
 
-        const model = process.env.REPLICATE_TRYON_MODEL || "black-forest-labs/flux-kontext-pro";
         const desc = (garment_desc || "the provided garment").trim();
         const prompt = [
-          `Dress the exact same person in the first image with: ${desc}.`,
-          `The garment reference is the second image — match its color, pattern, texture, neckline and silhouette faithfully.`,
-          `CRITICAL identity preservation: keep the person's face 100% identical — same facial geometry, eyes shape, nose, mouth, skin tone, skin texture, freckles, hair, hairstyle, beard, expression and pose.`,
-          `Do NOT alter, smooth, retouch, beautify or change the face in any way. Do not change ethnicity, age, or body proportions.`,
-          `Keep the original background, lighting direction, shadows and camera angle unchanged.`,
-          `Replace ONLY the clothing visible on the torso/body. Remove any noise, glitches or overlapping artifacts outside the body silhouette.`,
-          `Output: photorealistic, natural lighting, high detail, clean edges, no watermark, no extra people, no duplicated limbs.`,
+          `Dress the same person from the first image with: ${desc}.`,
+          `Use the second image as the garment reference — match color, pattern, texture, neckline and silhouette faithfully.`,
+          `Keep the face 100% identical (geometry, eyes, nose, mouth, skin, freckles, hair, expression, pose).`,
+          `Do NOT alter or beautify the face. Preserve background, lighting and camera angle.`,
+          `Replace ONLY the clothing on the torso/body. Output: photorealistic, clean edges, single subject, no watermark.`,
+          `Return the edited image only.`,
         ].join(" ");
 
+        if (process.env.LOVABLE_API_KEY) {
+          const r = await aiEditImage(prompt, [person, garment_url]);
+          if (r.ok) return json({ result_url: r.dataUrl });
+          if (!process.env.REPLICATE_API_TOKEN) return json({ error: r.error }, r.status);
+        }
+
+        const token = process.env.REPLICATE_API_TOKEN;
+        if (!token) return json({ error: "AI service unavailable" }, 503);
+
+        const model = process.env.REPLICATE_TRYON_MODEL || "black-forest-labs/flux-kontext-pro";
         const create = await fetch(
           `https://api.replicate.com/v1/models/${model}/predictions`,
           {
             method: "POST",
             headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Prefer: "wait" },
             body: JSON.stringify({
-              input: {
-                input_image: person,
-                image_reference: garment_url,
-                prompt,
-                output_format: "jpg",
-                safety_tolerance: 2,
-                prompt_upsampling: false,
-              },
+              input: { input_image: person, image_reference: garment_url, prompt, output_format: "jpg", safety_tolerance: 2 },
             }),
           },
         );
