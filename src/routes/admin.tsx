@@ -291,10 +291,17 @@ function PricingTab() {
 /* ============ الطلبات ============ */
 function OrdersTab() {
   const qc = useQueryClient();
+  const { data: regions } = useRegions();
+  const [filterRegion, setFilterRegion] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("");
+
   const { data: orders } = useQuery({
-    queryKey: ["orders"],
+    queryKey: ["orders", filterRegion, filterStatus],
     queryFn: async () => {
-      const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(200);
+      let q = supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(300);
+      if (filterRegion) q = q.eq("region_name", filterRegion);
+      if (filterStatus) q = q.eq("status", filterStatus);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Order[];
     },
@@ -306,8 +313,28 @@ function OrdersTab() {
   }
 
   return (
-    <div className="rounded-2xl bg-card p-5 shadow-card border border-border">
-      <h2 className="mb-3 text-sm font-black">الطلبات الواردة ({orders?.length ?? 0})</h2>
+    <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-black">الطلبات الواردة ({orders?.length ?? 0})</h2>
+        <div className="flex gap-2">
+          <select value={filterRegion} onChange={(e) => setFilterRegion(e.target.value)}
+            className="rounded-lg bg-muted px-2 py-1 text-xs">
+            <option value="">كل المناطق</option>
+            {regions?.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
+          </select>
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+            className="rounded-lg bg-muted px-2 py-1 text-xs">
+            <option value="">كل الحالات</option>
+            <option value="new">جديد</option>
+            <option value="inspected">تم المعاينة</option>
+            <option value="active">قيد التنفيذ</option>
+            <option value="finished">منتهي</option>
+            <option value="contacted">تم التواصل</option>
+            <option value="done">منجز</option>
+            <option value="cancelled">ملغى</option>
+          </select>
+        </div>
+      </div>
       <div className="space-y-2">
         {orders?.map((o) => (
           <div key={o.id} className="rounded-xl border border-border bg-background p-3">
@@ -322,6 +349,9 @@ function OrdersTab() {
               <select value={o.status} onChange={(e) => setStatus(o.id, e.target.value)}
                 className="rounded-lg bg-muted px-2 py-1 text-xs">
                 <option value="new">جديد</option>
+                <option value="inspected">تم المعاينة</option>
+                <option value="active">قيد التنفيذ</option>
+                <option value="finished">منتهي</option>
                 <option value="contacted">تم التواصل</option>
                 <option value="done">منجز</option>
                 <option value="cancelled">ملغى</option>
@@ -330,6 +360,107 @@ function OrdersTab() {
           </div>
         ))}
         {(!orders || orders.length === 0) && <p className="text-center text-sm text-muted-foreground py-8">لا طلبات بعد.</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ============ السوق (Vendors) ============ */
+type VendorRow = { id: string; business_name: string; category: string; whatsapp_number: string; logo_url: string | null; is_premium: boolean; region_id: string | null };
+type VForm = { business_name: string; category: string; whatsapp_number: string; logo_url: string; is_premium: boolean; region_id: string };
+const EMPTY_V: VForm = { business_name: "", category: "curtains", whatsapp_number: "", logo_url: "", is_premium: false, region_id: "" };
+
+function VendorsTab() {
+  const qc = useQueryClient();
+  const { data: regions } = useRegions();
+  const [form, setForm] = useState<VForm>(EMPTY_V);
+  const [editing, setEditing] = useState<string | null>(null);
+
+  const { data: vendors } = useQuery({
+    queryKey: ["admin-vendors"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("vendors").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as VendorRow[];
+    },
+  });
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.business_name || !form.whatsapp_number) { toast.error("الاسم والرقم مطلوبان"); return; }
+    const payload = {
+      business_name: form.business_name,
+      category: form.category,
+      whatsapp_number: form.whatsapp_number.replace(/\D/g, ""),
+      logo_url: form.logo_url || null,
+      is_premium: form.is_premium,
+      region_id: form.region_id || null,
+    };
+    const res = editing
+      ? await supabase.from("vendors").update(payload).eq("id", editing)
+      : await supabase.from("vendors").insert(payload);
+    if (res.error) { toast.error(res.error.message); return; }
+    toast.success("تم الحفظ");
+    setForm(EMPTY_V); setEditing(null);
+    qc.invalidateQueries({ queryKey: ["admin-vendors"] });
+    qc.invalidateQueries({ queryKey: ["vendors"] });
+  }
+
+  async function remove(id: string) {
+    if (!confirm("حذف هذا الشريك؟")) return;
+    await supabase.from("vendors").delete().eq("id", id);
+    qc.invalidateQueries({ queryKey: ["admin-vendors"] });
+  }
+
+  return (
+    <div className="space-y-4">
+      <form onSubmit={save} className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <h2 className="text-sm font-black">{editing ? "تعديل شريك" : "إضافة شريك للسوق"}</h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input value={form.business_name} onChange={(v) => setForm({ ...form, business_name: v })} placeholder="اسم النشاط *" />
+          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
+            className="rounded-xl bg-muted px-3 py-2 text-sm outline-none">
+            <option value="curtains">ستائر</option>
+            <option value="sofa">كنب</option>
+            <option value="furniture">أثاث</option>
+            <option value="fashion">أزياء</option>
+            <option value="other">أخرى</option>
+          </select>
+          <Input value={form.whatsapp_number} onChange={(v) => setForm({ ...form, whatsapp_number: v })} placeholder="واتساب 963xxx" />
+          <Input value={form.logo_url} onChange={(v) => setForm({ ...form, logo_url: v })} placeholder="رابط الشعار" />
+          <select value={form.region_id} onChange={(e) => setForm({ ...form, region_id: e.target.value })}
+            className="rounded-xl bg-muted px-3 py-2 text-sm outline-none">
+            <option value="">— كل المناطق —</option>
+            {regions?.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={form.is_premium} onChange={(e) => setForm({ ...form, is_premium: e.target.checked })} />
+            مميّز (Premium)
+          </label>
+        </div>
+        <button type="submit" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft hover:opacity-90">
+          {editing ? <Save className="size-4" /> : <Plus className="size-4" />} {editing ? "حفظ" : "إضافة"}
+        </button>
+        {editing && <button type="button" onClick={() => { setEditing(null); setForm(EMPTY_V); }} className="text-xs text-muted-foreground">إلغاء</button>}
+      </form>
+
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border">
+        <h2 className="mb-3 text-sm font-black">الشركاء ({vendors?.length ?? 0})</h2>
+        <div className="space-y-2">
+          {vendors?.map(v => (
+            <div key={v.id} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3">
+              {v.logo_url && <img src={v.logo_url} className="size-10 rounded-lg object-cover bg-muted" />}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold">{v.business_name} {v.is_premium && <span className="text-[10px] text-primary">★</span>}</p>
+                <p className="text-[11px] text-muted-foreground" dir="ltr">{v.category} · {v.whatsapp_number}</p>
+              </div>
+              <button onClick={() => { setEditing(v.id); setForm({ business_name: v.business_name, category: v.category, whatsapp_number: v.whatsapp_number, logo_url: v.logo_url ?? "", is_premium: v.is_premium, region_id: v.region_id ?? "" }); }}
+                className="rounded-lg bg-muted p-2"><Edit3 className="size-3.5" /></button>
+              <button onClick={() => remove(v.id)} className="rounded-lg bg-destructive/10 p-2 text-destructive"><Trash2 className="size-3.5" /></button>
+            </div>
+          ))}
+          {(!vendors || vendors.length === 0) && <p className="text-center text-xs text-muted-foreground py-6">لا شركاء بعد. أضف أول شريك ليظهر في السوق.</p>}
+        </div>
       </div>
     </div>
   );
