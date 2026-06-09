@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download } from "lucide-react";
+import { useRef, useState } from "react";
+import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/AdminGate";
 import { logoutAdmin } from "@/lib/admin-gate";
 import { useRegions, usePricing, type Region, type Order } from "@/lib/platform";
 import { exportPlatformSnapshot } from "@/lib/export-snapshot";
+import { parseCSV } from "@/lib/csv-import";
+
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "لوحة التحكم — وتر الإحساس" }] }),
