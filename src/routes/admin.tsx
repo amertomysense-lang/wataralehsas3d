@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download } from "lucide-react";
+import { useRef, useState } from "react";
+import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/AdminGate";
 import { logoutAdmin } from "@/lib/admin-gate";
 import { useRegions, usePricing, type Region, type Order } from "@/lib/platform";
 import { exportPlatformSnapshot } from "@/lib/export-snapshot";
+import { parseCSV } from "@/lib/csv-import";
+
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "لوحة التحكم — وتر الإحساس" }] }),
@@ -143,7 +145,20 @@ function ProductsTab() {
       </form>
 
       <div className="rounded-2xl bg-card p-5 shadow-card border border-border">
-        <h2 className="mb-3 text-sm font-black">المنتجات ({designs?.length ?? 0})</h2>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="text-sm font-black">المنتجات ({designs?.length ?? 0})</h2>
+          <CSVImportButton
+            table="designs"
+            sample="name,description,image_url,category,price"
+            map={(row) => ({
+              name: row.name, description: row.description || null,
+              image_url: row.image_url, category: row.category || null,
+              price: row.price ? Number(row.price) : null,
+            })}
+            onDone={() => { qc.invalidateQueries({ queryKey: ["admin-designs"] }); qc.invalidateQueries({ queryKey: ["designs"] }); }}
+          />
+        </div>
+
         <div className="grid gap-3 sm:grid-cols-2">
           {designs?.map((d) => (
             <div key={d.id} className="flex gap-3 rounded-xl border border-border bg-background p-3">
@@ -445,7 +460,22 @@ function VendorsTab() {
       </form>
 
       <div className="rounded-2xl bg-card p-5 shadow-card border border-border">
-        <h2 className="mb-3 text-sm font-black">الشركاء ({vendors?.length ?? 0})</h2>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="text-sm font-black">الشركاء ({vendors?.length ?? 0})</h2>
+          <CSVImportButton
+            table="vendors"
+            sample="business_name,category,whatsapp_number,logo_url,is_premium"
+            map={(row) => ({
+              business_name: row.business_name,
+              category: ["curtains","sofa","furniture","fashion","other"].includes(row.category) ? row.category : "other",
+              whatsapp_number: (row.whatsapp_number || "").replace(/\D/g, ""),
+              logo_url: row.logo_url || null,
+              is_premium: ["true","1","yes","نعم"].includes((row.is_premium || "").toLowerCase()),
+            })}
+            onDone={() => qc.invalidateQueries({ queryKey: ["admin-vendors"] })}
+          />
+        </div>
+
         <div className="space-y-2">
           {vendors?.map(v => (
             <div key={v.id} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3">
@@ -473,3 +503,56 @@ function Input({ value, onChange, placeholder, type = "text", full }: { value: s
       className={`${full ? "sm:col-span-2 " : ""}rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring`} />
   );
 }
+
+function CSVImportButton({ table, sample, map, onDone }: {
+  table: string;
+  sample: string;
+  map: (row: Record<string, string>) => Record<string, unknown>;
+  onDone: () => void;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]; if (!f) return;
+    setBusy(true);
+    try {
+      const text = await f.text();
+      const rows = parseCSV(text);
+      if (!rows.length) { toast.error("لا توجد صفوف في الملف"); return; }
+      const payload = rows.map(map);
+      const { error } = await supabase.from(table).insert(payload);
+      if (error) throw error;
+      toast.success(`تم استيراد ${payload.length} صف`);
+      onDone();
+    } catch (err) {
+      const m = err instanceof Error ? err.message : String(err);
+      toast.error(`فشل الاستيراد: ${m}`);
+    } finally {
+      setBusy(false);
+      if (ref.current) ref.current.value = "";
+    }
+  }
+
+  function downloadSample() {
+    const blob = new Blob([sample + "\n"], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${table}-sample.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <button onClick={downloadSample} type="button"
+        className="text-[10px] text-muted-foreground hover:text-primary underline">عيّنة CSV</button>
+      <button onClick={() => ref.current?.click()} type="button" disabled={busy}
+        className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-bold text-primary hover:bg-primary/20 disabled:opacity-50">
+        <Upload className="size-3.5" /> {busy ? "..." : "استيراد CSV"}
+      </button>
+      <input ref={ref} type="file" accept=".csv,text/csv" className="hidden" onChange={onFile} />
+    </div>
+  );
+}
+

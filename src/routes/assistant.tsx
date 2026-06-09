@@ -151,7 +151,52 @@ function AssistantBoard({ regionName, onLogout }: { regionName: string; onLogout
             <p className="text-center text-sm text-muted-foreground py-12">لا توجد طلبات في منطقتك حالياً.</p>
           )}
         </div>
+
+        <RegionVendorsPanel regionName={regionName} />
       </div>
     </div>
   );
 }
+
+function RegionVendorsPanel({ regionName }: { regionName: string }) {
+  const { data: regions } = useRegions();
+  const region = regions?.find(r => r.name === regionName);
+  const { data: vendors, refetch } = useQuery({
+    enabled: !!region,
+    queryKey: ["assistant-vendors", region?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("vendors").select("*").eq("region_id", region!.id).order("is_premium", { ascending: false });
+      return (data ?? []) as Array<{ id: string; business_name: string; category: string; whatsapp_number: string; is_premium: boolean }>;
+    },
+  });
+
+  async function togglePremium(id: string, val: boolean) {
+    const { error } = await supabase.from("vendors").update({ is_premium: val }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    refetch();
+  }
+
+  return (
+    <div className="mt-8 rounded-2xl border border-border bg-card p-4">
+      <h2 className="mb-3 text-sm font-black">شركاء السوق في منطقتك ({vendors?.length ?? 0})</h2>
+      <div className="space-y-2">
+        {vendors?.map(v => (
+          <div key={v.id} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold">{v.business_name}</p>
+              <p className="text-[11px] text-muted-foreground" dir="ltr">{v.category} · {v.whatsapp_number}</p>
+            </div>
+            <button onClick={() => togglePremium(v.id, !v.is_premium)}
+              className={`rounded-lg px-2 py-1 text-[11px] font-bold ${v.is_premium ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+              {v.is_premium ? "مميّز ★" : "تفعيل مميّز"}
+            </button>
+          </div>
+        ))}
+        {(!vendors || vendors.length === 0) && (
+          <p className="text-center text-xs text-muted-foreground py-4">لا شركاء مسجّلين في منطقتك بعد.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+

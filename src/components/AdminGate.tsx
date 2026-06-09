@@ -1,13 +1,18 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Lock } from "lucide-react";
 import { isAdmin, tryLogin } from "@/lib/admin-gate";
 
 export function AdminGate({ children, title = "منطقة محمية" }: { children: ReactNode; title?: string }) {
-  const [ok, setOk] = useState(() => isAdmin());
+  const [mounted, setMounted] = useState(false);
+  const [ok, setOk] = useState(false);
   const [pw, setPw] = useState("");
   const [err, setErr] = useState(false);
 
+  useEffect(() => { setMounted(true); setOk(isAdmin()); }, []);
+
+  if (!mounted) return null;
   if (ok) return <>{children}</>;
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6" dir="rtl">

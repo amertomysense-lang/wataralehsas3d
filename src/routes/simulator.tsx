@@ -177,12 +177,12 @@ function Simulator() {
               <button onClick={() => setShipping("self")}
                 className={`flex items-center justify-between rounded-lg border-2 px-3 py-2 text-xs font-bold transition ${shipping === "self" ? "border-primary bg-primary/10" : "border-border"}`}>
                 <span>تأمين النقل من طرفك</span>
-                <span className="text-success">$0.00</span>
+                <span className="text-success">0.00 {pricing?.currency ?? "$"}</span>
               </button>
               <button onClick={() => setShipping("company")}
                 className={`flex items-center justify-between rounded-lg border-2 px-3 py-2 text-xs font-bold transition ${shipping === "company" ? "border-primary bg-primary/10" : "border-border"}`}>
                 <span>سيارة الشركة المدعومة</span>
-                <span className="text-primary">$0.30 / كم</span>
+                <span className="text-primary">0.30 {pricing?.currency ?? "$"} / كم</span>
               </button>
               {shipping === "company" && (
                 <>
