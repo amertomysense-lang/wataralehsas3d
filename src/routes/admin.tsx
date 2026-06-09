@@ -76,7 +76,7 @@ function AdminPage() {
         {tab === "cms" && <CmsStringsTab />}
         {tab === "quota" && <QuotaSettingsTab />}
         {tab === "payments" && <PaymentsTab />}
-        {tab === "haircuts" && <HaircutsTab />}
+        {tab === "haircuts" && <DesignsTab />}
       </div>
     </div>
   );
