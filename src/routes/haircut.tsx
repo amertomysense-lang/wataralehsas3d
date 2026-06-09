@@ -39,7 +39,10 @@ type Tx = { x: number; y: number; scale: number; rotate: number };
 const INIT_TX: Tx = { x: 0, y: -40, scale: 1, rotate: 0 };
 
 function HaircutStudio() {
-  const t = (k: string) => useStr(k);
+  const tTitle1 = useStr("haircut.title_1");
+  const tTitle2 = useStr("haircut.title_2");
+  const tUploadHint = useStr("haircut.upload_hint");
+  const tColor = useStr("haircut.color");
   const [person, setPerson] = useState<string | null>(null);
   const [style, setStyle] = useState<Style | null>(null);
   const [color, setColor] = useState(COLORS[0]);
