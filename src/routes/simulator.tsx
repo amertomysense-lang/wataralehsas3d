@@ -224,6 +224,7 @@ function Simulator() {
 
       <div className="mx-auto max-w-6xl px-5 pb-10">
         <AiImageStudio
+          section="simulator"
           title="استوديو تصاميم الجدران بالذكاء الاصطناعي"
           subtitle="ولّد تصميم جدار/أرضية مخصصاً حسب ذوقك — ارفع صورة غرفتك ليتم التصميم على مقاسها."
           accent="from-primary to-accent"
