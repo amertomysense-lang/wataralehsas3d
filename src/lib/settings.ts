@@ -55,7 +55,11 @@ export type PlatformSettings = {
   paymentPackages: PaymentPackage[];
 
   // قصّات شعر مخصّصة يضيفها الأدمن
+  // قصّات شعر مخصّصة يضيفها الأدمن
   customHaircuts: CustomHaircut[];
+
+  // تصاميم مخصّصة (برومبتات جاهزة) لكل قسم AI — تُربط تلقائياً
+  customDesigns: CustomDesign[];
 };
 
 export const DEFAULT_SETTINGS: PlatformSettings = {
