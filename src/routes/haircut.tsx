@@ -53,9 +53,25 @@ function HaircutStudio() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [quotaOpen, setQuotaOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
   const remaining = useQuota();
-
-  const stageRef = useRef<HTMLDivElement>(null);
+  const unlimited = isUnlimited();
+  const remLabel = unlimited ? "∞" : String(remaining);
+  // قصّات الأدمن المخصّصة
+  const [customs, setCustoms] = useState<Style[]>([]);
+  useEffect(() => {
+    const sync = () => {
+      const ch = readSettings().customHaircuts ?? [];
+      setCustoms(ch.map((c) => ({ id: c.id, label: c.label, preview: c.preview, gender: c.gender })));
+    };
+    sync();
+    window.addEventListener("watar:settings", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("watar:settings", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const startDist = useRef(0);
   const startTx = useRef<Tx>(INIT_TX);
