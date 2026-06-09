@@ -416,7 +416,9 @@ function SchemaControllerTab() {
           <QuotaToggleRow label="إظهار خدمة الأسطول السريع" value={s.fleetMobilizationEnabled} onChange={() => toggle("fleetMobilizationEnabled")} />
           <QuotaToggleRow label="تسجيل تجارب AI Try-On" value={s.aiTryOnLogging} onChange={() => toggle("aiTryOnLogging")} />
           <QuotaToggleRow label="تفعيل المزامنة الأوفلاين" value={s.enableOfflineSync} onChange={() => toggle("enableOfflineSync")} />
+          <QuotaToggleRow label="وضع تشغيل الذكاء الاصطناعي — محاكاة مجانية على الجهاز (إيقاف = خادم Replicate الحي)" value={s.aiSimulationOnly} onChange={() => toggle("aiSimulationOnly")} />
         </div>
+
       </div>
 
       <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
