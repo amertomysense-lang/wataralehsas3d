@@ -13,6 +13,7 @@ import { useSettings, DEFAULT_SETTINGS, SYRIAN_PROVINCES, CURRENCY_OPTIONS, SECT
 import { useCmsStrings, DEFAULT_STRINGS } from "@/lib/cms-strings";
 import { useVendorStore, DEFAULT_VENDOR_STATE, generateLoginToken, STATUS_LABELS, type VendorState, type VendorStatus } from "@/lib/vendor-config";
 import { usePaymentRequests, approveRequest, rejectRequest, grantCreditsByDevice, type PaymentPackage, type PaymentRequest } from "@/lib/payments";
+import { BatchImageUploader, type BatchItem } from "@/components/BatchImageUploader";
 
 
 export const Route = createFileRoute("/admin")({
@@ -160,6 +161,12 @@ function ProductsTab() {
           {editing ? "حفظ التعديلات" : "إضافة"}
         </button>
       </form>
+
+      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
+        <h2 className="text-sm font-black">رفع جماعي للتصاميم — حتى 100 صورة</h2>
+        <p className="text-[11px] text-muted-foreground">اختر الفئة ثم ارفع — تُضاف بدون أسعار ويظهر شارة "للتجربة والمعاينة الافتراضية".</p>
+        <BulkProductsUploader onDone={() => { qc.invalidateQueries({ queryKey: ["admin-products"] }); qc.invalidateQueries({ queryKey: ["products"] }); }} />
+      </div>
 
       <div className="rounded-2xl bg-card p-5 shadow-card border border-border">
         <div className="mb-3 flex items-center justify-between gap-2">
@@ -1258,6 +1265,34 @@ function DesignsTab() {
           لم تضف أي تصميم بعد — أضف أوّل تصميم ليظهر فوراً في القسم المناسب.
         </div>
       )}
+    </div>
+  );
+}
+
+function BulkProductsUploader({ onDone }: { onDone: () => void }) {
+  const [category, setCategory] = useState<string>("curtains");
+  const cats = ["curtains", "sofa", "furniture", "fashion", "haircut", "other"];
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        {cats.map((c) => (
+          <button key={c} type="button" onClick={() => setCategory(c)}
+            className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition ${
+              category === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary/50"
+            }`}>{c}</button>
+        ))}
+      </div>
+      <BatchImageUploader
+        onUploaded={async (items: BatchItem[]) => {
+          if (!items.length) return;
+          const rows = items.map((it) => ({
+            name: it.name || "تصميم", image_url: it.dataUrl, price: null, category, description: null,
+          }));
+          const { error } = await supabase.from("products").insert(rows);
+          if (error) throw error;
+          onDone();
+        }}
+      />
     </div>
   );
 }

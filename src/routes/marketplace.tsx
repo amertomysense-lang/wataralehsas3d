@@ -8,6 +8,7 @@ import { useSettings } from "@/lib/settings";
 import { usePricing } from "@/lib/platform";
 import { useVendorStore, DEFAULT_VENDOR_STATE } from "@/lib/vendor-config";
 import { useStr } from "@/lib/cms-strings";
+import { PriceOrTrialBadge } from "@/components/BatchImageUploader";
 
 type Vendor = {
   id: string; business_name: string; category: string;
@@ -129,11 +130,7 @@ function Marketplace() {
                   <div className="p-3">
                     <p className="line-clamp-1 text-sm font-bold">{p.name}</p>
                     {p.category && <p className="text-[11px] text-muted-foreground">{p.category}</p>}
-                    {p.price != null && (
-                      <p className="mt-2 text-sm font-black text-primary">
-                        {Number(p.price).toLocaleString("ar")} <span className="text-xs opacity-80">{currency}</span>
-                      </p>
-                    )}
+                    <PriceOrTrialBadge price={p.price} currency={currency} />
                   </div>
                 </div>
               ))}
