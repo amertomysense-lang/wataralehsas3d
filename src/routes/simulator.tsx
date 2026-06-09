@@ -5,6 +5,8 @@ import { Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X } from "lucid
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
 import { toast } from "sonner";
+import { useSettings } from "@/lib/settings";
+import { CampaignSection } from "@/components/CampaignSection";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
@@ -35,11 +37,13 @@ function Simulator() {
 
   const { data: regions } = useRegions();
   const { data: pricing } = usePricing();
+  const [settings] = useSettings();
   const region = useMemo(() => regions?.find((r) => r.id === regionId), [regions, regionId]);
+  const currency = pricing?.currency ?? settings.currency;
 
   const baseTotal = useMemo(() => (pricing ? calcTotal(width, height, embossed, pricing) : 0),
     [pricing, width, height, embossed]);
-  const shippingCost = shipping === "company" ? km * 0.3 : 0;
+  const shippingCost = shipping === "company" ? km * settings.fuelPerKm : 0;
   const grandTotal = baseTotal + shippingCost;
 
   function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
