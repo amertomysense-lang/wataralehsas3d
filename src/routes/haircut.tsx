@@ -233,7 +233,7 @@ function HaircutStudio() {
           <span className="text-primary">{tTitle2}</span>
         </h1>
         <p className="mt-2 text-muted-foreground">
-          محرّر فوري على جهازك — حرّك القصّة بإصبعك، كبّر وصغّر، بدون أي تكلفة سيرفر.
+          صورتك الحقيقية + القصّة المختارة = دمج واقعي بـ AI مع قفل كامل لملامح الوجه.
         </p>
 
         <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-bold text-primary">
