@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { Upload, Shirt, Sparkles, MessageCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { consumeQuota, useQuota, DAILY_LIMIT } from "@/lib/quota";
+import { QuotaModal } from "@/components/QuotaModal";
 
 type FashionItem = {
   id: string; vendor_id: string | null; item_name: string;
