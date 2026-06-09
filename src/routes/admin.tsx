@@ -14,6 +14,7 @@ import { useCmsStrings, DEFAULT_STRINGS } from "@/lib/cms-strings";
 import { useVendorStore, DEFAULT_VENDOR_STATE, generateLoginToken, STATUS_LABELS, type VendorState, type VendorStatus } from "@/lib/vendor-config";
 import { usePaymentRequests, approveRequest, rejectRequest, grantCreditsByDevice, type PaymentPackage, type PaymentRequest } from "@/lib/payments";
 import { BatchImageUploader, type BatchItem } from "@/components/BatchImageUploader";
+import { useCategories, labelOf, type Category, type CategoryTab } from "@/lib/categories";
 
 
 export const Route = createFileRoute("/admin")({
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/admin")({
   component: () => <AdminGate title="لوحة تحكم المعرض"><AdminPage /></AdminGate>,
 });
 
-type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms" | "quota" | "payments" | "haircuts";
+type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms" | "quota" | "payments" | "haircuts" | "categories";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
@@ -65,6 +66,7 @@ function AdminPage() {
           <TabBtn icon={<Sparkles className="size-4" />} label="المحاولات والإعلانات" active={tab === "quota"} onClick={() => setTab("quota")} />
           <TabBtn icon={<Wallet className="size-4" />} label="الاشتراكات والدفع" active={tab === "payments"} onClick={() => setTab("payments")} />
           <TabBtn icon={<Scissors className="size-4" />} label="معرض التصاميم AI" active={tab === "haircuts"} onClick={() => setTab("haircuts")} />
+          <TabBtn icon={<Type className="size-4" />} label="الفئات" active={tab === "categories"} onClick={() => setTab("categories")} />
         </div>
 
         {tab === "products" && <ProductsTab />}
@@ -78,6 +80,7 @@ function AdminPage() {
         {tab === "quota" && <QuotaSettingsTab />}
         {tab === "payments" && <PaymentsTab />}
         {tab === "haircuts" && <DesignsTab />}
+        {tab === "categories" && <CategoriesTab />}
       </div>
     </div>
   );
