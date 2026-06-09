@@ -68,7 +68,12 @@ export const Route = createFileRoute("/api/haircut")({
           },
         );
         const pred = await create.json();
-        if (!create.ok) return json({ error: pred?.detail || pred?.error || "create failed" }, 500);
+        if (!create.ok) {
+          const msg = String(pred?.detail || pred?.error || "create failed");
+          const isCredit = /credit|insufficient|billing|payment|quota|rate/i.test(msg);
+          return json({ error: msg, fallback: true }, isCredit ? 200 : 200);
+        }
+
 
         let status = pred.status as string, out = pred.output;
         const id = pred.id;
