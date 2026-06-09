@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { readSettings } from "./settings";
 import { isAdmin } from "./admin-gate";
+import { paidAttemptsForDevice, consumePaidAttempt } from "./payments";
 
 const KEY = "watar.ai.quota.v1";
 const AD_KEY = "watar.ai.quota.ads.v1";

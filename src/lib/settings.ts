@@ -1,24 +1,43 @@
 // إعدادات المنصة الشاملة — تُحفظ محلياً ويمكن للأدمن تعديلها فوراً
 // (تتجاوز أي قيم في pricing_config عندما تكون موجودة)
 import { useEffect, useState } from "react";
+import { DEFAULT_PACKAGES, type PaymentPackage } from "./payments";
+
+export type CustomHaircut = {
+  id: string;
+  label: string;
+  preview: string;
+  gender: "m" | "f" | "u";
+  prompt?: string;
+};
 
 export type PlatformSettings = {
-  currency: string;           // مثل: $ / TRY / ل.س
-  fuelPerKm: number;          // تكلفة الوقود المدعوم لكل كم
-  embossedRate: number;       // نسبة البروز (0.30 = 30%)
-  pricePerMeter: number;      // السعر/متر² الافتراضي
-  aiTryOnLogging: boolean;    // تفعيل تسجيل تجارب AI Try-On
-  showMarketingBanner: boolean; // إظهار قسم حملة الإطلاق
-  fleetMobilizationEnabled: boolean; // إظهار خدمة الأسطول السريع
+  currency: string;
+  fuelPerKm: number;
+  embossedRate: number;
+  pricePerMeter: number;
+  aiTryOnLogging: boolean;
+  showMarketingBanner: boolean;
+  fleetMobilizationEnabled: boolean;
   enableOfflineSync: boolean;
 
-  // ===== نظام المحاولات & الإعلانات =====
-  quotaUnlimited: boolean;      // إن كان true → كل الزوار بلا حد
-  freeAttemptsDaily: number;    // عدد المحاولات اليومية المجانية
-  adRewardEnabled: boolean;     // السماح بمشاهدة إعلان لاستعادة محاولة
-  adBonusAttempts: number;      // عدد المحاولات لكل إعلان
-  adMaxDaily: number;           // أقصى محاولات إضافية يومياً عبر الإعلانات
-  adSeconds: number;            // مدة الإعلان الإجبارية (ثانية)
+  quotaUnlimited: boolean;
+  freeAttemptsDaily: number;
+  adRewardEnabled: boolean;
+  adBonusAttempts: number;
+  adMaxDaily: number;
+  adSeconds: number;
+
+  // الاشتراكات المدفوعة عبر شام كاش
+  paidEnabled: boolean;
+  shamCashNumber: string;
+  shamCashName: string;
+  shamCashQR: string;
+  shamCashNotes: string;
+  paymentPackages: PaymentPackage[];
+
+  // قصّات شعر مخصّصة يضيفها الأدمن
+  customHaircuts: CustomHaircut[];
 };
 
 export const DEFAULT_SETTINGS: PlatformSettings = {
@@ -37,6 +56,15 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
   adBonusAttempts: 1,
   adMaxDaily: 5,
   adSeconds: 15,
+
+  paidEnabled: false,
+  shamCashNumber: "",
+  shamCashName: "",
+  shamCashQR: "",
+  shamCashNotes: "بعد التحويل، أرسل رقم العملية وكود الطلب عبر واتساب للتفعيل خلال دقائق.",
+  paymentPackages: DEFAULT_PACKAGES,
+
+  customHaircuts: [],
 };
 
 const KEY = "watar.platform.settings.v2";
