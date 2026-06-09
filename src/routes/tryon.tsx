@@ -6,6 +6,7 @@ import { Upload, Shirt, Sparkles, MessageCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { consumeQuota, useQuota, DAILY_LIMIT } from "@/lib/quota";
 import { QuotaModal } from "@/components/QuotaModal";
+import { AiImageStudio } from "@/components/AiImageStudio";
 
 type FashionItem = {
   id: string; vendor_id: string | null; item_name: string;
@@ -133,6 +134,21 @@ function TryOn() {
         <p className="mt-6 rounded-2xl bg-accent/10 px-4 py-3 text-xs text-accent leading-relaxed">
           <Shirt className="mb-1 inline size-3.5" /> يستخدم نموذج IDM-VTON مفتوح المصدر عبر Replicate. للتفعيل أضف مفتاح <code>REPLICATE_API_TOKEN</code>.
         </p>
+
+        <div className="mt-8">
+          <AiImageStudio
+            title="استوديو الأزياء بالذكاء الاصطناعي"
+            subtitle="ولّد قطعة ملابس جديدة من الخيال — ارفع صورتك واطلب التصميم الذي يخطر ببالك."
+            accent="from-primary to-accent"
+            basePrompt="Photorealistic fashion lookbook image, studio lighting, premium fabric details"
+            presets={[
+              { id: "abaya", label: "عباية فاخرة", prompt: "elegant embroidered black abaya" },
+              { id: "suit", label: "بدلة رسمية", prompt: "tailored modern suit, soft beige" },
+              { id: "dress", label: "فستان ورود", prompt: "floral rose pink evening dress, flowing" },
+              { id: "casual", label: "كاجوال شبابي", prompt: "trendy streetwear outfit" },
+            ]}
+          />
+        </div>
       </div>
       <QuotaModal open={quotaOpen} onClose={() => setQuotaOpen(false)} />
     </div>
