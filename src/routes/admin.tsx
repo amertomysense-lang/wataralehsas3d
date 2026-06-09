@@ -785,11 +785,11 @@ function QuotaSettingsTab() {
           onChange={(v) => set({ adRewardEnabled: v })}
         />
         <div className="grid gap-3 sm:grid-cols-3">
-          <QuotaNumberRow label="محاولات لكل إعلان" value={s.adBonusAttempts} min={1} max={10}
+          <AdNumberRow label="محاولات لكل إعلان" value={s.adBonusAttempts} min={1} max={10}
             disabled={!s.adRewardEnabled} onChange={(v) => set({ adBonusAttempts: v })} compact />
-          <QuotaNumberRow label="الحد الأقصى يومياً" value={s.adMaxDaily} min={0} max={50}
+          <AdNumberRow label="الحد الأقصى يومياً" value={s.adMaxDaily} min={0} max={50}
             disabled={!s.adRewardEnabled} onChange={(v) => set({ adMaxDaily: v })} compact />
-          <QuotaNumberRow label="مدة الإعلان (ثانية)" value={s.adSeconds} min={5} max={60}
+          <AdNumberRow label="مدة الإعلان (ثانية)" value={s.adSeconds} min={5} max={60}
             disabled={!s.adRewardEnabled} onChange={(v) => set({ adSeconds: v })} compact />
         </div>
       </div>
@@ -797,7 +797,7 @@ function QuotaSettingsTab() {
   );
 }
 
-function QuotaToggleRow({ label, desc, checked, onChange }: { label: string; desc?: string; checked: boolean; onChange: (v: boolean) => void }) {
+function AdToggleRow({ label, desc, checked, onChange }: { label: string; desc?: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <label className="flex items-start gap-3 cursor-pointer">
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
@@ -810,7 +810,7 @@ function QuotaToggleRow({ label, desc, checked, onChange }: { label: string; des
   );
 }
 
-function QuotaNumberRow({ label, value, min, max, onChange, disabled, compact }: {
+function AdNumberRow({ label, value, min, max, onChange, disabled, compact }: {
   label: string; value: number; min: number; max: number; onChange: (v: number) => void; disabled?: boolean; compact?: boolean;
 }) {
   return (
