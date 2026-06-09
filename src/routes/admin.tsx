@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal, Type, ToggleLeft, Sparkles, Wallet, Scissors, Check, Bell } from "lucide-react";
+import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal, Type, ToggleLeft, Sparkles, Wallet, Scissors, Check, Bell, Image as ImageIcon, Video } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/AdminGate";
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/admin")({
   component: () => <AdminGate title="لوحة تحكم المعرض"><AdminPage /></AdminGate>,
 });
 
-type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms" | "quota" | "payments" | "haircuts" | "categories";
+type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms" | "quota" | "payments" | "haircuts" | "categories" | "media";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
@@ -67,6 +67,7 @@ function AdminPage() {
           <TabBtn icon={<Wallet className="size-4" />} label="الاشتراكات والدفع" active={tab === "payments"} onClick={() => setTab("payments")} />
           <TabBtn icon={<Scissors className="size-4" />} label="معرض التصاميم AI" active={tab === "haircuts"} onClick={() => setTab("haircuts")} />
           <TabBtn icon={<Type className="size-4" />} label="الفئات" active={tab === "categories"} onClick={() => setTab("categories")} />
+          <TabBtn icon={<ImageIcon className="size-4" />} label="خلفية وفيديوهات الواجهة" active={tab === "media"} onClick={() => setTab("media")} />
         </div>
 
         {tab === "products" && <ProductsTab />}
@@ -81,6 +82,7 @@ function AdminPage() {
         {tab === "payments" && <PaymentsTab />}
         {tab === "haircuts" && <DesignsTab />}
         {tab === "categories" && <CategoriesTab />}
+        {tab === "media" && <MediaTab />}
       </div>
     </div>
   );
