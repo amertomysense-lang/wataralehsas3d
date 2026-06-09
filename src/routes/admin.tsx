@@ -767,12 +767,12 @@ function QuotaSettingsTab() {
           onChange={(v) => set({ quotaUnlimited: v })}
         />
 
-        <NumberRow
+        <AdNumberRow
           label="عدد المحاولات اليومية المجانية"
           value={s.freeAttemptsDaily}
           min={0} max={50}
           disabled={s.quotaUnlimited}
-          onChange={(v) => set({ freeAttemptsDaily: v })}
+          onChange={(v: number) => set({ freeAttemptsDaily: v })}
         />
       </div>
 
