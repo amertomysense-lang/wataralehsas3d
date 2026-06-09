@@ -388,6 +388,22 @@ function GalleryTab({ vendor }: { vendor: Vendor }) {
         </button>
       </div>
 
+      <div className="surface-card p-5">
+        <h2 className="mb-3 text-sm font-black">رفع جماعي للمعرض</h2>
+        <BatchImageUploader
+          hint="حتى 100 صورة دفعة واحدة — يتم ضغطها وإضافتها فوراً إلى معرضك."
+          onUploaded={async (items) => {
+            if (!items.length) return;
+            const rows = items.map((it, i) => ({
+              vendor_id: vendor.id, image_url: it.dataUrl, caption: it.name || null, sort_order: i,
+            }));
+            const { error } = await supabase.from("vendor_gallery").insert(rows);
+            if (error) throw error;
+            qc.invalidateQueries({ queryKey: ["vendor-gallery"] });
+          }}
+        />
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {gallery?.map((g) => (
           <div key={g.id} className="overflow-hidden rounded-2xl border border-border bg-card">
