@@ -89,13 +89,6 @@ function Simulator() {
     a.href = aiResult; a.download = `watar-room-${Date.now()}.jpg`; a.click();
   }
 
-  function _origUploadStub(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    const r = new FileReader();
-    r.onload = () => setBg(r.result as string);
-    r.readAsDataURL(f);
-  }
 
   async function sendOrder() {
     if (!region || !pricing) { toast.error("اختر المنطقة"); return; }
