@@ -1091,10 +1091,11 @@ function PaymentsTab() {
 }
 
 /* ============ تبويب قصّات الشعر المخصّصة ============ */
-function HaircutsTab() {
+function DesignsTab() {
   const [s, set] = useSettings();
-  const [form, setForm] = useState<{ label: string; gender: "m" | "f" | "u"; preview: string; prompt: string }>({
-    label: "", gender: "u", preview: "", prompt: "",
+  const [section, setSection] = useState<DesignSection>("haircut");
+  const [form, setForm] = useState<{ label: string; prompt: string; preview: string; gender: "m" | "f" | "u" }>({
+    label: "", prompt: "", preview: "", gender: "u",
   });
 
   function onImage(e: React.ChangeEvent<HTMLInputElement>) {
@@ -1103,65 +1104,126 @@ function HaircutsTab() {
     r.onload = () => setForm((p) => ({ ...p, preview: r.result as string }));
     r.readAsDataURL(f);
   }
+
   function add() {
-    if (!form.label.trim() || !form.preview) { toast.error("الاسم والصورة مطلوبان"); return; }
-    set({ ...s, customHaircuts: [...s.customHaircuts, {
-      id: "ch" + Date.now(), label: form.label.trim(), gender: form.gender,
-      preview: form.preview, prompt: form.prompt.trim() || undefined,
-    }]});
-    setForm({ label: "", gender: "u", preview: "", prompt: "" });
-    toast.success("تمت إضافة القصّة");
+    if (!form.label.trim()) { toast.error("اسم التصميم مطلوب"); return; }
+    if (section === "haircut" && !form.preview) { toast.error("صورة المعاينة مطلوبة لقصّات الشعر"); return; }
+    if (section !== "haircut" && !form.prompt.trim()) { toast.error("اكتب وصف/برومبت AI"); return; }
+
+    const id = "d" + Date.now();
+    const next: PlatformSettings = { ...s };
+    // ربط تلقائي حسب القسم
+    if (section === "haircut") {
+      next.customHaircuts = [...s.customHaircuts, {
+        id, label: form.label.trim(), gender: form.gender,
+        preview: form.preview, prompt: form.prompt.trim() || undefined,
+      }];
+    }
+    next.customDesigns = [...s.customDesigns, {
+      id, section, label: form.label.trim(),
+      prompt: form.prompt.trim() || form.label.trim(),
+      preview: form.preview || undefined,
+      createdAt: Date.now(),
+    }];
+    set(next);
+    setForm({ label: "", prompt: "", preview: "", gender: "u" });
+    toast.success(`تمت إضافة "${form.label}" إلى ${SECTION_LABELS[section]} تلقائياً`);
   }
+
   function remove(id: string) {
-    set({ ...s, customHaircuts: s.customHaircuts.filter((c) => c.id !== id) });
+    set({
+      ...s,
+      customDesigns: s.customDesigns.filter((d) => d.id !== id),
+      customHaircuts: s.customHaircuts.filter((c) => c.id !== id),
+    });
   }
+
+  const sections: DesignSection[] = ["haircut", "simulator", "marketing", "tryon"];
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
-        <h3 className="text-sm font-black flex items-center gap-2"><Plus className="size-4 text-primary" /> إضافة قصّة جديدة</h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Input value={form.label} onChange={(v) => setForm((p) => ({ ...p, label: v }))} placeholder="اسم القصّة (مثال: Crew Cut)" />
-          <select value={form.gender} onChange={(e) => setForm((p) => ({ ...p, gender: e.target.value as "m" | "f" | "u" }))}
-            className="rounded-xl bg-muted px-3 py-2 text-sm">
-            <option value="u">الجميع</option>
-            <option value="m">رجال</option>
-            <option value="f">نساء</option>
-          </select>
+      <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-card to-accent/10 p-5 shadow-card border border-primary/20">
+        <h3 className="text-sm font-black flex items-center gap-2 mb-1">
+          <Sparkles className="size-4 text-primary" /> أضف تصميماً جديداً — يُربط تلقائياً بالقسم
+        </h3>
+        <p className="text-[11px] text-muted-foreground mb-4">
+          اختر القسم وأضف الاسم وبرومبت AI (وصورة معاينة اختيارية). سيظهر التصميم فوراً كزرّ سريع داخل القسم المختار.
+        </p>
+
+        <div className="mb-3 flex flex-wrap gap-2">
+          {sections.map((sec) => (
+            <button key={sec} onClick={() => setSection(sec)}
+              className={`rounded-full border-2 px-3 py-1.5 text-xs font-bold transition ${section === sec ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary/50"}`}>
+              {SECTION_LABELS[sec]}
+            </button>
+          ))}
         </div>
-        <Input value={form.prompt} onChange={(v) => setForm((p) => ({ ...p, prompt: v }))} placeholder="برومبت AI إنجليزي (اختياري — لتحسين دقة التوليد)" full />
-        <div className="flex items-center gap-3">
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input value={form.label} onChange={(v) => setForm((p) => ({ ...p, label: v }))} placeholder="اسم التصميم (مثال: حديقة ورود ذهبية)" />
+          {section === "haircut" && (
+            <select value={form.gender} onChange={(e) => setForm((p) => ({ ...p, gender: e.target.value as "m" | "f" | "u" }))}
+              className="rounded-xl bg-muted px-3 py-2 text-sm">
+              <option value="u">الجميع</option>
+              <option value="m">رجال</option>
+              <option value="f">نساء</option>
+            </select>
+          )}
+        </div>
+
+        <textarea value={form.prompt} onChange={(e) => setForm((p) => ({ ...p, prompt: e.target.value }))}
+          placeholder="برومبت AI بالإنجليزية (مثال: soft pink rose garden mural, romantic warm lighting)"
+          className="mt-3 w-full rounded-xl bg-muted px-3 py-2 text-sm min-h-[72px]" />
+
+        <div className="mt-3 flex items-center gap-3">
           {form.preview && <img src={form.preview} alt="" className="h-20 w-20 rounded-xl object-cover border border-border" />}
           <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-2 text-xs font-bold text-primary">
-            <Upload className="size-3.5" /> {form.preview ? "تغيير الصورة" : "رفع صورة معاينة"}
+            <Upload className="size-3.5" /> {form.preview ? "تغيير الصورة" : "رفع صورة معاينة (اختياري)"}
             <input type="file" accept="image/*" className="hidden" onChange={onImage} />
           </label>
         </div>
+
         <button onClick={add}
-          className="w-full rounded-xl bg-gradient-to-l from-primary to-primary-glow px-4 py-2.5 text-sm font-black text-primary-foreground">
-          إضافة إلى المعرض
+          className="mt-4 w-full rounded-xl bg-gradient-to-l from-primary to-primary-glow px-4 py-3 text-sm font-black text-primary-foreground shadow-soft">
+          ➕ إضافة وربط تلقائي بـ {SECTION_LABELS[section]}
         </button>
       </div>
 
-      <div className="rounded-2xl bg-card p-5 shadow-card border border-border">
-        <h3 className="text-sm font-black mb-3">القصّات المخصّصة ({s.customHaircuts.length})</h3>
-        {s.customHaircuts.length === 0 ? (
-          <p className="text-xs text-muted-foreground">لم تضف قصّات بعد.</p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {s.customHaircuts.map((c) => (
-              <div key={c.id} className="relative overflow-hidden rounded-xl border border-border">
-                <img src={c.preview} alt={c.label} className="h-28 w-full object-cover" />
-                <p className="px-2 py-1.5 text-[11px] font-bold truncate">{c.label}</p>
-                <button onClick={() => remove(c.id)}
-                  className="absolute top-1 left-1 rounded-full bg-destructive p-1.5 text-destructive-foreground hover:scale-110 transition">
-                  <Trash2 className="size-3" />
-                </button>
-              </div>
-            ))}
+      {sections.map((sec) => {
+        const items = s.customDesigns.filter((d) => d.section === sec);
+        if (items.length === 0) return null;
+        return (
+          <div key={sec} className="rounded-2xl bg-card p-5 shadow-card border border-border">
+            <h3 className="text-sm font-black mb-3 flex items-center gap-2">
+              <Check className="size-4 text-primary" /> {SECTION_LABELS[sec]} ({items.length})
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {items.map((d) => (
+                <div key={d.id} className="relative overflow-hidden rounded-xl border border-border bg-muted/30">
+                  {d.preview ? (
+                    <img src={d.preview} alt={d.label} className="h-28 w-full object-cover" />
+                  ) : (
+                    <div className="h-28 w-full grid place-items-center bg-gradient-to-br from-primary/20 to-accent/20">
+                      <Sparkles className="size-6 text-primary" />
+                    </div>
+                  )}
+                  <p className="px-2 py-1.5 text-[11px] font-bold truncate">{d.label}</p>
+                  <button onClick={() => remove(d.id)}
+                    className="absolute top-1 left-1 rounded-full bg-destructive p-1.5 text-destructive-foreground hover:scale-110 transition">
+                    <Trash2 className="size-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
-      </div>
+        );
+      })}
+
+      {s.customDesigns.length === 0 && (
+        <div className="rounded-2xl bg-muted/30 p-8 text-center text-xs text-muted-foreground border border-dashed border-border">
+          لم تضف أي تصميم بعد — أضف أوّل تصميم ليظهر فوراً في القسم المناسب.
+        </div>
+      )}
     </div>
   );
 }
