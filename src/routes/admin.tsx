@@ -310,11 +310,10 @@ function PricingTab() {
         </label>
         <label className="block">
           <span className="text-xs font-bold">العملة</span>
-          <input value={cur} onChange={(e) => setCur(e.target.value)} list="cur-list"
-            className="mt-1 w-full rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
-          <datalist id="cur-list">
-            <option value="$" /><option value="TRY" /><option value="€" /><option value="ل.س" /><option value="SAR" /><option value="AED" />
-          </datalist>
+          <select value={cur} onChange={(e) => setCur(e.target.value)}
+            className="mt-1 w-full rounded-xl bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring">
+            {CURRENCY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
         </label>
       </div>
       <button onClick={save} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft hover:opacity-90">
