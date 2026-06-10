@@ -67,7 +67,7 @@ function TryOn() {
       if (!res.ok) throw new Error(j.error || "فشل التجهيز");
       setResult(j.result_url);
       await supabase.from("tryon_logs").insert({
-        person_url: null, garment_id: garment.id, result_url: j.result_url,
+        person_url: null, garment_id: null, result_url: j.result_url,
       });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
