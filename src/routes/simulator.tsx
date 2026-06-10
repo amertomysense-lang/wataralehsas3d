@@ -253,7 +253,7 @@ function Simulator() {
               <Layers className="size-4 text-primary" /> اختر تصميماً
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {PRESET_LAYERS.map((l) => (
+              {allLayers.map((l) => (
                 <button key={l.id} onClick={() => setActive(l)}
                   className={`group overflow-hidden rounded-xl border-2 transition ${active?.id === l.id ? "border-primary" : "border-border hover:border-primary/50"}`}>
                   <img src={l.url} alt={l.name} className="h-16 w-full object-cover" />
