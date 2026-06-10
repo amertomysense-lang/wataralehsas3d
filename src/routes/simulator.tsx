@@ -51,6 +51,23 @@ function Simulator() {
   const [settings] = useSettings();
   const region = useMemo(() => regions?.find((r) => r.id === regionId), [regions, regionId]);
 
+  // تصاميم الديكور التي يرفعها الأدمن من /admin → جدول products
+  const [cats] = useCategories();
+  const decorIds = idsForTab(cats, "decor");
+  const { data: adminLayers } = useQuery({
+    queryKey: ["decor_products", decorIds.join(",")],
+    queryFn: async (): Promise<Layer[]> => {
+      let q = supabase.from("products").select("*").order("created_at", { ascending: false }).limit(80);
+      if (decorIds.length) q = q.in("type", decorIds);
+      const { data, error } = await q;
+      if (error) return [];
+      return ((data ?? []) as Design[]).map((d) => ({
+        id: d.id, name: d.title || "تصميم", url: d.image_url, opacity: 0.9,
+      }));
+    },
+  });
+  const allLayers = useMemo(() => [...(adminLayers ?? []), ...PRESET_LAYERS], [adminLayers]);
+
   const [currencyMode, setCurrencyMode] = useState<"USD" | "TRY">("USD");
   const TRY_RATE = 32.5;
   const currency = currencyMode === "USD" ? "$" : "₺";
