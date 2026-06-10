@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, type Design } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { Upload, Shirt, Sparkles, MessageCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -8,10 +8,11 @@ import { consumeQuota, useQuota, DAILY_LIMIT } from "@/lib/quota";
 import { QuotaModal } from "@/components/QuotaModal";
 import { AiImageStudio } from "@/components/AiImageStudio";
 import { AiLoungeBanner } from "@/components/AiLoungeBanner";
+import { useCategories, idsForTab } from "@/lib/categories";
 
 type FashionItem = {
-  id: string; vendor_id: string | null; item_name: string;
-  image_url: string; mask_url: string | null; price: number | null;
+  id: string; item_name: string; image_url: string;
+  price: number | null; type: string | null;
   vendor_whatsapp?: string | null;
 };
 
@@ -27,13 +28,21 @@ function TryOn() {
   const [busy, setBusy] = useState(false);
   const [quotaOpen, setQuotaOpen] = useState(false);
   const remaining = useQuota();
+  const [cats] = useCategories();
+  const fashionIds = idsForTab(cats, "fashion").filter((id) => id !== "haircut");
 
   const { data: items } = useQuery({
-    queryKey: ["fashion_items"],
+    queryKey: ["fashion_products", fashionIds.join(",")],
     queryFn: async (): Promise<FashionItem[]> => {
-      const { data, error } = await supabase.from("fashion_items").select("*").limit(24);
+      // المصدر الموحَّد: جدول products الذي يرفع إليه الأدمن من /admin
+      let q = supabase.from("products").select("*").order("created_at", { ascending: false }).limit(60);
+      if (fashionIds.length) q = q.in("type", fashionIds);
+      const { data, error } = await q;
       if (error) return [];
-      return (data ?? []) as FashionItem[];
+      return ((data ?? []) as Design[]).map((d) => ({
+        id: d.id, item_name: d.title, image_url: d.image_url,
+        price: d.price, type: d.type,
+      }));
     },
   });
 
@@ -58,7 +67,7 @@ function TryOn() {
       if (!res.ok) throw new Error(j.error || "فشل التجهيز");
       setResult(j.result_url);
       await supabase.from("tryon_logs").insert({
-        person_url: null, garment_id: garment.id, result_url: j.result_url,
+        person_url: null, garment_id: null, result_url: j.result_url,
       });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);

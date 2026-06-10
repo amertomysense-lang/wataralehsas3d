@@ -349,7 +349,24 @@ function HaircutStudio() {
               ))}
             </div>
 
-            <p className="mt-3 mb-2 text-xs font-black text-primary">القصّات الترند</p>
+            <div className="mt-3 mb-2 flex items-center justify-between">
+              <p className="text-xs font-black text-primary">القصّات الترند + معرض الإدارة</p>
+              <label className="cursor-pointer inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2 py-1 text-[10px] font-black text-primary hover:bg-primary/20">
+                <Upload className="size-3" /> ارفع صورة مرجعية
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                  const f = e.target.files?.[0]; if (!f) return;
+                  const r = new FileReader();
+                  r.onload = () => {
+                    const url = r.result as string;
+                    const ref: Style = { id: `ref-${Date.now()}`, label: "مرجعي", preview: url, gender: "u" };
+                    setCustoms((prev) => [ref, ...prev]);
+                    setStyle(ref);
+                    toast.success("تم إضافة صورتك المرجعية — ادمج الآن");
+                  };
+                  r.readAsDataURL(f);
+                }} />
+              </label>
+            </div>
             <div className="grid h-56 grid-cols-3 gap-2 overflow-y-auto">
               {visible.map((s) => (
                 <button key={s.id} onClick={() => setStyle(s)}

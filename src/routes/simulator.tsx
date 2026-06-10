@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X, Wand2, Loader2, Download, Camera, RefreshCw } from "lucide-react";
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
@@ -7,6 +8,8 @@ import { toast } from "sonner";
 import { useSettings } from "@/lib/settings";
 import { CampaignSection } from "@/components/CampaignSection";
 import { AiImageStudio } from "@/components/AiImageStudio";
+import { supabase, type Design } from "@/integrations/supabase/client";
+import { useCategories, idsForTab } from "@/lib/categories";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
@@ -47,6 +50,23 @@ function Simulator() {
   const { data: pricing } = usePricing();
   const [settings] = useSettings();
   const region = useMemo(() => regions?.find((r) => r.id === regionId), [regions, regionId]);
+
+  // تصاميم الديكور التي يرفعها الأدمن من /admin → جدول products
+  const [cats] = useCategories();
+  const decorIds = idsForTab(cats, "decor");
+  const { data: adminLayers } = useQuery({
+    queryKey: ["decor_products", decorIds.join(",")],
+    queryFn: async (): Promise<Layer[]> => {
+      let q = supabase.from("products").select("*").order("created_at", { ascending: false }).limit(80);
+      if (decorIds.length) q = q.in("type", decorIds);
+      const { data, error } = await q;
+      if (error) return [];
+      return ((data ?? []) as Design[]).map((d) => ({
+        id: d.id, name: d.title || "تصميم", url: d.image_url, opacity: 0.9,
+      }));
+    },
+  });
+  const allLayers = useMemo(() => [...(adminLayers ?? []), ...PRESET_LAYERS], [adminLayers]);
 
   const [currencyMode, setCurrencyMode] = useState<"USD" | "TRY">("USD");
   const TRY_RATE = 32.5;
@@ -233,7 +253,7 @@ function Simulator() {
               <Layers className="size-4 text-primary" /> اختر تصميماً
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {PRESET_LAYERS.map((l) => (
+              {allLayers.map((l) => (
                 <button key={l.id} onClick={() => setActive(l)}
                   className={`group overflow-hidden rounded-xl border-2 transition ${active?.id === l.id ? "border-primary" : "border-border hover:border-primary/50"}`}>
                   <img src={l.url} alt={l.name} className="h-16 w-full object-cover" />
