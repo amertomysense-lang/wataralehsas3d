@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X, Wand2, Loader2, Download, Camera, RefreshCw } from "lucide-react";
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
@@ -7,6 +8,8 @@ import { toast } from "sonner";
 import { useSettings } from "@/lib/settings";
 import { CampaignSection } from "@/components/CampaignSection";
 import { AiImageStudio } from "@/components/AiImageStudio";
+import { supabase, type Design } from "@/integrations/supabase/client";
+import { useCategories, idsForTab } from "@/lib/categories";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
