@@ -57,9 +57,10 @@ export function FloatingChat() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className={`fixed bottom-5 left-5 z-40 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft transition hover:scale-105 ${
+        className={`fixed left-5 z-30 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft transition hover:scale-105 ${
           open ? "opacity-0 pointer-events-none" : "animate-float"
         }`}
+        style={{ bottom: "calc(env(safe-area-inset-bottom) + 2rem)" }}
         aria-label="فتح المحادثة"
       >
         <MessageCircle className="size-5" />
