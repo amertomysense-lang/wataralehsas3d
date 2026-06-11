@@ -11,8 +11,6 @@ import { AiImageStudio } from "@/components/AiImageStudio";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { useCategories, idsForTab } from "@/lib/categories";
 import { toWebpQ92 } from "@/lib/webp-compress";
-import { supabase, type Design } from "@/integrations/supabase/client";
-import { useCategories, idsForTab } from "@/lib/categories";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
