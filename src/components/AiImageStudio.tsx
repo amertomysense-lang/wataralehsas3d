@@ -17,6 +17,8 @@ export function AiImageStudio({
   basePrompt = "",
   allowImageInput = true,
   section,
+  extraFields,
+  buildPrompt,
 }: {
   title: string;
   subtitle?: string;
@@ -25,6 +27,8 @@ export function AiImageStudio({
   basePrompt?: string;
   allowImageInput?: boolean;
   section?: DesignSection;
+  extraFields?: React.ReactNode;
+  buildPrompt?: (args: { basePrompt: string; presetPrompt?: string; prompt: string }) => string;
 }) {
   const [s] = useSettings();
   const customForSection: Preset[] = section
@@ -50,7 +54,9 @@ export function AiImageStudio({
   }
 
   async function generate() {
-    const finalPrompt = [basePrompt, preset?.prompt, prompt].filter(Boolean).join(". ");
+    const finalPrompt = buildPrompt
+      ? buildPrompt({ basePrompt, presetPrompt: preset?.prompt, prompt })
+      : [basePrompt, preset?.prompt, prompt].filter(Boolean).join(". ");
     if (finalPrompt.trim().length < 5) { toast.error("اكتب وصفاً أو اختر نمطاً"); return; }
     if (!consumeQuota()) { setQuotaOpen(true); return; }
     setBusy(true); setResult(null);
@@ -62,7 +68,12 @@ export function AiImageStudio({
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || "فشل التوليد");
+      if (!j.image_url) {
+        toast.message(j.error || "خدمة التوليد مشغولة حالياً");
+        return;
+      }
       setResult(j.image_url);
+      if (j.fallback === "hf") toast.success("تم التوليد عبر المحرك الاحتياطي ✨");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "خطأ");
     } finally { setBusy(false); }
@@ -90,6 +101,8 @@ export function AiImageStudio({
       <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)}
         placeholder="صِف ما تريد توليده… مثال: خلفية ورود وردية ناعمة بإضاءة دافئة"
         className="w-full rounded-2xl bg-muted px-4 py-3 text-sm leading-relaxed outline-none focus:ring-2 focus:ring-primary min-h-[88px]" />
+
+      {extraFields && <div className="mt-3">{extraFields}</div>}
 
       {allowImageInput && (
         <div className="mt-3 grid grid-cols-2 gap-2">
