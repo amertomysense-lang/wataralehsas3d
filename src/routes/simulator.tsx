@@ -71,10 +71,22 @@ function Simulator() {
   });
   const allLayers = useMemo(() => [...(adminLayers ?? []), ...PRESET_LAYERS], [adminLayers]);
 
-  const [currencyMode, setCurrencyMode] = useState<"USD" | "TRY">("USD");
-  const TRY_RATE = 32.5;
-  const currency = currencyMode === "USD" ? "$" : "₺";
-  const fx = currencyMode === "USD" ? 1 : TRY_RATE;
+  type Cur = "USD" | "TRY" | "SYP";
+  const [currencyMode, setCurrencyMode] = useState<Cur>("USD");
+  const enabledCurs: { code: Cur; sym: string; rate: number; label: string }[] = useMemo(() => {
+    const arr: { code: Cur; sym: string; rate: number; label: string }[] = [
+      { code: "USD", sym: "$", rate: 1, label: "USD $" },
+    ];
+    if (settings.enableTRY) arr.push({ code: "TRY", sym: "₺", rate: Number(settings.tryRate) || 32.5, label: "TRY ₺" });
+    if (settings.enableSYP) arr.push({ code: "SYP", sym: "ل.س", rate: Number(settings.sypRate) || 14500, label: "SYP ل.س" });
+    return arr;
+  }, [settings.enableTRY, settings.tryRate, settings.enableSYP, settings.sypRate]);
+  useEffect(() => {
+    if (!enabledCurs.some((c) => c.code === currencyMode)) setCurrencyMode("USD");
+  }, [enabledCurs, currencyMode]);
+  const activeCur = enabledCurs.find((c) => c.code === currencyMode) ?? enabledCurs[0];
+  const currency = activeCur.sym;
+  const fx = activeCur.rate;
 
   const baseTotalUsd = useMemo(
     () => (pricing ? calcTotal(width, height, embossed, pricing) : 0),
@@ -140,24 +152,34 @@ function Simulator() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          room: bg,
-          design: active.url,
-          design_desc: active.name,
-          surface,
-          embossed,
-          placement_mode: placementMode,
-          placement_note: placementNote,
+          room: bg, design: active.url, design_desc: active.name,
+          surface, embossed,
+          placement_mode: placementMode, placement_note: placementNote,
         }),
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j?.error || "فشل الدمج");
-      if (!j.result_url) { toast.message(j.error || "تعذّر الدمج حالياً"); return; }
-      // ضغط WebP بجودة 92% — حافة حادة لطباعة UV مع تخفيف الحجم
+      // Silent sandbox fallback: لو فشل الـ AI لأي سبب نعرض الـ overlay المحلي
+      if (!res.ok || !j?.result_url) {
+        setAiResult(bg); // overlay سيعرض الطبقة فوق الصورة الأصلية
+        const region = regions?.find((r) => r.id === regionId);
+        const num = region?.whatsapp_number || "963933000000";
+        toast("وضع المحاكاة التجريبي ✨ — لإخراج طباعة UV حقيقية أكمل الطلب عبر واتساب", {
+          duration: 8000,
+          action: { label: "واتساب", onClick: () => window.open(`https://wa.me/${num}?text=${encodeURIComponent("أرغب بتنفيذ تصميم: " + active.name)}`, "_blank") },
+        });
+        return;
+      }
       const compressed = await toWebpQ92(j.result_url, 0.92).catch(() => j.result_url);
       setAiResult(compressed);
-      toast.success(j.fallback === "hf" || j.fallback === "replicate" ? "تمّ الدمج عبر المحرك الاحتياطي ✨" : "تمّ الدمج التوليدي بدقّة 8K");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "تعذّر الدمج، حاول لاحقاً");
+      toast.success(j.fallback ? "تمّ الدمج عبر المحرك الاحتياطي ✨" : "تمّ الدمج التوليدي بدقّة 8K");
+    } catch {
+      setAiResult(bg);
+      const region = regions?.find((r) => r.id === regionId);
+      const num = region?.whatsapp_number || "963933000000";
+      toast("وضع المحاكاة التجريبي ✨ — لإخراج طباعة UV حقيقية أكمل الطلب عبر واتساب", {
+        duration: 8000,
+        action: { label: "واتساب", onClick: () => window.open(`https://wa.me/${num}`, "_blank") },
+      });
     } finally { setAiBusy(false); }
   }
 
@@ -380,14 +402,16 @@ function Simulator() {
           <div className="rounded-2xl p-4 text-primary-foreground" style={{ background: "var(--gradient-brand)" }}>
             <div className="flex items-center justify-between">
               <p className="text-xs opacity-90">الإجمالي المقدّر</p>
-              <div className="inline-flex rounded-lg bg-background/15 p-0.5 text-[11px] font-black backdrop-blur">
-                {(["USD", "TRY"] as const).map((c) => (
-                  <button key={c} onClick={() => setCurrencyMode(c)}
-                    className={`px-2.5 py-1 rounded-md transition ${currencyMode === c ? "bg-background text-foreground" : "text-primary-foreground/80"}`}>
-                    {c === "USD" ? "USD $" : "TRY ₺"}
-                  </button>
-                ))}
-              </div>
+              {enabledCurs.length > 1 && (
+                <div className="inline-flex rounded-lg bg-background/15 p-0.5 text-[11px] font-black backdrop-blur">
+                  {enabledCurs.map((c) => (
+                    <button key={c.code} onClick={() => setCurrencyMode(c.code)}
+                      className={`px-2.5 py-1 rounded-md transition ${currencyMode === c.code ? "bg-background text-foreground" : "text-primary-foreground/80"}`}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <p className="mt-1 text-3xl font-black">{grandTotal.toLocaleString("ar", { maximumFractionDigits: 0 })} {currency}</p>
             <p className="mt-1 text-[11px] opacity-80">

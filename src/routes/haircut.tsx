@@ -175,7 +175,6 @@ function HaircutStudio() {
 
   async function runAI() {
     if (!person || !style) { toast.error("ارفع صورة واختر قصّة"); return; }
-    // وضع المحاكاة المجانية على الجهاز — لا استهلاك للسيرفر
     if (readSettings().aiSimulationOnly) {
       setBusy(true);
       try {
@@ -188,39 +187,51 @@ function HaircutStudio() {
     }
     if (!consumeQuota()) { setQuotaOpen(true); return; }
     setBusy(true); setResult(null);
+    let resultUrl: string | null = null;
+    let usedFallback = false;
     try {
       const res = await fetch("/api/haircut", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ person, style: style.label, color: color.id, hairstyle_url: style.preview }),
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok || j?.fallback || !j?.result_url) {
-        const msg = String(j?.error || "");
-        if (res.status === 402 || j?.fallback || /credit|insufficient|payment|402|quota/i.test(msg)) {
-          await renderLocalComposite(false);
-          toast.warning("جاري العرض في وضع المحاكاة التجريبي — لنتائج واقعية تواصل مع الإدارة", { duration: 6000 });
-          return;
-        }
-        throw new Error(msg || "فشل التجهيز");
-      }
-      setResult(j.result_url);
-      toast.success("تمّ الدمج الواقعي بالذكاء الاصطناعي ✨");
-
-      if (readSettings().aiTryOnLogging) {
-        await supabase.from("tryon_logs").insert({
-          person_url: null, garment_id: null, result_url: j.result_url,
+      if (res.ok && !j?.fallback && j?.result_url) {
+        resultUrl = j.result_url;
+        setResult(j.result_url);
+        toast.success("تمّ الدمج الواقعي بالذكاء الاصطناعي ✨");
+      } else {
+        usedFallback = true;
+        resultUrl = await renderLocalComposite(false);
+        // Luxury Light-Mode toast with WhatsApp CTA
+        toast("وضع المحاكاة التجريبي ✨ — لإطلالة بقصّة شعر حقيقية احجز جلسة عبر واتساب", {
+          duration: 8000,
+          action: {
+            label: "واتساب",
+            onClick: () => window.open(
+              `https://wa.me/963933000000?text=${encodeURIComponent("أرغب بحجز جلسة قصّة شعر: " + style.label)}`,
+              "_blank",
+            ),
+          },
         });
       }
-    } catch (e) {
-      // فشل شبكي عام → تنبيه واضح + معاينة محلية
-      try {
-        await renderLocalComposite(false);
-        toast.warning("جاري العرض في وضع المحاكاة التجريبي — لنتائج واقعية تواصل مع الإدارة", { duration: 6000 });
-      } catch {
-        const m = e instanceof Error ? e.message : String(e);
-        toast.error(m);
-      }
+    } catch {
+      usedFallback = true;
+      try { resultUrl = await renderLocalComposite(false); } catch { /* noop */ }
+      toast("وضع المحاكاة التجريبي ✨ — لإطلالة بقصّة شعر حقيقية احجز جلسة عبر واتساب", {
+        duration: 8000,
+        action: { label: "واتساب", onClick: () => window.open(`https://wa.me/963933000000`, "_blank") },
+      });
     } finally { setBusy(false); }
+
+    // Log every trial in tryon_logs (success or sandbox fallback)
+    try {
+      await supabase.from("tryon_logs").insert({
+        person_url: null,
+        garment_id: null,
+        result_url: resultUrl,
+      });
+    } catch { /* logging best-effort */ }
+    void usedFallback;
   }
 
 
