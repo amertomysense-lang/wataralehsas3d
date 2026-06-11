@@ -1,7 +1,9 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "wataralehsas3d"
 compatibility_date = "2024-11-01"
-pages_build_output_dir = ".output"
+
+[site]
+bucket = ".output/public"
 
 [vars]
-HF_TOKEN = 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
+HF_TOKEN = "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"
