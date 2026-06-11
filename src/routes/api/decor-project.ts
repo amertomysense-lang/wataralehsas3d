@@ -51,10 +51,56 @@ export const Route = createFileRoute("/api/decor-project")({
         if (process.env.LOVABLE_API_KEY) {
           const r = await aiEditImage(prompt, [room, design]);
           if (r.ok) return json({ result_url: r.dataUrl });
-          console.warn("Lovable AI decor failed, trying HF fallback:", r.status, r.error);
+          console.warn("Lovable AI decor failed, trying Replicate fallback:", r.status, r.error);
         }
 
-        // 2) Hugging Face silent fallback
+        // 2) Replicate fallback for decor compositing
+        const token = process.env.REPLICATE_API_TOKEN || process.env.VITE_REPLICATE_API_TOKEN;
+        if (token) {
+          const model = process.env.REPLICATE_DECOR_MODEL || "black-forest-labs/flux-kontext-pro";
+          const create = await fetch(
+            `https://api.replicate.com/v1/models/${model}/predictions`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+                Prefer: "wait",
+              },
+              body: JSON.stringify({
+                input: {
+                  input_image: room,
+                  image_reference: design,
+                  prompt,
+                  output_format: "jpg",
+                  safety_tolerance: 2,
+                },
+              }),
+            },
+          );
+          const pred = await create.json().catch(() => ({}));
+          if (create.ok) {
+            let status = pred.status as string, out = pred.output;
+            const id = pred.id;
+            for (let i = 0; i < 90 && (status === "starting" || status === "processing"); i++) {
+              await new Promise((r) => setTimeout(r, 2000));
+              const p = await fetch(`https://api.replicate.com/v1/predictions/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              const j = await p.json().catch(() => ({}));
+              status = j.status; out = j.output;
+            }
+            if (status === "succeeded") {
+              const url = Array.isArray(out) ? out[0] : out;
+              if (url) return json({ result_url: url, fallback: "replicate" });
+            }
+            console.warn("Replicate decor prediction did not succeed:", status);
+          } else {
+            console.warn("Replicate decor create failed:", pred?.detail || pred?.error || create.status);
+          }
+        }
+
+        // 3) Hugging Face silent fallback
         const hf = await hfGenerateImage(prompt);
         if (hf.ok) return json({ result_url: hf.dataUrl, fallback: "hf" });
 
