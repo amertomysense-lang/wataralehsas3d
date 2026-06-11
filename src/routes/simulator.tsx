@@ -141,6 +141,7 @@ function Simulator() {
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || "فشل الدمج");
+      if (!j.result_url) { toast.message(j.error || "خدمة الدمج مشغولة — حاول لاحقاً"); return; }
       // ضغط WebP بجودة 92% — حافة حادة لطباعة UV مع تخفيف الحجم
       const compressed = await toWebpQ92(j.result_url, 0.92).catch(() => j.result_url);
       setAiResult(compressed);
