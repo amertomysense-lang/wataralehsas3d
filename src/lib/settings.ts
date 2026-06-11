@@ -39,6 +39,12 @@ export type PlatformSettings = {
   fleetMobilizationEnabled: boolean;
   enableOfflineSync: boolean;
 
+  // عملات ثانوية يفعّلها الأدمن مع سعر صرف مقابل الدولار
+  enableTRY: boolean;
+  tryRate: number; // 1 USD = N TRY
+  enableSYP: boolean;
+  sypRate: number; // 1 USD = N SYP
+
   quotaUnlimited: boolean;
   freeAttemptsDaily: number;
   adRewardEnabled: boolean;
