@@ -43,7 +43,7 @@ export const Route = createFileRoute("/api/decor-project")({
         const hf = await hfGenerateImage(prompt);
         if (hf.ok) return json({ result_url: hf.dataUrl, fallback: "hf" });
 
-        return json({ error: friendlyAiError() }, 503);
+        return json({ fallback: true, error: friendlyAiError() });
       },
     },
   },
