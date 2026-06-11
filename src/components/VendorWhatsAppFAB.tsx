@@ -12,7 +12,7 @@ export function VendorWhatsAppFAB({
     <a
       href={url} target="_blank" rel="noreferrer"
       aria-label="تواصل مباشر مع التاجر"
-      className="fixed bottom-6 left-6 z-40 inline-flex items-center gap-2 rounded-full bg-gradient-to-l from-green-600 to-green-500 px-5 py-3.5 text-sm font-black text-white shadow-2xl ring-4 ring-green-500/20 transition hover:scale-105 active:scale-95"
+      className="fixed bottom-36 left-4 z-40 inline-flex items-center gap-2 rounded-full bg-gradient-to-l from-green-600 to-green-500 px-4 py-2.5 text-xs font-black text-white shadow-2xl ring-2 ring-green-500/20 transition hover:scale-105 active:scale-95"
       dir="rtl"
     >
       <MessageCircle className="size-5" />

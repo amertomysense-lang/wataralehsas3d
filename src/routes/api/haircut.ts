@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { aiEditImage } from "@/lib/ai-image-edit.server";
 
-// تحرير قصّة الشعر — Replicate مباشر (بدون بوّابة Lovable) باستخدام مفتاح المالك
+// قصّات الشعر — Lovable AI (Gemini Nano Banana 2) أساسي + Replicate احتياطي
+// قفل صارم على ملامح الوجه؛ التغيير محصور بمنطقة الشعر فقط.
 export const Route = createFileRoute("/api/haircut")({
   server: {
     handlers: {
@@ -11,33 +13,35 @@ export const Route = createFileRoute("/api/haircut")({
           };
           if (!person) return json({ error: "missing person image" }, 400);
 
-          const token =
-            process.env.REPLICATE_API_TOKEN ||
-            process.env.VITE_REPLICATE_API_TOKEN;
-
-          // وضع المحاكاة التلقائي — لا أعطال على العميل
-          if (!token) {
-            return json({
-              fallback: true,
-              error: "REPLICATE_API_TOKEN missing — switching to local preview mode",
-            });
-          }
-
           const styleText = (style?.trim() || "modern stylish haircut").replace(/\s+/g, " ");
           const colorText = color?.trim() ? `, hair color: ${color.trim()}` : "";
           const refClause = hairstyle_url
-            ? `Use the second image strictly as a STYLE REFERENCE for hair shape, length, parting and texture — do NOT copy its face, skin, lighting or background.`
+            ? `INPUT 2 is a HAIRSTYLE REFERENCE — copy ONLY the hair shape, length, parting, texture and styling from it. Do NOT copy its face, skin tone, lighting, background, age, gender, ethnicity or any other attribute.`
             : ``;
 
           const prompt = [
-            `Identity-locked photo edit. INPUT 1 = the real person (source of truth).`,
+            `Photorealistic identity-locked hair edit. INPUT 1 = the real person photograph (the ONLY source of identity).`,
             refClause,
-            `TASK: Re-synthesize ONLY the hair region to match: ${styleText}${colorText}.`,
-            `STRICT IDENTITY LOCK: Treat the face as a fixed mask. Preserve 100% of facial geometry, eyes, eyebrows, nose, mouth, jawline, ears, skin tone, freckles, age and expression.`,
-            `HAIR BOUNDARY: Re-grow hair organically from the actual scalp topology. Natural hairline, baby hairs, follicle direction, shine and stray strands. Blend edges seamlessly. No stamping, no flat overlay.`,
-            `CONTEXT LOCK: Preserve clothing, background, camera angle, lighting and shadows exactly.`,
-            `OUTPUT: One photorealistic image. Return ONLY the edited image.`,
+            `TASK: Replace ONLY the hair region of INPUT 1 with: ${styleText}${colorText}.`,
+            `ABSOLUTE IDENTITY LOCK: Face, eyes, eyebrows, eyelashes, nose, mouth, lips, teeth, chin, jawline, ears, neck, skin tone, freckles, moles, age, gender expression, makeup and exact facial expression must remain 100% identical to INPUT 1, pixel-faithful. Do not beautify, smooth, slim or alter facial geometry in any way.`,
+            `CONTEXT LOCK: Clothing, jewelry, accessories, background, camera angle, framing, lighting direction, color temperature, shadows and image grain remain identical to INPUT 1.`,
+            `HAIR REGION ONLY: Re-grow hair organically from the actual scalp — natural hairline, baby hairs, follicle direction, realistic shine, individual strands and stray hairs. Blend hair edges seamlessly with the forehead, temples and neck. No flat sticker overlays, no symmetric stamping, no cartoon look.`,
+            `OUTPUT: One photorealistic image at the same resolution and aspect ratio as INPUT 1. Return ONLY the edited image.`,
           ].filter(Boolean).join(" ");
+
+          // 1) Lovable AI primary
+          if (process.env.LOVABLE_API_KEY) {
+            const imgs = hairstyle_url ? [person, hairstyle_url] : [person];
+            const r = await aiEditImage(prompt, imgs);
+            if (r.ok) return json({ result_url: r.dataUrl });
+            console.warn("Lovable AI haircut failed, trying Replicate:", r.error);
+          }
+
+          // 2) Replicate fallback if owner key present
+          const token = process.env.REPLICATE_API_TOKEN || process.env.VITE_REPLICATE_API_TOKEN;
+          if (!token) {
+            return json({ fallback: true, error: "AI service unavailable — using local preview" });
+          }
 
           const model = process.env.REPLICATE_HAIRCUT_MODEL || "flux-kontext-apps/change-haircut";
           const isChangeHaircut = model.includes("change-haircut");
@@ -62,8 +66,7 @@ export const Route = createFileRoute("/api/haircut")({
           );
           const pred = await create.json();
           if (!create.ok) {
-            const msg = String(pred?.detail || pred?.error || "create failed");
-            return json({ error: msg, fallback: true });
+            return json({ error: String(pred?.detail || pred?.error || "create failed"), fallback: true });
           }
 
           let status = pred.status as string, out = pred.output;
