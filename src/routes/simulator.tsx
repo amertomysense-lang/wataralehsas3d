@@ -344,15 +344,15 @@ function Simulator() {
           <summary className="cursor-pointer list-none text-xs font-black text-muted-foreground">
             <span className="inline-flex items-center gap-2">
               <Wand2 className="size-3.5 text-primary" />
-              استوديو التوليد التخيلي
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px]">للتسلية</span>
+              استوديو التوليد التخيلي للأفكار الإبداعية
+              <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[10px]">إلهام</span>
             </span>
           </summary>
           <div className="mt-3">
             <AiImageStudio
               section="simulator"
               title="استوديو التوليد التخيلي للجدران"
-              subtitle="ميزة إضافية — الأساس هو الدمج التوليدي بالأعلى."
+              subtitle="استلهم أفكار تصاميم جديدة — ثم ادمجها بالأعلى على جدارك الحقيقي."
               accent="from-primary to-accent"
               basePrompt="High-resolution interior wall/floor decorative design, photorealistic, premium material finish"
               presets={[

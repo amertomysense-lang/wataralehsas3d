@@ -13,7 +13,7 @@ export function FeaturesBubble() {
       <button
         onClick={() => setOpen(true)}
         aria-label="مزايا وتر الإحساس"
-        className="fixed bottom-4 left-4 z-40 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-l from-primary to-primary-glow px-3.5 py-2 text-[11px] font-black text-primary-foreground shadow-2xl ring-2 ring-background hover:scale-105 transition"
+        className="fixed bottom-20 left-4 z-40 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-l from-primary to-primary-glow px-3.5 py-2 text-[11px] font-black text-primary-foreground shadow-2xl ring-2 ring-background hover:scale-105 transition"
         dir="rtl"
       >
         <Info className="size-3.5" /> مزايا المشروع
@@ -44,9 +44,9 @@ export function FeaturesBubble() {
               منصّة دمج واقعي بالذكاء الاصطناعي
             </h2>
             <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-              المشروع يعتمد بشكل أساسي على <b className="text-foreground">الدمج الواقعي</b> —
+              المشروع يعتمد على <b className="text-foreground">الدمج الواقعي بالذكاء الاصطناعي</b> —
               يأخذ صورتك الحقيقية (جدار غرفتك، وجهك، أو جسمك) ويُركّب التصميم فوقها
-              بمنظور ومقاسات وإضاءة حقيقية. التوليد التخيلي ميزة ثانوية للتسلية فقط.
+              بمنظور ومقاسات وإضاءة حقيقية مع قفل تام لملامحك ومحيطك.
             </p>
 
             <div className="mt-4 space-y-3 text-[12px] leading-relaxed">
@@ -72,7 +72,7 @@ export function FeaturesBubble() {
             </div>
 
             <p className="mt-3 text-[10px] text-muted-foreground">
-              التوليد التخيلي بالـ AI متوفّر كاستوديو إضافي داخل كل جناح — للتسلية فقط.
+              استوديو التوليد التخيلي متوفّر كميزة إضافية داخل كل جناح لاستلهام أفكار جديدة.
             </p>
           </div>
         </div>

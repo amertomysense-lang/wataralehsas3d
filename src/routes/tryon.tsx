@@ -147,8 +147,8 @@ function TryOn() {
             <summary className="cursor-pointer list-none text-xs font-black text-muted-foreground">
               <span className="inline-flex items-center gap-2">
                 <Shirt className="size-3.5 text-primary" />
-                استوديو توليد قطع تخيلية
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px]">ميزة ثانوية · للتسلية</span>
+                استوديو توليد قطع ملابس إبداعية
+                <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[10px]">إلهام</span>
                 <span className="text-primary group-open:hidden">▾ افتح</span>
                 <span className="hidden text-primary group-open:inline">▴ أغلق</span>
               </span>
@@ -157,7 +157,7 @@ function TryOn() {
               <AiImageStudio
                 section="tryon"
                 title="استوديو توليد قطع ملابس تخيلية"
-                subtitle="ميزة إضافية للتسلية — الأساس هو الدمج الواقعي بالأعلى."
+                subtitle="استلهم قطع جديدة بالذكاء الاصطناعي — ثم اعرضها على جسمك بالأعلى."
                 accent="from-primary to-accent"
                 basePrompt="Photorealistic fashion lookbook image, studio lighting, premium fabric details"
                 presets={[
