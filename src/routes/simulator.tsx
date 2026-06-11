@@ -71,10 +71,22 @@ function Simulator() {
   });
   const allLayers = useMemo(() => [...(adminLayers ?? []), ...PRESET_LAYERS], [adminLayers]);
 
-  const [currencyMode, setCurrencyMode] = useState<"USD" | "TRY">("USD");
-  const TRY_RATE = 32.5;
-  const currency = currencyMode === "USD" ? "$" : "₺";
-  const fx = currencyMode === "USD" ? 1 : TRY_RATE;
+  type Cur = "USD" | "TRY" | "SYP";
+  const [currencyMode, setCurrencyMode] = useState<Cur>("USD");
+  const enabledCurs: { code: Cur; sym: string; rate: number; label: string }[] = useMemo(() => {
+    const arr: { code: Cur; sym: string; rate: number; label: string }[] = [
+      { code: "USD", sym: "$", rate: 1, label: "USD $" },
+    ];
+    if (settings.enableTRY) arr.push({ code: "TRY", sym: "₺", rate: Number(settings.tryRate) || 32.5, label: "TRY ₺" });
+    if (settings.enableSYP) arr.push({ code: "SYP", sym: "ل.س", rate: Number(settings.sypRate) || 14500, label: "SYP ل.س" });
+    return arr;
+  }, [settings.enableTRY, settings.tryRate, settings.enableSYP, settings.sypRate]);
+  useEffect(() => {
+    if (!enabledCurs.some((c) => c.code === currencyMode)) setCurrencyMode("USD");
+  }, [enabledCurs, currencyMode]);
+  const activeCur = enabledCurs.find((c) => c.code === currencyMode) ?? enabledCurs[0];
+  const currency = activeCur.sym;
+  const fx = activeCur.rate;
 
   const baseTotalUsd = useMemo(
     () => (pricing ? calcTotal(width, height, embossed, pricing) : 0),
