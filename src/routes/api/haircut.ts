@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { aiEditImage } from "@/lib/ai-image-edit.server";
+import { hfGenerateImage, friendlyAiError } from "@/lib/hf-fallback.server";
 
 // قصّات الشعر — Lovable AI (Gemini Nano Banana 2) أساسي + Replicate احتياطي
 // قفل صارم على ملامح الوجه؛ التغيير محصور بمنطقة الشعر فقط.
@@ -40,7 +41,10 @@ export const Route = createFileRoute("/api/haircut")({
           // 2) Replicate fallback if owner key present
           const token = process.env.REPLICATE_API_TOKEN || process.env.VITE_REPLICATE_API_TOKEN;
           if (!token) {
-            return json({ fallback: true, error: "AI service unavailable — using local preview" });
+            // 3) Hugging Face silent fallback (free tier)
+            const hf = await hfGenerateImage(prompt);
+            if (hf.ok) return json({ result_url: hf.dataUrl, fallback: "hf" });
+            return json({ fallback: true, error: friendlyAiError() });
           }
 
           const model = process.env.REPLICATE_HAIRCUT_MODEL || "flux-kontext-apps/change-haircut";

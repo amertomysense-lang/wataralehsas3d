@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { aiEditImage } from "@/lib/ai-image-edit.server";
+import { hfGenerateImage, friendlyAiError } from "@/lib/hf-fallback.server";
 
 // تجربة الأزياء — Lovable AI أساسي + Replicate احتياطي
 // الذكاء يتعرّف نوع القطعة (فستان/قميص/بنطال...) ويستبدل المنطقة المناسبة فقط.
@@ -50,7 +51,10 @@ export const Route = createFileRoute("/api/tryon")({
           // 2) Replicate fallback
           const token = process.env.REPLICATE_API_TOKEN || process.env.VITE_REPLICATE_API_TOKEN;
           if (!token) {
-            return json({ fallback: true, error: "AI service unavailable — using local preview" });
+            // 3) Hugging Face silent fallback (free tier)
+            const hf = await hfGenerateImage(prompt);
+            if (hf.ok) return json({ result_url: hf.dataUrl, fallback: "hf" });
+            return json({ fallback: true, error: friendlyAiError() });
           }
 
           const model = process.env.REPLICATE_TRYON_MODEL || "black-forest-labs/flux-kontext-pro";
