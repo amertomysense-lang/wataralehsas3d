@@ -40,6 +40,8 @@ function Simulator() {
   const [aiBusy, setAiBusy] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [surface, setSurface] = useState<"wall" | "floor" | "ceiling">("wall");
+  const [placementMode, setPlacementMode] = useState<"single-area" | "centerpiece" | "full-surface" | "feature-strip">("full-surface");
+  const [placementNote, setPlacementNote] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Live camera state
@@ -138,6 +140,19 @@ function Simulator() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ room: bg, design: active.url, design_desc: active.name, surface, embossed }),
+      });
+      const res = await fetch("/api/decor-project", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room: bg,
+          design: active.url,
+          design_desc: active.name,
+          surface,
+          embossed,
+          placement_mode: placementMode,
+          placement_note: placementNote,
+        }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || "فشل الدمج");
@@ -250,6 +265,34 @@ function Simulator() {
                 className="ms-auto inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-bold">
                 <RefreshCw className="size-3.5" /> صورة جديدة
               </button>
+            </div>
+          )}
+
+          {previewSrc && (
+            <div className="mt-3 rounded-2xl border border-border bg-card/60 p-3">
+              <div className="mb-2 text-xs font-black text-foreground">تحديد موضع التطبيق</div>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  ["full-surface", "كامل السطح"],
+                  ["single-area", "جزء محدد"],
+                  ["centerpiece", "منتصف/قطعة رئيسية"],
+                  ["feature-strip", "شريط/امتداد محدد"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => setPlacementMode(value)}
+                    className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-bold transition ${placementMode === value ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <textarea
+                value={placementNote}
+                onChange={(e) => setPlacementNote(e.target.value)}
+                placeholder="مثال: ضع باقة الورد كرسمة في منتصف الحائط فقط، أو اجعل الرخام ممتداً على الأرضية كاملة، أو مدّ التصميم كشريط على الحائط خلف التلفاز"
+                className="mt-3 min-h-[88px] w-full rounded-xl bg-muted px-3 py-2 text-xs leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-primary"
+              />
             </div>
           )}
 
@@ -375,6 +418,57 @@ function Simulator() {
               subtitle="استلهم أفكار تصاميم جديدة — ثم ادمجها بالأعلى على جدارك الحقيقي."
               accent="from-primary to-accent"
               basePrompt="High-resolution interior wall/floor decorative design, photorealistic, premium material finish"
+              buildPrompt={({ basePrompt, presetPrompt, prompt }) => [
+                basePrompt,
+                presetPrompt,
+                `Target surface: ${surface}. Placement mode: ${placementMode}.`,
+                placementNote ? `Placement instruction: ${placementNote}.` : "",
+                "Do not generate a whole room redesign. Generate only the requested decor element/pattern so it can be placed precisely on the selected area.",
+                prompt,
+              ].filter(Boolean).join(" ")}
+              extraFields={(
+                <div className="grid gap-3">
+                  <div className="flex flex-wrap gap-2">
+                    {([
+                      ["wall", "حائط"],
+                      ["floor", "أرضية"],
+                      ["ceiling", "سقف"],
+                    ] as const).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setSurface(value)}
+                        className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-bold transition ${surface === value ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {([
+                      ["full-surface", "كامل السطح"],
+                      ["single-area", "جزء محدد"],
+                      ["centerpiece", "منتصف"],
+                      ["feature-strip", "امتداد محدد"],
+                    ] as const).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setPlacementMode(value)}
+                        className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-bold transition ${placementMode === value ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={placementNote}
+                    onChange={(e) => setPlacementNote(e.target.value)}
+                    placeholder="مثال: ضع باقة ورد ثلاثية الأبعاد على الباب، أو مدّها على جميع الحيطان، أو اجعلها في منتصف الأرضية"
+                    className="min-h-[82px] w-full rounded-xl bg-muted px-3 py-2 text-xs leading-relaxed outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              )}
               presets={[
                 { id: "rose", label: "حديقة ورود", prompt: "soft pink rose garden mural, romantic warm lighting" },
                 { id: "calli", label: "خط عربي ذهبي", prompt: "elegant golden arabic calligraphy on dark marble" },
