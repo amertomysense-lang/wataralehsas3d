@@ -392,14 +392,16 @@ function Simulator() {
           <div className="rounded-2xl p-4 text-primary-foreground" style={{ background: "var(--gradient-brand)" }}>
             <div className="flex items-center justify-between">
               <p className="text-xs opacity-90">الإجمالي المقدّر</p>
-              <div className="inline-flex rounded-lg bg-background/15 p-0.5 text-[11px] font-black backdrop-blur">
-                {(["USD", "TRY"] as const).map((c) => (
-                  <button key={c} onClick={() => setCurrencyMode(c)}
-                    className={`px-2.5 py-1 rounded-md transition ${currencyMode === c ? "bg-background text-foreground" : "text-primary-foreground/80"}`}>
-                    {c === "USD" ? "USD $" : "TRY ₺"}
-                  </button>
-                ))}
-              </div>
+              {enabledCurs.length > 1 && (
+                <div className="inline-flex rounded-lg bg-background/15 p-0.5 text-[11px] font-black backdrop-blur">
+                  {enabledCurs.map((c) => (
+                    <button key={c.code} onClick={() => setCurrencyMode(c.code)}
+                      className={`px-2.5 py-1 rounded-md transition ${currencyMode === c.code ? "bg-background text-foreground" : "text-primary-foreground/80"}`}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <p className="mt-1 text-3xl font-black">{grandTotal.toLocaleString("ar", { maximumFractionDigits: 0 })} {currency}</p>
             <p className="mt-1 text-[11px] opacity-80">
