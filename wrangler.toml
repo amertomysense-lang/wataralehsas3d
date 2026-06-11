@@ -1,11 +1,1 @@
-#:schema node_modules/wrangler/config-schema.json
-name = "wataralehsas3d"
-compatibility_date = "2024-11-01"
-compatibility_flags = [ "nodejs_compat" ]
 
-[site]
-bucket = ".output/public"
-
-[vars]
-NODE_VERSION = "20"
-HF_TOKEN = "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"
