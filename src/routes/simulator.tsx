@@ -10,6 +10,9 @@ import { CampaignSection } from "@/components/CampaignSection";
 import { AiImageStudio } from "@/components/AiImageStudio";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { useCategories, idsForTab } from "@/lib/categories";
+import { toWebpQ92 } from "@/lib/webp-compress";
+import { supabase, type Design } from "@/integrations/supabase/client";
+import { useCategories, idsForTab } from "@/lib/categories";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
@@ -140,8 +143,10 @@ function Simulator() {
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || "فشل الدمج");
-      setAiResult(j.result_url);
-      toast.success("تمّ الدمج التوليدي بدقّة 8K");
+      // ضغط WebP بجودة 92% — حافة حادة لطباعة UV مع تخفيف الحجم
+      const compressed = await toWebpQ92(j.result_url, 0.92).catch(() => j.result_url);
+      setAiResult(compressed);
+      toast.success(j.fallback === "hf" ? "تمّ الدمج (محرّك احتياطي) ✨" : "تمّ الدمج التوليدي بدقّة 8K");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "تعذّر الدمج، حاول لاحقاً");
     } finally { setAiBusy(false); }
@@ -150,7 +155,8 @@ function Simulator() {
   function downloadResult() {
     if (!aiResult) return;
     const a = document.createElement("a");
-    a.href = aiResult; a.download = `watar-room-${Date.now()}.jpg`; a.click();
+    const ext = aiResult.startsWith("data:image/webp") ? "webp" : "jpg";
+    a.href = aiResult; a.download = `watar-room-${Date.now()}.${ext}`; a.click();
   }
 
   async function sendOrder() {
