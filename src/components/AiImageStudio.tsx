@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Sparkles, Loader2, Camera, Upload, Download, Share2, Wand2, X } from "lucide-react";
 import { toast } from "sonner";
 import { consumeQuota, useQuota } from "@/lib/quota";
@@ -27,7 +27,7 @@ export function AiImageStudio({
   basePrompt?: string;
   allowImageInput?: boolean;
   section?: DesignSection;
-  extraFields?: React.ReactNode;
+  extraFields?: ReactNode;
   buildPrompt?: (args: { basePrompt: string; presetPrompt?: string; prompt: string }) => string;
 }) {
   const [s] = useSettings();
