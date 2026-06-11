@@ -12,7 +12,8 @@ export function VendorWhatsAppFAB({
     <a
       href={url} target="_blank" rel="noreferrer"
       aria-label="تواصل مباشر مع التاجر"
-      className="fixed bottom-36 left-4 z-40 inline-flex items-center gap-2 rounded-full bg-gradient-to-l from-green-600 to-green-500 px-4 py-2.5 text-xs font-black text-white shadow-2xl ring-2 ring-green-500/20 transition hover:scale-105 active:scale-95"
+      className="fixed left-4 z-30 inline-flex items-center gap-2 rounded-full bg-gradient-to-l from-green-600 to-green-500 px-4 py-2.5 text-xs font-black text-white shadow-2xl ring-2 ring-green-500/20 transition hover:scale-105 active:scale-95"
+      style={{ bottom: "calc(env(safe-area-inset-bottom) + 6.75rem)" }}
       dir="rtl"
     >
       <MessageCircle className="size-5" />

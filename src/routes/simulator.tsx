@@ -151,11 +151,11 @@ function Simulator() {
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || "فشل الدمج");
-      if (!j.result_url) { toast.message(j.error || "خدمة الدمج مشغولة — حاول لاحقاً"); return; }
+      if (!j.result_url) { toast.message(j.error || "تعذّر الدمج حالياً"); return; }
       // ضغط WebP بجودة 92% — حافة حادة لطباعة UV مع تخفيف الحجم
       const compressed = await toWebpQ92(j.result_url, 0.92).catch(() => j.result_url);
       setAiResult(compressed);
-      toast.success(j.fallback === "hf" ? "تمّ الدمج (محرّك احتياطي) ✨" : "تمّ الدمج التوليدي بدقّة 8K");
+      toast.success(j.fallback === "hf" || j.fallback === "replicate" ? "تمّ الدمج عبر المحرك الاحتياطي ✨" : "تمّ الدمج التوليدي بدقّة 8K");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "تعذّر الدمج، حاول لاحقاً");
     } finally { setAiBusy(false); }
@@ -476,7 +476,7 @@ function Simulator() {
       </div>
 
       {/* Bottom action sheet */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] backdrop-blur supports-[backdrop-filter]:bg-card/80">
         <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3">
           <button onClick={runAiProjection} disabled={aiBusy || !bg || !active}
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-3 py-3 text-xs font-black text-primary-foreground shadow-soft disabled:opacity-50">

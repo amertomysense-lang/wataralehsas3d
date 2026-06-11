@@ -13,7 +13,8 @@ export function FeaturesBubble() {
       <button
         onClick={() => setOpen(true)}
         aria-label="مزايا وتر الإحساس"
-        className="fixed bottom-20 left-4 z-40 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-l from-primary to-primary-glow px-3.5 py-2 text-[11px] font-black text-primary-foreground shadow-2xl ring-2 ring-background hover:scale-105 transition"
+        className="fixed left-4 z-30 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-l from-primary to-primary-glow px-3.5 py-2 text-[11px] font-black text-primary-foreground shadow-2xl ring-2 ring-background transition hover:scale-105"
+        style={{ bottom: "calc(env(safe-area-inset-bottom) + 10rem)" }}
         dir="rtl"
       >
         <Info className="size-3.5" /> مزايا المشروع
