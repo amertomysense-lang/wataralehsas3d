@@ -139,11 +139,6 @@ function Simulator() {
       const res = await fetch("/api/decor-project", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ room: bg, design: active.url, design_desc: active.name, surface, embossed }),
-      });
-      const res = await fetch("/api/decor-project", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           room: bg,
           design: active.url,
