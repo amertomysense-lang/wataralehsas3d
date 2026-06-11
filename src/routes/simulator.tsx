@@ -152,24 +152,34 @@ function Simulator() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          room: bg,
-          design: active.url,
-          design_desc: active.name,
-          surface,
-          embossed,
-          placement_mode: placementMode,
-          placement_note: placementNote,
+          room: bg, design: active.url, design_desc: active.name,
+          surface, embossed,
+          placement_mode: placementMode, placement_note: placementNote,
         }),
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j?.error || "فشل الدمج");
-      if (!j.result_url) { toast.message(j.error || "تعذّر الدمج حالياً"); return; }
-      // ضغط WebP بجودة 92% — حافة حادة لطباعة UV مع تخفيف الحجم
+      // Silent sandbox fallback: لو فشل الـ AI لأي سبب نعرض الـ overlay المحلي
+      if (!res.ok || !j?.result_url) {
+        setAiResult(bg); // overlay سيعرض الطبقة فوق الصورة الأصلية
+        const region = regions?.find((r) => r.id === regionId);
+        const num = region?.whatsapp_number || "963933000000";
+        toast("وضع المحاكاة التجريبي ✨ — لإخراج طباعة UV حقيقية أكمل الطلب عبر واتساب", {
+          duration: 8000,
+          action: { label: "واتساب", onClick: () => window.open(`https://wa.me/${num}?text=${encodeURIComponent("أرغب بتنفيذ تصميم: " + active.name)}`, "_blank") },
+        });
+        return;
+      }
       const compressed = await toWebpQ92(j.result_url, 0.92).catch(() => j.result_url);
       setAiResult(compressed);
-      toast.success(j.fallback === "hf" || j.fallback === "replicate" ? "تمّ الدمج عبر المحرك الاحتياطي ✨" : "تمّ الدمج التوليدي بدقّة 8K");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "تعذّر الدمج، حاول لاحقاً");
+      toast.success(j.fallback ? "تمّ الدمج عبر المحرك الاحتياطي ✨" : "تمّ الدمج التوليدي بدقّة 8K");
+    } catch {
+      setAiResult(bg);
+      const region = regions?.find((r) => r.id === regionId);
+      const num = region?.whatsapp_number || "963933000000";
+      toast("وضع المحاكاة التجريبي ✨ — لإخراج طباعة UV حقيقية أكمل الطلب عبر واتساب", {
+        duration: 8000,
+        action: { label: "واتساب", onClick: () => window.open(`https://wa.me/${num}`, "_blank") },
+      });
     } finally { setAiBusy(false); }
   }
 
