@@ -7,14 +7,27 @@ export const Route = createFileRoute("/api/decor-project")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const { room, design, design_desc, surface, embossed } = (await request.json()) as {
+        const { room, design, design_desc, surface, embossed, placement_note, placement_mode } = (await request.json()) as {
           room: string; design: string; design_desc?: string;
           surface?: "wall" | "floor" | "ceiling"; embossed?: boolean;
+          placement_note?: string;
+          placement_mode?: "single-area" | "centerpiece" | "full-surface" | "feature-strip";
         };
         if (!room || !design) return json({ error: "missing inputs" }, 400);
 
         const target = surface === "floor" ? "floor" : surface === "ceiling" ? "ceiling" : "main visible wall";
         const desc = (design_desc || "the decorative pattern shown in the second image").trim();
+        const placementText = (placement_note || "").trim();
+        const placementRule = placement_mode === "centerpiece"
+          ? "PLACEMENT: Apply the design as a focused centerpiece only in the requested location, keeping the rest of the target surface mostly unchanged."
+          : placement_mode === "feature-strip"
+            ? "PLACEMENT: Apply the design as a localized decorative strip/band only where requested, not as a full-surface fill."
+            : placement_mode === "single-area"
+              ? "PLACEMENT: Apply the design only to one clearly bounded chosen area of the target surface."
+              : "PLACEMENT: Cover the whole selected target surface continuously and seamlessly.";
+        const placementNoteClause = placementText
+          ? `USER PLACEMENT NOTE: ${placementText}. Follow this placement instruction exactly while preserving real room perspective.`
+          : "";
         const embossedClause = embossed
           ? `EMBOSS: Apply a tactile ~30% embossed relief — raised geometry along the pattern edges with consistent self-shadowing driven by the scene's light direction, simulating CNC/3D-printed wall panels.`
           : `Keep the surface flat and matte unless the pattern naturally implies sheen.`;
@@ -22,6 +35,8 @@ export const Route = createFileRoute("/api/decor-project")({
         const prompt = [
           `Architectural interior compositing for industrial UV wall-printing blueprints. INPUT 1 = the real room photo. INPUT 2 = decorative design reference (${desc}).`,
           `TASK: Project the design from INPUT 2 onto the ${target} of INPUT 1 with photoreal perspective.`,
+          placementRule,
+          placementNoteClause,
           `VECTOR-GRID MAPPING: Treat the design as a seamless, tileable, vector-grid-aligned pattern. Align tile edges to the surface grid; veins, motifs and repeats must continue continuously across tile boundaries with zero visible seams.`,
           `PERSPECTIVE MATRIX: Detect the room's vanishing points, surface normals and corner vectors. Bend, scale and foreshorten the design along the surface plane so vertical lines stay vertical, horizontal patterns recede toward the vanishing point, and the design wraps correctly around real corners, pillars, sockets and moldings.`,
           `RESOLUTION: Output must be razor-sharp at print resolution — crisp vein edges, no upscaling blur, no JPEG artifacts, suitable for large-format UV plotter output.`,
