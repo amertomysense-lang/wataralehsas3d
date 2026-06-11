@@ -87,6 +87,11 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
   fleetMobilizationEnabled: true,
   enableOfflineSync: true,
 
+  enableTRY: false,
+  tryRate: 32.5,
+  enableSYP: false,
+  sypRate: 14500,
+
   quotaUnlimited: false,
   freeAttemptsDaily: 3,
   adRewardEnabled: true,
