@@ -26,10 +26,13 @@ const PRESET_LAYERS: Layer[] = [
   { id: "epoxy", name: "إيبوكسي محيطي", url: "https://images.unsplash.com/photo-1505761671935-60b3a7427bad?w=900&auto=format&fit=crop", opacity: 0.9 },
 ];
 
+// مشهد افتراضي لمعاينة فورية عند الدخول — يستبدله المستخدم بصورة جداره أو يلتقطها مباشرة
+const DEFAULT_ROOM = "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1600&auto=format&fit=crop";
+
 function Simulator() {
   useOnlineSync();
-  const [bg, setBg] = useState<string | null>(null);
-  const [active, setActive] = useState<Layer | null>(null);
+  const [bg, setBg] = useState<string | null>(DEFAULT_ROOM);
+  const [active, setActive] = useState<Layer | null>(PRESET_LAYERS[1]);
   const [width, setWidth] = useState(3);
   const [height, setHeight] = useState(2.5);
   const [embossed, setEmbossed] = useState(false);
