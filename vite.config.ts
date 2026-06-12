@@ -1,10 +1,7 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import lovableConfig from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
-  plugins: [react()],
-  build: {
-    outDir: "dist",
-    assetsDir: "assets",
-  }
+  ...lovableConfig,
+  plugins: [...(lovableConfig.plugins || [])]
 });
