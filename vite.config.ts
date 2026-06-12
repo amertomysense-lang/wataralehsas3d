@@ -1,8 +1,9 @@
 import { defineConfig } from "vite";
-import lovableConfig from "@lovable.dev/vite-tanstack-config";
+import react from "@vitejs/plugin-react";
 
-// Cloudflare Auto-Detection Bypass: export default defineConfig({ plugins: [] });
 export default defineConfig({
-  ...lovableConfig,
-  plugins: [],
+  plugins: [react()],
+  build: {
+    outDir: "dist",
+  }
 });
