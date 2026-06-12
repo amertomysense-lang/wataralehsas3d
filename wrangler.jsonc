@@ -1,0 +1,12 @@
+{
+  "name": "wataralehsas3d",
+  "compatibility_date": "2024-11-01",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "main": ".output/server/index.mjs",
+  "assets": {
+    "directory": ".output/public",
+    "binding": "ASSETS"
+  }
+}
