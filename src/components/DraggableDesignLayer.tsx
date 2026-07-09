@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Move, Maximize2, RotateCcw } from "lucide-react";
+import { Move, Maximize2, RotateCw } from "lucide-react";
 
-export type DesignBox = { x: number; y: number; w: number; h: number; opacity: number };
+export type DesignBox = {
+  x: number; y: number; w: number; h: number;
+  opacity: number;
+  rotation: number;      // درجات
+  blur: number;          // px
+  brightness: number;    // 0.5–1.6
+  saturation: number;    // 0.5–2
+  contrast: number;      // 0.5–1.6
+  blendMode: React.CSSProperties["mixBlendMode"];
+};
 
 type Props = {
   src: string;
@@ -9,26 +18,30 @@ type Props = {
   box: DesignBox;
   onChange: (b: DesignBox) => void;
   container: React.RefObject<HTMLDivElement | null>;
-  /** يفعّل مصفوفة بروز SVG عالية التباين لمحاكاة الطباعة UV الملموسة */
   embossed?: boolean;
 };
 
 /**
- * طبقة تصميم قابلة للسحب والتحجيم فوق صورة الجدار الثابتة.
- * تستخدم Vector-Grid Mapping (object-cover + image-rendering crisp) لتفادي البلر
- * وعند تفعيل embossed تُطبَّق فلتر SVG displacement لإبراز العروق الفيزيائية.
+ * طبقة تصميم فوق صورة الجدار الثابتة:
+ * سحب حر + تكبير من الزاوية + تدوير من مقبض علوي +
+ * تأثيرات (شفافية/طمس/إشراق/تشبع/تباين/وضع مزج) + بروز UV.
  */
 export function DraggableDesignLayer({ src, name, box, onChange, container, embossed }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const [mode, setMode] = useState<"drag" | "resize" | null>(null);
-  const start = useRef<{ px: number; py: number; box: DesignBox } | null>(null);
+  const [mode, setMode] = useState<"drag" | "resize" | "rotate" | null>(null);
+  const start = useRef<{ px: number; py: number; box: DesignBox; cx?: number; cy?: number } | null>(null);
 
-  const onDown = useCallback((m: "drag" | "resize") => (e: React.PointerEvent) => {
-    e.preventDefault();
+  const onDown = useCallback((m: "drag" | "resize" | "rotate") => (e: React.PointerEvent) => {
+    e.preventDefault(); e.stopPropagation();
     (e.target as Element).setPointerCapture?.(e.pointerId);
     setMode(m);
-    start.current = { px: e.clientX, py: e.clientY, box: { ...box } };
-  }, [box]);
+    const rect = container.current?.getBoundingClientRect();
+    start.current = {
+      px: e.clientX, py: e.clientY, box: { ...box },
+      cx: rect ? rect.left + ((box.x + box.w / 2) / 100) * rect.width : 0,
+      cy: rect ? rect.top + ((box.y + box.h / 2) / 100) * rect.height : 0,
+    };
+  }, [box, container]);
 
   useEffect(() => {
     if (!mode) return;
@@ -41,15 +54,18 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
       if (mode === "drag") {
         onChange({
           ...s.box,
-          x: Math.max(0, Math.min(100 - s.box.w, s.box.x + dx)),
-          y: Math.max(0, Math.min(100 - s.box.h, s.box.y + dy)),
+          x: Math.max(-20, Math.min(120 - s.box.w, s.box.x + dx)),
+          y: Math.max(-20, Math.min(120 - s.box.h, s.box.y + dy)),
         });
-      } else {
+      } else if (mode === "resize") {
         onChange({
           ...s.box,
-          w: Math.max(10, Math.min(100 - s.box.x, s.box.w + dx)),
-          h: Math.max(10, Math.min(100 - s.box.y, s.box.h + dy)),
+          w: Math.max(8, Math.min(150, s.box.w + dx)),
+          h: Math.max(8, Math.min(150, s.box.h + dy)),
         });
+      } else if (mode === "rotate") {
+        const angle = Math.atan2(e.clientY - (s.cy ?? 0), e.clientX - (s.cx ?? 0)) * (180 / Math.PI) + 90;
+        onChange({ ...s.box, rotation: Math.round(angle) });
       }
     }
     function onUp() { setMode(null); start.current = null; }
@@ -63,11 +79,18 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
     };
   }, [mode, container, onChange]);
 
-  // فلتر SVG لمحاكاة البروز الـ UV — تباين عالي + ظلال داخلية حادّة
-  const embossFilter = embossed ? "url(#watar-emboss)" : undefined;
+  const embossFilter = embossed ? "url(#watar-emboss)" : "";
   const embossShadow = embossed
     ? "drop-shadow(0 1px 0 rgba(0,0,0,.55)) drop-shadow(0 -1px 0 rgba(255,255,255,.35))"
-    : undefined;
+    : "";
+  const cssFilter = [
+    `blur(${box.blur}px)`,
+    `brightness(${box.brightness})`,
+    `saturate(${box.saturation})`,
+    `contrast(${box.contrast})`,
+    embossFilter,
+    embossShadow,
+  ].filter(Boolean).join(" ");
 
   return (
     <div
@@ -77,10 +100,11 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
         left: `${box.x}%`, top: `${box.y}%`,
         width: `${box.w}%`, height: `${box.h}%`,
         opacity: box.opacity,
-        mixBlendMode: "multiply",
+        mixBlendMode: box.blendMode,
+        transform: `rotate(${box.rotation}deg)`,
+        transformOrigin: "center",
       }}
     >
-      {/* تعريف فلتر البروز مرّة واحدة على كامل الطبقة */}
       {embossed && (
         <svg width="0" height="0" className="absolute" aria-hidden>
           <filter id="watar-emboss">
@@ -94,17 +118,30 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
         alt={name ?? "design"}
         draggable={false}
         decoding="async"
-        className="size-full rounded-lg object-cover shadow-2xl"
-        style={{
-          imageRendering: "crisp-edges",
-          filter: [embossFilter, embossShadow].filter(Boolean).join(" ") || undefined,
-          contrast: embossed ? 1.15 : undefined,
-        } as React.CSSProperties}
+        className="size-full rounded-lg object-cover shadow-2xl ring-1 ring-white/20"
+        style={{ imageRendering: "crisp-edges", filter: cssFilter } as React.CSSProperties}
       />
-      {/* drag overlay */}
-      <button onPointerDown={onDown("drag")}
+      {/* drag surface */}
+      <button
+        onPointerDown={onDown("drag")}
         aria-label="سحب التصميم"
-        className="absolute inset-0 cursor-move opacity-0">drag</button>
+        className="absolute inset-0 cursor-move opacity-0"
+      >drag</button>
+
+      {/* selection border */}
+      <div className="pointer-events-none absolute inset-0 rounded-lg border-2 border-dashed border-primary/70" />
+
+      {/* rotate handle (top) */}
+      <button
+        onPointerDown={onDown("rotate")}
+        aria-label="تدوير"
+        title="تدوير"
+        className="absolute -top-8 left-1/2 -translate-x-1/2 grid size-7 place-items-center rounded-full bg-primary text-primary-foreground shadow ring-2 ring-background"
+        style={{ cursor: "grab" }}
+      >
+        <RotateCw className="size-3.5" />
+      </button>
+
       {/* drag chip */}
       <span className="pointer-events-none absolute -top-3 right-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-black text-primary-foreground shadow">
         <Move className="size-3" /> اسحب
@@ -114,19 +151,25 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
           بروز +30%
         </span>
       )}
+
       {/* resize handle */}
-      <button onPointerDown={onDown("resize")}
+      <button
+        onPointerDown={onDown("resize")}
         aria-label="تكبير وتصغير"
-        className="absolute -left-1 -bottom-1 grid size-6 place-items-center rounded-full bg-primary text-primary-foreground shadow ring-2 ring-background"
-        style={{ cursor: "nwse-resize" }}>
-        <Maximize2 className="size-3" />
+        className="absolute -left-1 -bottom-1 grid size-7 place-items-center rounded-full bg-primary text-primary-foreground shadow ring-2 ring-background"
+        style={{ cursor: "nwse-resize" }}
+      >
+        <Maximize2 className="size-3.5" />
       </button>
     </div>
   );
 }
 
 export function resetBox(): DesignBox {
-  return { x: 15, y: 18, w: 60, h: 55, opacity: 0.85 };
+  return {
+    x: 18, y: 20, w: 55, h: 45,
+    opacity: 0.9, rotation: 0,
+    blur: 0, brightness: 1, saturation: 1, contrast: 1,
+    blendMode: "normal",
+  };
 }
-
-export { RotateCcw };

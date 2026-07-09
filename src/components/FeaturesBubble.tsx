@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Info, X, Layers, Scissors, Shirt, Sparkles } from "lucide-react";
+import { Info, X, Layers, Sparkles, Move, Wand2 } from "lucide-react";
 
 /**
- * فقاعة موحّدة تجمع كل شروحات المشروع في مكان واحد —
- * بدل توزيع الفقرات الشارحة في كل صفحة. تظهر كزر عائم وتفتح بطاقة موجزة.
+ * فقاعة موحّدة تشرح مزايا مشروع "وتر الإحساس" لدمج تصاميم الديكور
+ * (جدران / أرضيات / أسقف) بالسحب والإفلات والتأثيرات + دمج AI واقعي اختياري.
  */
 export function FeaturesBubble() {
   const [open, setOpen] = useState(false);
@@ -42,39 +42,34 @@ export function FeaturesBubble() {
               <Sparkles className="size-3.5" /> وتر الإحساس
             </div>
             <h2 className="text-lg font-black leading-tight">
-              منصّة دمج واقعي بالذكاء الاصطناعي
+              محاكي دمج التصاميم على الجدران والأرضيات
             </h2>
             <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-              المشروع يعتمد على <b className="text-foreground">الدمج الواقعي بالذكاء الاصطناعي</b> —
-              يأخذ صورتك الحقيقية (جدار غرفتك، وجهك، أو جسمك) ويُركّب التصميم فوقها
-              بمنظور ومقاسات وإضاءة حقيقية مع قفل تام لملامحك ومحيطك.
+              ارفع صورة مكانك أو التقطها مباشرة، اختر تصميماً، ثم
+              <b className="text-foreground"> اسحبه وحرّكه وكبّره وأدره </b>
+              فوق الجدار بدقة — مع تأثيرات احترافية لضبط شكله النهائي قبل الطباعة.
             </p>
 
             <div className="mt-4 space-y-3 text-[12px] leading-relaxed">
-              <Item icon={Layers} title="دمج الجدران والأرضيات والسقف">
-                ارفع صورة المكان، اختر التصميم، حرّك التصميم وكبّره فوق الجدار الثابت
-                لقياس المساحة بدقة، ثم اطلب الدمج الواقعي بـ AI ليُسقَط بمنظور حقيقي
-                مع الظلال والإضاءة وميزة البروز الملموس (Embossed).
+              <Item icon={Move} title="سحب وإفلات وتحكّم كامل بالمقاس">
+                حرّك التصميم أينما تريد على الجدار، غيّر حجمه من الزاوية،
+                ودوّره من المقبض العلوي لضبط الاتجاه المثالي.
               </Item>
-              <Item icon={Scissors} title="دمج قصّات الشعر على وجهك">
-                ارفع صورتك الحقيقية، اختر القصّة واللون، ودع الذكاء يُعيد توليد منطقة
-                الشعر فقط مع قفل صارم لملامح الوجه — قصّتك الجديدة قبل أيّ موعد.
+              <Item icon={Layers} title="تأثيرات احترافية على التصميم">
+                شفافية، طمس، إشراق، تشبع، تباين، ووضع مزج (Blend Mode)
+                لدمج التصميم بنسيج الجدار كأنه مطبوع فعلاً.
               </Item>
-              <Item icon={Shirt} title="دمج الأزياء على جسمك">
-                صورة الزبون + قطعة من الكتالوج → الذكاء يُلبسه القطعة بثنيات قماش طبيعية
-                وحفاظ كامل على الوجه والخلفية، ثم يحجز عبر واتساب المحل مباشرة.
+              <Item icon={Wand2} title="دمج واقعي بالذكاء الاصطناعي (اختياري)">
+                زر واحد يُعيد إسقاط التصميم بمنظور حقيقي مع مطابقة الإضاءة والظلال —
+                جودة 8K جاهزة للطباعة UV.
               </Item>
             </div>
 
             <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 p-3 text-[11px] leading-relaxed text-primary">
-              <b>طباعة ليزرية احترافية:</b> بعد اختيار التصميم تُنفّذ الطباعة على الجدار
-              أو الأرضية أو السقف بدقة 8K مع خيار البروز الملموس وحساب فوري للسعر
-              والشحن حسب منطقتك.
+              <b>طباعة UV احترافية:</b> بعد اعتماد التصميم تُنفَّذ الطباعة على الجدار
+              أو الأرضية أو السقف بدقة 8K مع خيار البروز الملموس (Embossed)
+              وحساب فوري للسعر والشحن حسب منطقتك.
             </div>
-
-            <p className="mt-3 text-[10px] text-muted-foreground">
-              استوديو التوليد التخيلي متوفّر كميزة إضافية داخل كل جناح لاستلهام أفكار جديدة.
-            </p>
           </div>
         </div>
       )}
@@ -82,15 +77,7 @@ export function FeaturesBubble() {
   );
 }
 
-function Item({
-  icon: Icon,
-  title,
-  children,
-}: {
-  icon: typeof Layers;
-  title: string;
-  children: React.ReactNode;
-}) {
+function Item({ icon: Icon, title, children }: { icon: typeof Layers; title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-background/60 p-3">
       <div className="mb-1 flex items-center gap-2 text-[12px] font-black text-foreground">
