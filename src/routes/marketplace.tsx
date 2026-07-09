@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useMemo, useState } from "react";
-import { ShoppingBag, Crown, MessageCircle, Sofa, Shirt, Sparkles, Cuboid, Scissors } from "lucide-react";
+import { useMemo } from "react";
+import { ShoppingBag, Crown, MessageCircle, Sparkles, Cuboid } from "lucide-react";
 import { CampaignSection } from "@/components/CampaignSection";
 import { useSettings } from "@/lib/settings";
 import { usePricing } from "@/lib/platform";
@@ -28,15 +28,13 @@ export const Route = createFileRoute("/marketplace")({
 });
 
 function Marketplace() {
-  const [tab, setTab] = useState<"decor" | "fashion">("decor");
+  const tab = "decor" as const;
   const [settings] = useSettings();
   const { data: pricing } = usePricing();
   const currency = pricing?.currency ?? settings.currency;
   const [vendorStore] = useVendorStore();
   const [cats] = useCategories();
   const title2 = useStr("marketplace.title_2");
-  const tabDecor = useStr("marketplace.tab_decor");
-  const tabFashion = useStr("marketplace.tab_fashion");
   const emptyTxt = useStr("marketplace.empty");
 
   const { data, isLoading } = useQuery({
@@ -94,12 +92,6 @@ function Marketplace() {
 
         <CampaignSection />
 
-        <div className="inline-flex rounded-2xl border border-border bg-card p-1">
-          <TabBtn active={tab === "decor"} onClick={() => setTab("decor")}
-            icon={<Sofa className="size-4" />} label={tabDecor} />
-          <TabBtn active={tab === "fashion"} onClick={() => setTab("fashion")}
-            icon={<Shirt className="size-4" />} label={tabFashion} />
-        </div>
 
         {isLoading && <p className="text-center text-muted-foreground">…تحميل</p>}
 
@@ -141,21 +133,8 @@ function Marketplace() {
   );
 }
 
-function TabBtn({ active, onClick, icon, label }:
-  { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
-  return (
-    <button onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
-        active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:text-foreground"
-      }`}>
-      {icon} {label}
-    </button>
-  );
-}
-
-function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolean; fashion: boolean; haircut: boolean }; subscription_active: boolean; brand_badge?: string } }) {
+function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolean }; subscription_active: boolean; brand_badge?: string } }) {
   const [cats] = useCategories();
-  const mods = state.modules;
   const isIdle = v.subscription_status === "idle";
   return (
     <div className={`group relative overflow-hidden rounded-3xl border bg-card transition hover:-translate-y-1 ${
@@ -192,10 +171,8 @@ function VendorCard({ v, state }: { v: Vendor; state: { modules: { decor: boolea
           </div>
         </div>
 
-        <div className="relative mt-3 flex flex-wrap gap-1.5">
-          {mods.decor && <span className="badge-rose"><Cuboid className="size-3" /> ديكور</span>}
-          {mods.fashion && <span className="badge-rose"><Shirt className="size-3" /> أزياء AI</span>}
-          {mods.haircut && <span className="badge-rose"><Scissors className="size-3" /> قصّات AI</span>}
+        <div className="relative mt-3">
+          <span className="badge-rose"><Cuboid className="size-3" /> ديكور</span>
         </div>
 
         <a href={`https://wa.me/${v.phone ?? ""}`} target="_blank" rel="noreferrer"

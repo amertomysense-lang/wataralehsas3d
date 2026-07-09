@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X, Wand2, Loader2, Download, Camera, RefreshCw } from "lucide-react";
+import {
+  Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X, Wand2, Loader2,
+  Download, Camera, RefreshCw, Sliders, RotateCcw,
+} from "lucide-react";
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
 import { toast } from "sonner";
@@ -11,6 +14,7 @@ import { AiImageStudio } from "@/components/AiImageStudio";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { useCategories, idsForTab } from "@/lib/categories";
 import { toWebpQ92 } from "@/lib/webp-compress";
+import { DraggableDesignLayer, resetBox, type DesignBox } from "@/components/DraggableDesignLayer";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
@@ -26,13 +30,24 @@ const PRESET_LAYERS: Layer[] = [
   { id: "epoxy", name: "إيبوكسي محيطي", url: "https://images.unsplash.com/photo-1505761671935-60b3a7427bad?w=900&auto=format&fit=crop", opacity: 0.9 },
 ];
 
-// مشهد افتراضي لمعاينة فورية عند الدخول — يستبدله المستخدم بصورة جداره أو يلتقطها مباشرة
 const DEFAULT_ROOM = "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1600&auto=format&fit=crop";
+
+const BLEND_MODES: { key: NonNullable<DesignBox["blendMode"]>; label: string }[] = [
+  { key: "normal", label: "عادي" },
+  { key: "multiply", label: "ضرب" },
+  { key: "screen", label: "شاشة" },
+  { key: "overlay", label: "تراكب" },
+  { key: "soft-light", label: "ضوء ناعم" },
+  { key: "hard-light", label: "ضوء حاد" },
+  { key: "color-burn", label: "حرق لوني" },
+  { key: "luminosity", label: "إضاءة" },
+];
 
 function Simulator() {
   useOnlineSync();
   const [bg, setBg] = useState<string | null>(DEFAULT_ROOM);
   const [active, setActive] = useState<Layer | null>(PRESET_LAYERS[1]);
+  const [box, setBox] = useState<DesignBox>(resetBox());
   const [width, setWidth] = useState(3);
   const [height, setHeight] = useState(2.5);
   const [embossed, setEmbossed] = useState(false);
@@ -43,9 +58,9 @@ function Simulator() {
   const [aiBusy, setAiBusy] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [surface, setSurface] = useState<"wall" | "floor" | "ceiling">("wall");
-  const [placementMode, setPlacementMode] = useState<"single-area" | "centerpiece" | "full-surface" | "feature-strip">("full-surface");
-  const [placementNote, setPlacementNote] = useState("");
+  const [showEffects, setShowEffects] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
 
   // Live camera state
   const [camOpen, setCamOpen] = useState(false);
@@ -57,7 +72,6 @@ function Simulator() {
   const [settings] = useSettings();
   const region = useMemo(() => regions?.find((r) => r.id === regionId), [regions, regionId]);
 
-  // تصاميم الديكور التي يرفعها الأدمن من /admin → جدول products
   const [cats] = useCategories();
   const decorIds = idsForTab(cats, "decor");
   const { data: adminLayers } = useQuery({
@@ -115,7 +129,7 @@ function Simulator() {
       });
       streamRef.current = stream;
       setCamOpen(true);
-    } catch (e) {
+    } catch {
       toast.error("تعذّر فتح الكاميرا — تأكد من منح الإذن");
     }
   }
@@ -143,7 +157,7 @@ function Simulator() {
     setBg(c.toDataURL("image/jpeg", 0.92));
     setAiResult(null);
     closeCamera();
-    toast.success("تم التقاط الصورة — اختر تصميماً ثم ادمج بـ AI");
+    toast.success("تم التقاط الصورة — اسحب التصميم على الجدار");
   }
 
   async function runAiProjection() {
@@ -157,13 +171,13 @@ function Simulator() {
         body: JSON.stringify({
           room: bg, design: active.url, design_desc: active.name,
           surface, embossed,
-          placement_mode: placementMode, placement_note: placementNote,
+          placement_mode: "single-area",
+          placement_note: `Placed at approx x=${Math.round(box.x)}%, y=${Math.round(box.y)}%, width=${Math.round(box.w)}%, height=${Math.round(box.h)}%, rotation=${box.rotation}°`,
         }),
       });
       const j = await res.json().catch(() => ({}));
-      // Silent sandbox fallback: لو فشل الـ AI لأي سبب نعرض الـ overlay المحلي
       if (!res.ok || !j?.result_url) {
-        setAiResult(bg); // overlay سيعرض الطبقة فوق الصورة الأصلية
+        setAiResult(bg);
         const region = regions?.find((r) => r.id === regionId);
         const num = region?.whatsapp_number || "963933000000";
         toast("وضع المحاكاة التجريبي ✨ — لإخراج طباعة UV حقيقية أكمل الطلب عبر واتساب", {
@@ -177,12 +191,7 @@ function Simulator() {
       toast.success(j.fallback ? "تمّ الدمج عبر المحرك الاحتياطي ✨" : "تمّ الدمج التوليدي بدقّة 8K");
     } catch {
       setAiResult(bg);
-      const region = regions?.find((r) => r.id === regionId);
-      const num = region?.whatsapp_number || "963933000000";
-      toast("وضع المحاكاة التجريبي ✨ — لإخراج طباعة UV حقيقية أكمل الطلب عبر واتساب", {
-        duration: 8000,
-        action: { label: "واتساب", onClick: () => window.open(`https://wa.me/${num}`, "_blank") },
-      });
+      toast("وضع المحاكاة التجريبي ✨");
     } finally { setAiBusy(false); }
   }
 
@@ -214,7 +223,7 @@ function Simulator() {
     window.open(url, "_blank");
   }
 
-  const previewSrc = aiResult || bg;
+  const previewBg = aiResult || bg;
 
   return (
     <div className="min-h-screen bg-background pb-40" dir="rtl">
@@ -232,7 +241,7 @@ function Simulator() {
 
       <div className="mx-auto grid max-w-6xl gap-5 px-5 py-6 lg:grid-cols-[1fr_360px]">
         <div className="rounded-3xl border border-border bg-card p-3">
-          {!previewSrc ? (
+          {!previewBg ? (
             <div className="grid h-[420px] place-items-center rounded-2xl bg-muted">
               <div className="w-full max-w-sm space-y-3 px-5 text-center">
                 <div className="mx-auto grid size-16 place-items-center rounded-2xl bg-primary/15 text-primary">
@@ -241,22 +250,31 @@ function Simulator() {
                 <p className="text-sm font-black text-foreground">ابدأ بصورة جدارك</p>
                 <button onClick={openCamera}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-4 py-3 text-sm font-black text-primary-foreground shadow-soft">
-                  <Camera className="size-4" /> التقط صورة جدارك الآن حي ومباشر 📸
+                  <Camera className="size-4" /> التقط صورة جدارك مباشرة 📸
                 </button>
                 <button onClick={() => fileRef.current?.click()}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-background px-4 py-3 text-xs font-bold text-foreground">
                   <Upload className="size-4" /> أو ارفع صورة من المعرض
                 </button>
-                <p className="text-[11px] text-muted-foreground">سيقوم الذكاء بإسقاط التصميم على الجدار بدقّة 8K مع مطابقة الإضاءة والمنظور تلقائياً.</p>
               </div>
             </div>
           ) : (
-            <div className="relative overflow-hidden rounded-2xl bg-muted">
-              <img src={previewSrc} alt="preview" className="block w-full" />
+            <div ref={stageRef} className="relative overflow-hidden rounded-2xl bg-muted">
+              <img src={previewBg} alt="preview" className="block w-full select-none" draggable={false} />
+              {!aiResult && active && (
+                <DraggableDesignLayer
+                  src={active.url}
+                  name={active.name}
+                  box={box}
+                  onChange={setBox}
+                  container={stageRef}
+                  embossed={embossed}
+                />
+              )}
               {aiBusy && (
                 <div className="absolute inset-0 grid place-items-center bg-background/60 backdrop-blur-sm">
                   <div className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground">
-                    <Loader2 className="size-4 animate-spin" /> جارٍ التوليد بدقّة 8K…
+                    <Loader2 className="size-4 animate-spin" /> جارٍ الدمج بدقّة 8K…
                   </div>
                 </div>
               )}
@@ -269,7 +287,7 @@ function Simulator() {
           <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onUpload} />
 
           {/* Surface + embossed quick toggles */}
-          {previewSrc && (
+          {previewBg && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <div className="inline-flex rounded-lg bg-background p-1 text-[11px] font-bold">
                 {([["wall", "جدار"], ["floor", "أرضية"], ["ceiling", "سقف"]] as const).map(([k, l]) => (
@@ -281,6 +299,11 @@ function Simulator() {
                 <input type="checkbox" checked={embossed} onChange={(e) => setEmbossed(e.target.checked)} className="accent-primary" />
                 بروز Embossed <b className="text-primary">+30%</b>
               </label>
+              <button onClick={() => setBox(resetBox())}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-bold"
+                title="إعادة تعيين موضع وتأثيرات التصميم">
+                <RotateCcw className="size-3.5" /> إعادة تعيين
+              </button>
               <button onClick={openCamera}
                 className="ms-auto inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-bold">
                 <RefreshCw className="size-3.5" /> صورة جديدة
@@ -288,31 +311,51 @@ function Simulator() {
             </div>
           )}
 
-          {previewSrc && (
+          {/* Effects panel */}
+          {previewBg && active && !aiResult && (
             <div className="mt-3 rounded-2xl border border-border bg-card/60 p-3">
-              <div className="mb-2 text-xs font-black text-foreground">تحديد موضع التطبيق</div>
-              <div className="flex flex-wrap gap-2">
-                {([
-                  ["full-surface", "كامل السطح"],
-                  ["single-area", "جزء محدد"],
-                  ["centerpiece", "منتصف/قطعة رئيسية"],
-                  ["feature-strip", "شريط/امتداد محدد"],
-                ] as const).map(([value, label]) => (
-                  <button
-                    key={value}
-                    onClick={() => setPlacementMode(value)}
-                    className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-bold transition ${placementMode === value ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <textarea
-                value={placementNote}
-                onChange={(e) => setPlacementNote(e.target.value)}
-                placeholder="مثال: ضع باقة الورد كرسمة في منتصف الحائط فقط، أو اجعل الرخام ممتداً على الأرضية كاملة، أو مدّ التصميم كشريط على الحائط خلف التلفاز"
-                className="mt-3 min-h-[88px] w-full rounded-xl bg-muted px-3 py-2 text-xs leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-primary"
-              />
+              <button
+                onClick={() => setShowEffects((s) => !s)}
+                className="mb-2 flex w-full items-center justify-between text-xs font-black text-foreground"
+              >
+                <span className="inline-flex items-center gap-2"><Sliders className="size-3.5 text-primary" /> تأثيرات التصميم</span>
+                <span className="text-[10px] text-muted-foreground">{showEffects ? "إخفاء" : "إظهار"}</span>
+              </button>
+              {showEffects && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Slider label="الشفافية" value={box.opacity} min={0.1} max={1} step={0.05}
+                    fmt={(v) => `${Math.round(v * 100)}%`}
+                    onChange={(v) => setBox({ ...box, opacity: v })} />
+                  <Slider label="التدوير" value={box.rotation} min={-180} max={180} step={1}
+                    fmt={(v) => `${v}°`}
+                    onChange={(v) => setBox({ ...box, rotation: v })} />
+                  <Slider label="الطمس" value={box.blur} min={0} max={12} step={0.5}
+                    fmt={(v) => `${v}px`}
+                    onChange={(v) => setBox({ ...box, blur: v })} />
+                  <Slider label="الإشراق" value={box.brightness} min={0.5} max={1.6} step={0.05}
+                    fmt={(v) => v.toFixed(2)}
+                    onChange={(v) => setBox({ ...box, brightness: v })} />
+                  <Slider label="التشبع" value={box.saturation} min={0.2} max={2} step={0.05}
+                    fmt={(v) => v.toFixed(2)}
+                    onChange={(v) => setBox({ ...box, saturation: v })} />
+                  <Slider label="التباين" value={box.contrast} min={0.5} max={1.6} step={0.05}
+                    fmt={(v) => v.toFixed(2)}
+                    onChange={(v) => setBox({ ...box, contrast: v })} />
+                  <div className="sm:col-span-2">
+                    <p className="mb-1 text-[11px] font-bold text-muted-foreground">وضع المزج مع الجدار</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {BLEND_MODES.map((m) => (
+                        <button key={m.key} onClick={() => setBox({ ...box, blendMode: m.key })}
+                          className={`rounded-md border px-2 py-1 text-[10px] font-bold transition ${
+                            box.blendMode === m.key ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/50"
+                          }`}>
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -329,7 +372,8 @@ function Simulator() {
                   r.onload = () => {
                     const url = r.result as string;
                     setActive({ id: `ref-${Date.now()}`, name: "تصميم مرجعي", url, opacity: 0.9 });
-                    toast.success("تم اعتماد التصميم — ادمج الآن على جدارك");
+                    setBox(resetBox());
+                    toast.success("تم اعتماد التصميم — اسحبه واضبطه فوق الجدار");
                   };
                   r.readAsDataURL(f);
                 }} />
@@ -337,7 +381,7 @@ function Simulator() {
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {allLayers.map((l) => (
-                <button key={l.id} onClick={() => setActive(l)}
+                <button key={l.id} onClick={() => { setActive(l); setBox(resetBox()); setAiResult(null); }}
                   className={`group overflow-hidden rounded-xl border-2 transition ${active?.id === l.id ? "border-primary" : "border-border hover:border-primary/50"}`}>
                   <img src={l.url} alt={l.name} className="h-16 w-full object-cover" />
                   <p className="px-2 py-1 text-[11px] font-bold">{l.name}</p>
@@ -429,7 +473,7 @@ function Simulator() {
           <summary className="cursor-pointer list-none text-xs font-black text-muted-foreground">
             <span className="inline-flex items-center gap-2">
               <Wand2 className="size-3.5 text-primary" />
-              استوديو التوليد التخيلي للأفكار الإبداعية
+              استوديو التوليد التخيلي لأفكار تصاميم جديدة
               <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[10px]">إلهام</span>
             </span>
           </summary>
@@ -437,60 +481,15 @@ function Simulator() {
             <AiImageStudio
               section="simulator"
               title="استوديو التوليد التخيلي للجدران"
-              subtitle="استلهم أفكار تصاميم جديدة — ثم ادمجها بالأعلى على جدارك الحقيقي."
+              subtitle="استلهم أفكار تصاميم جديدة — ثم اعتمدها ودمجها بالأعلى على جدارك الحقيقي."
               accent="from-primary to-accent"
               basePrompt="High-resolution interior wall/floor decorative design, photorealistic, premium material finish"
               buildPrompt={({ basePrompt, presetPrompt, prompt }) => [
-                basePrompt,
-                presetPrompt,
-                `Target surface: ${surface}. Placement mode: ${placementMode}.`,
-                placementNote ? `Placement instruction: ${placementNote}.` : "",
-                "Do not generate a whole room redesign. Generate only the requested decor element/pattern so it can be placed precisely on the selected area.",
+                basePrompt, presetPrompt,
+                `Target surface: ${surface}.`,
+                "Generate only the decorative pattern element, tileable, sharp and print-ready.",
                 prompt,
               ].filter(Boolean).join(" ")}
-              extraFields={(
-                <div className="grid gap-3">
-                  <div className="flex flex-wrap gap-2">
-                    {([
-                      ["wall", "حائط"],
-                      ["floor", "أرضية"],
-                      ["ceiling", "سقف"],
-                    ] as const).map(([value, label]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setSurface(value)}
-                        className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-bold transition ${surface === value ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {([
-                      ["full-surface", "كامل السطح"],
-                      ["single-area", "جزء محدد"],
-                      ["centerpiece", "منتصف"],
-                      ["feature-strip", "امتداد محدد"],
-                    ] as const).map(([value, label]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setPlacementMode(value)}
-                        className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-bold transition ${placementMode === value ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                  <textarea
-                    value={placementNote}
-                    onChange={(e) => setPlacementNote(e.target.value)}
-                    placeholder="مثال: ضع باقة ورد ثلاثية الأبعاد على الباب، أو مدّها على جميع الحيطان، أو اجعلها في منتصف الأرضية"
-                    className="min-h-[82px] w-full rounded-xl bg-muted px-3 py-2 text-xs leading-relaxed outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-              )}
               presets={[
                 { id: "rose", label: "حديقة ورود", prompt: "soft pink rose garden mural, romantic warm lighting" },
                 { id: "calli", label: "خط عربي ذهبي", prompt: "elegant golden arabic calligraphy on dark marble" },
@@ -509,6 +508,12 @@ function Simulator() {
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-3 py-3 text-xs font-black text-primary-foreground shadow-soft disabled:opacity-50">
             {aiBusy ? <><Loader2 className="size-4 animate-spin" /> جارٍ الدمج…</> : <><Wand2 className="size-4" /> ادمج بواقعية AI</>}
           </button>
+          {aiResult && (
+            <button onClick={() => setAiResult(null)}
+              className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-3 text-xs font-black text-foreground">
+              <RotateCcw className="size-4" /> رجوع للتحرير
+            </button>
+          )}
           <button onClick={downloadResult} disabled={!aiResult}
             className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-3 text-xs font-black text-foreground disabled:opacity-40">
             <Download className="size-4" /> حفظ
@@ -537,5 +542,26 @@ function Simulator() {
         </div>
       )}
     </div>
+  );
+}
+
+function Slider({
+  label, value, min, max, step, onChange, fmt,
+}: {
+  label: string; value: number; min: number; max: number; step: number;
+  onChange: (v: number) => void; fmt?: (v: number) => string;
+}) {
+  return (
+    <label className="block">
+      <div className="mb-1 flex items-center justify-between text-[11px] font-bold">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="text-foreground">{fmt ? fmt(value) : value}</span>
+      </div>
+      <input
+        type="range" min={min} max={max} step={step} value={value}
+        onChange={(e) => onChange(+e.target.value)}
+        className="w-full accent-primary"
+      />
+    </label>
   );
 }
