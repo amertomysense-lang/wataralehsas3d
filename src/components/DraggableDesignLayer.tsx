@@ -28,10 +28,10 @@ type Props = {
  */
 export function DraggableDesignLayer({ src, name, box, onChange, container, embossed }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const [mode, setMode] = useState<"drag" | "resize" | "rotate" | null>(null);
+  const [mode, setMode] = useState<"drag" | "resize" | "resize-x" | "resize-y" | "rotate" | null>(null);
   const start = useRef<{ px: number; py: number; box: DesignBox; cx?: number; cy?: number } | null>(null);
 
-  const onDown = useCallback((m: "drag" | "resize" | "rotate") => (e: React.PointerEvent) => {
+  const onDown = useCallback((m: "drag" | "resize" | "resize-x" | "resize-y" | "rotate") => (e: React.PointerEvent) => {
     e.preventDefault(); e.stopPropagation();
     (e.target as Element).setPointerCapture?.(e.pointerId);
     setMode(m);
@@ -60,14 +60,19 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
       } else if (mode === "resize") {
         onChange({
           ...s.box,
-          w: Math.max(8, Math.min(150, s.box.w + dx)),
-          h: Math.max(8, Math.min(150, s.box.h + dy)),
+          w: Math.max(4, Math.min(200, s.box.w + dx)),
+          h: Math.max(4, Math.min(200, s.box.h + dy)),
         });
+      } else if (mode === "resize-x") {
+        onChange({ ...s.box, w: Math.max(4, Math.min(200, s.box.w + dx)) });
+      } else if (mode === "resize-y") {
+        onChange({ ...s.box, h: Math.max(4, Math.min(200, s.box.h + dy)) });
       } else if (mode === "rotate") {
         const angle = Math.atan2(e.clientY - (s.cy ?? 0), e.clientX - (s.cx ?? 0)) * (180 / Math.PI) + 90;
         onChange({ ...s.box, rotation: Math.round(angle) });
       }
     }
+
     function onUp() { setMode(null); start.current = null; }
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
@@ -152,15 +157,49 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
         </span>
       )}
 
-      {/* resize handle */}
+      {/* resize handle (both axes) */}
       <button
         onPointerDown={onDown("resize")}
         aria-label="تكبير وتصغير"
+        title="تمديد بالعرض والارتفاع"
         className="absolute -left-1 -bottom-1 grid size-7 place-items-center rounded-full bg-primary text-primary-foreground shadow ring-2 ring-background"
         style={{ cursor: "nwse-resize" }}
       >
         <Maximize2 className="size-3.5" />
       </button>
+
+      {/* stretch handle — horizontal (width only) */}
+      <button
+        onPointerDown={onDown("resize-x")}
+        aria-label="تمديد عرضاً"
+        title="تمديد/تقليص العرض"
+        className="absolute -left-2 top-1/2 -translate-y-1/2 h-10 w-3 rounded-full bg-primary/90 text-primary-foreground shadow ring-2 ring-background"
+        style={{ cursor: "ew-resize" }}
+      />
+      <button
+        onPointerDown={onDown("resize-x")}
+        aria-label="تمديد عرضاً"
+        title="تمديد/تقليص العرض"
+        className="absolute -right-2 top-1/2 -translate-y-1/2 h-10 w-3 rounded-full bg-primary/90 text-primary-foreground shadow ring-2 ring-background"
+        style={{ cursor: "ew-resize" }}
+      />
+
+      {/* stretch handle — vertical (height only) */}
+      <button
+        onPointerDown={onDown("resize-y")}
+        aria-label="تمديد ارتفاعاً"
+        title="تمديد/تقليص الارتفاع"
+        className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-3 w-10 rounded-full bg-primary/90 text-primary-foreground shadow ring-2 ring-background"
+        style={{ cursor: "ns-resize" }}
+      />
+      <button
+        onPointerDown={onDown("resize-y")}
+        aria-label="تمديد ارتفاعاً"
+        title="تمديد/تقليص الارتفاع"
+        className="absolute -top-2 left-1/2 -translate-x-1/2 h-3 w-10 rounded-full bg-primary/90 text-primary-foreground shadow ring-2 ring-background"
+        style={{ cursor: "ns-resize" }}
+      />
+
     </div>
   );
 }
