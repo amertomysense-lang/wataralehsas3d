@@ -15,6 +15,7 @@ import { supabase, type Design } from "@/integrations/supabase/client";
 import { useCategories, idsForTab } from "@/lib/categories";
 import { toWebpQ92 } from "@/lib/webp-compress";
 import { DraggableDesignLayer, resetBox, type DesignBox } from "@/components/DraggableDesignLayer";
+import { DropZone } from "@/components/DropZone";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
@@ -241,6 +242,10 @@ function Simulator() {
 
       <div className="mx-auto grid max-w-6xl gap-5 px-5 py-6 lg:grid-cols-[1fr_360px]">
         <div className="rounded-3xl border border-border bg-card p-3">
+          <DropZone
+            hint="أفلت صورة الجدار هنا"
+            onImage={(url) => { setBg(url); setAiResult(null); toast.success("تم تحديث صورة الجدار"); }}
+          >
           {!previewBg ? (
             <div className="grid h-[420px] place-items-center rounded-2xl bg-muted">
               <div className="w-full max-w-sm space-y-3 px-5 text-center">
@@ -248,6 +253,7 @@ function Simulator() {
                   <Camera className="size-7" />
                 </div>
                 <p className="text-sm font-black text-foreground">ابدأ بصورة جدارك</p>
+                <p className="text-[11px] text-muted-foreground">اسحب صورة من سطح المكتب أو الصق (Ctrl+V) — أو استخدم الكاميرا</p>
                 <button onClick={openCamera}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-4 py-3 text-sm font-black text-primary-foreground shadow-soft">
                   <Camera className="size-4" /> التقط صورة جدارك مباشرة 📸
@@ -259,7 +265,21 @@ function Simulator() {
               </div>
             </div>
           ) : (
-            <div ref={stageRef} className="relative overflow-hidden rounded-2xl bg-muted">
+            <div
+              ref={stageRef}
+              className="relative overflow-hidden rounded-2xl bg-muted"
+              onDragOver={(e) => { if (e.dataTransfer.types.includes("application/x-watar-layer")) e.preventDefault(); }}
+              onDrop={(e) => {
+                const raw = e.dataTransfer.getData("application/x-watar-layer");
+                if (!raw) return;
+                try {
+                  const l = JSON.parse(raw) as Layer;
+                  setActive(l); setBox(resetBox()); setAiResult(null);
+                  toast.success(`تم إسقاط: ${l.name}`);
+                  e.preventDefault();
+                } catch { /* ignore */ }
+              }}
+            >
               <img src={previewBg} alt="preview" className="block w-full select-none" draggable={false} />
               {!aiResult && active && (
                 <DraggableDesignLayer
@@ -284,6 +304,7 @@ function Simulator() {
               </button>
             </div>
           )}
+          </DropZone>
           <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onUpload} />
 
           {/* Surface + embossed quick toggles */}
@@ -379,11 +400,18 @@ function Simulator() {
                 }} />
               </label>
             </div>
+            <p className="mb-2 text-[10px] text-muted-foreground">تلميح: اسحب أي تصميم بالماوس وأفلته فوق الجدار ✨</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {allLayers.map((l) => (
-                <button key={l.id} onClick={() => { setActive(l); setBox(resetBox()); setAiResult(null); }}
-                  className={`group overflow-hidden rounded-xl border-2 transition ${active?.id === l.id ? "border-primary" : "border-border hover:border-primary/50"}`}>
-                  <img src={l.url} alt={l.name} className="h-16 w-full object-cover" />
+                <button key={l.id}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("application/x-watar-layer", JSON.stringify(l));
+                    e.dataTransfer.effectAllowed = "copy";
+                  }}
+                  onClick={() => { setActive(l); setBox(resetBox()); setAiResult(null); }}
+                  className={`group cursor-grab active:cursor-grabbing overflow-hidden rounded-xl border-2 transition ${active?.id === l.id ? "border-primary shadow-soft" : "border-border hover:border-primary/50 hover:-translate-y-0.5"}`}>
+                  <img src={l.url} alt={l.name} className="h-16 w-full object-cover" draggable={false} />
                   <p className="px-2 py-1 text-[11px] font-bold">{l.name}</p>
                 </button>
               ))}
