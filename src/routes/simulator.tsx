@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X, Wand2, Loader2,
-  Download, Camera, RefreshCw, Sliders, RotateCcw,
+  Download, Camera, RefreshCw, Sliders, RotateCcw, Scissors, Check,
 } from "lucide-react";
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
@@ -60,6 +60,8 @@ function Simulator() {
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [surface, setSurface] = useState<"wall" | "floor" | "ceiling">("wall");
   const [showEffects, setShowEffects] = useState(true);
+  const [wallPoints, setWallPoints] = useState<{ x: number; y: number }[]>([]);
+  const [defineMode, setDefineMode] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
 
@@ -281,16 +283,71 @@ function Simulator() {
               }}
             >
               <img src={previewBg} alt="preview" className="block w-full select-none" draggable={false} />
+
+              {/* clipped design layer — التصميم يظهر فقط داخل نطاق الجدار المحدَّد */}
               {!aiResult && active && (
-                <DraggableDesignLayer
-                  src={active.url}
-                  name={active.name}
-                  box={box}
-                  onChange={setBox}
-                  container={stageRef}
-                  embossed={embossed}
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={wallPoints.length >= 3 ? {
+                    clipPath: `polygon(${wallPoints.map((p) => `${p.x}% ${p.y}%`).join(", ")})`,
+                    WebkitClipPath: `polygon(${wallPoints.map((p) => `${p.x}% ${p.y}%`).join(", ")})`,
+                  } : undefined}
+                >
+                  <div className="pointer-events-auto absolute inset-0">
+                    <DraggableDesignLayer
+                      src={active.url}
+                      name={active.name}
+                      box={box}
+                      onChange={setBox}
+                      container={stageRef}
+                      embossed={embossed}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Wall polygon overlay + click-capture in define mode */}
+              {(defineMode || wallPoints.length > 0) && (
+                <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  {wallPoints.length >= 2 && (
+                    <polygon
+                      points={wallPoints.map((p) => `${p.x},${p.y}`).join(" ")}
+                      fill="rgba(59,26,138,0.12)"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={0.4}
+                      strokeDasharray="1.2 0.8"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  )}
+                  {wallPoints.map((p, i) => (
+                    <circle key={i} cx={p.x} cy={p.y} r={0.9} fill="white" stroke="hsl(var(--primary))" strokeWidth={0.4} vectorEffect="non-scaling-stroke" />
+                  ))}
+                </svg>
+              )}
+              {defineMode && (
+                <button
+                  aria-label="أضف نقطة للنطاق"
+                  onClick={(e) => {
+                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    setWallPoints((pts) => [...pts, { x, y }]);
+                  }}
+                  className="absolute inset-0 cursor-crosshair bg-primary/5"
                 />
               )}
+              {defineMode && (
+                <div className="absolute inset-x-0 top-2 mx-auto flex w-fit items-center gap-1.5 rounded-full bg-foreground/85 px-3 py-1.5 text-[11px] font-black text-background shadow">
+                  <Scissors className="size-3.5" />
+                  انقر أطراف الجدار — {wallPoints.length} نقطة
+                  <button onClick={() => setWallPoints((p) => p.slice(0, -1))} className="ms-1 rounded bg-white/15 px-1.5 py-0.5">تراجع</button>
+                  <button onClick={() => setWallPoints([])} className="rounded bg-white/15 px-1.5 py-0.5">مسح</button>
+                  <button onClick={() => setDefineMode(false)} className="rounded bg-success px-2 py-0.5">
+                    <Check className="inline size-3" /> تم
+                  </button>
+                </div>
+              )}
+
               {aiBusy && (
                 <div className="absolute inset-0 grid place-items-center bg-background/60 backdrop-blur-sm">
                   <div className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground">
@@ -298,7 +355,7 @@ function Simulator() {
                   </div>
                 </div>
               )}
-              <button onClick={() => { setBg(null); setAiResult(null); setActive(null); }}
+              <button onClick={() => { setBg(null); setAiResult(null); setActive(null); setWallPoints([]); setDefineMode(false); }}
                 className="absolute end-2 top-2 grid size-9 place-items-center rounded-full bg-background/80 text-foreground backdrop-blur">
                 <X className="size-4" />
               </button>
@@ -325,12 +382,27 @@ function Simulator() {
                 title="إعادة تعيين موضع وتأثيرات التصميم">
                 <RotateCcw className="size-3.5" /> إعادة تعيين
               </button>
+              <button onClick={() => { setDefineMode((v) => !v); if (!defineMode) setWallPoints([]); }}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
+                  defineMode ? "bg-primary text-primary-foreground" : "border border-primary/40 bg-primary/10 text-primary"
+                }`}
+                title="ارسم نطاق الجدار بالنقر على أطرافه — التصميم سيظهر داخله فقط">
+                <Scissors className="size-3.5" /> {defineMode ? "جاري التحديد…" : wallPoints.length >= 3 ? "تعديل النطاق" : "حدّد نطاق الجدار"}
+              </button>
+              {wallPoints.length >= 3 && !defineMode && (
+                <button onClick={() => setWallPoints([])}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-bold text-muted-foreground"
+                  title="إلغاء تحديد النطاق">
+                  إلغاء النطاق
+                </button>
+              )}
               <button onClick={openCamera}
                 className="ms-auto inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-bold">
                 <RefreshCw className="size-3.5" /> صورة جديدة
               </button>
             </div>
           )}
+
 
           {/* Effects panel */}
           {previewBg && active && !aiResult && (
