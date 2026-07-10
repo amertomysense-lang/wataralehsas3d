@@ -287,7 +287,7 @@ function Simulator() {
               <img src={previewBg} alt="preview" className="block w-full select-none" draggable={false} />
 
               {/* clipped design layer — التصميم يظهر فقط داخل نطاق الجدار المحدَّد */}
-              {!aiResult && active && (
+              {((!aiResult || postEdit) && active) && (
                 <div
                   className="pointer-events-none absolute inset-0"
                   style={wallPoints.length >= 3 ? {
@@ -307,6 +307,7 @@ function Simulator() {
                   </div>
                 </div>
               )}
+
 
               {/* Wall polygon overlay + click-capture in define mode */}
               {(defineMode || wallPoints.length > 0) && (
