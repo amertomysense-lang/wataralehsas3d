@@ -283,16 +283,71 @@ function Simulator() {
               }}
             >
               <img src={previewBg} alt="preview" className="block w-full select-none" draggable={false} />
+
+              {/* clipped design layer — التصميم يظهر فقط داخل نطاق الجدار المحدَّد */}
               {!aiResult && active && (
-                <DraggableDesignLayer
-                  src={active.url}
-                  name={active.name}
-                  box={box}
-                  onChange={setBox}
-                  container={stageRef}
-                  embossed={embossed}
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={wallPoints.length >= 3 ? {
+                    clipPath: `polygon(${wallPoints.map((p) => `${p.x}% ${p.y}%`).join(", ")})`,
+                    WebkitClipPath: `polygon(${wallPoints.map((p) => `${p.x}% ${p.y}%`).join(", ")})`,
+                  } : undefined}
+                >
+                  <div className="pointer-events-auto absolute inset-0">
+                    <DraggableDesignLayer
+                      src={active.url}
+                      name={active.name}
+                      box={box}
+                      onChange={setBox}
+                      container={stageRef}
+                      embossed={embossed}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Wall polygon overlay + click-capture in define mode */}
+              {(defineMode || wallPoints.length > 0) && (
+                <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  {wallPoints.length >= 2 && (
+                    <polygon
+                      points={wallPoints.map((p) => `${p.x},${p.y}`).join(" ")}
+                      fill="rgba(59,26,138,0.12)"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={0.4}
+                      strokeDasharray="1.2 0.8"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  )}
+                  {wallPoints.map((p, i) => (
+                    <circle key={i} cx={p.x} cy={p.y} r={0.9} fill="white" stroke="hsl(var(--primary))" strokeWidth={0.4} vectorEffect="non-scaling-stroke" />
+                  ))}
+                </svg>
+              )}
+              {defineMode && (
+                <button
+                  aria-label="أضف نقطة للنطاق"
+                  onClick={(e) => {
+                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    setWallPoints((pts) => [...pts, { x, y }]);
+                  }}
+                  className="absolute inset-0 cursor-crosshair bg-primary/5"
                 />
               )}
+              {defineMode && (
+                <div className="absolute inset-x-0 top-2 mx-auto flex w-fit items-center gap-1.5 rounded-full bg-foreground/85 px-3 py-1.5 text-[11px] font-black text-background shadow">
+                  <Scissors className="size-3.5" />
+                  انقر أطراف الجدار — {wallPoints.length} نقطة
+                  <button onClick={() => setWallPoints((p) => p.slice(0, -1))} className="ms-1 rounded bg-white/15 px-1.5 py-0.5">تراجع</button>
+                  <button onClick={() => setWallPoints([])} className="rounded bg-white/15 px-1.5 py-0.5">مسح</button>
+                  <button onClick={() => setDefineMode(false)} className="rounded bg-success px-2 py-0.5">
+                    <Check className="inline size-3" /> تم
+                  </button>
+                </div>
+              )}
+
               {aiBusy && (
                 <div className="absolute inset-0 grid place-items-center bg-background/60 backdrop-blur-sm">
                   <div className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground">
@@ -300,7 +355,7 @@ function Simulator() {
                   </div>
                 </div>
               )}
-              <button onClick={() => { setBg(null); setAiResult(null); setActive(null); }}
+              <button onClick={() => { setBg(null); setAiResult(null); setActive(null); setWallPoints([]); setDefineMode(false); }}
                 className="absolute end-2 top-2 grid size-9 place-items-center rounded-full bg-background/80 text-foreground backdrop-blur">
                 <X className="size-4" />
               </button>
