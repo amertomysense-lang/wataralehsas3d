@@ -28,10 +28,10 @@ type Props = {
  */
 export function DraggableDesignLayer({ src, name, box, onChange, container, embossed }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const [mode, setMode] = useState<"drag" | "resize" | "rotate" | null>(null);
+  const [mode, setMode] = useState<"drag" | "resize" | "resize-x" | "resize-y" | "rotate" | null>(null);
   const start = useRef<{ px: number; py: number; box: DesignBox; cx?: number; cy?: number } | null>(null);
 
-  const onDown = useCallback((m: "drag" | "resize" | "rotate") => (e: React.PointerEvent) => {
+  const onDown = useCallback((m: "drag" | "resize" | "resize-x" | "resize-y" | "rotate") => (e: React.PointerEvent) => {
     e.preventDefault(); e.stopPropagation();
     (e.target as Element).setPointerCapture?.(e.pointerId);
     setMode(m);
@@ -60,14 +60,19 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
       } else if (mode === "resize") {
         onChange({
           ...s.box,
-          w: Math.max(8, Math.min(150, s.box.w + dx)),
-          h: Math.max(8, Math.min(150, s.box.h + dy)),
+          w: Math.max(4, Math.min(200, s.box.w + dx)),
+          h: Math.max(4, Math.min(200, s.box.h + dy)),
         });
+      } else if (mode === "resize-x") {
+        onChange({ ...s.box, w: Math.max(4, Math.min(200, s.box.w + dx)) });
+      } else if (mode === "resize-y") {
+        onChange({ ...s.box, h: Math.max(4, Math.min(200, s.box.h + dy)) });
       } else if (mode === "rotate") {
         const angle = Math.atan2(e.clientY - (s.cy ?? 0), e.clientX - (s.cx ?? 0)) * (180 / Math.PI) + 90;
         onChange({ ...s.box, rotation: Math.round(angle) });
       }
     }
+
     function onUp() { setMode(null); start.current = null; }
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
