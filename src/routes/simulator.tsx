@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X, Wand2, Loader2,
-  Download, Camera, RefreshCw, Sliders, RotateCcw,
+  Download, Camera, RefreshCw, Sliders, RotateCcw, Scissors, Check,
 } from "lucide-react";
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
@@ -60,6 +60,8 @@ function Simulator() {
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [surface, setSurface] = useState<"wall" | "floor" | "ceiling">("wall");
   const [showEffects, setShowEffects] = useState(true);
+  const [wallPoints, setWallPoints] = useState<{ x: number; y: number }[]>([]);
+  const [defineMode, setDefineMode] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
 
