@@ -400,11 +400,18 @@ function Simulator() {
                 }} />
               </label>
             </div>
+            <p className="mb-2 text-[10px] text-muted-foreground">تلميح: اسحب أي تصميم بالماوس وأفلته فوق الجدار ✨</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {allLayers.map((l) => (
-                <button key={l.id} onClick={() => { setActive(l); setBox(resetBox()); setAiResult(null); }}
-                  className={`group overflow-hidden rounded-xl border-2 transition ${active?.id === l.id ? "border-primary" : "border-border hover:border-primary/50"}`}>
-                  <img src={l.url} alt={l.name} className="h-16 w-full object-cover" />
+                <button key={l.id}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("application/x-watar-layer", JSON.stringify(l));
+                    e.dataTransfer.effectAllowed = "copy";
+                  }}
+                  onClick={() => { setActive(l); setBox(resetBox()); setAiResult(null); }}
+                  className={`group cursor-grab active:cursor-grabbing overflow-hidden rounded-xl border-2 transition ${active?.id === l.id ? "border-primary shadow-soft" : "border-border hover:border-primary/50 hover:-translate-y-0.5"}`}>
+                  <img src={l.url} alt={l.name} className="h-16 w-full object-cover" draggable={false} />
                   <p className="px-2 py-1 text-[11px] font-bold">{l.name}</p>
                 </button>
               ))}
