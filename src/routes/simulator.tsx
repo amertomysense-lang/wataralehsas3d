@@ -382,10 +382,26 @@ function Simulator() {
                 title="إعادة تعيين موضع وتأثيرات التصميم">
                 <RotateCcw className="size-3.5" /> إعادة تعيين
               </button>
+              <button onClick={() => { setDefineMode((v) => !v); if (!defineMode) setWallPoints([]); }}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
+                  defineMode ? "bg-primary text-primary-foreground" : "border border-primary/40 bg-primary/10 text-primary"
+                }`}
+                title="ارسم نطاق الجدار بالنقر على أطرافه — التصميم سيظهر داخله فقط">
+                <Scissors className="size-3.5" /> {defineMode ? "جاري التحديد…" : wallPoints.length >= 3 ? "تعديل النطاق" : "حدّد نطاق الجدار"}
+              </button>
+              {wallPoints.length >= 3 && !defineMode && (
+                <button onClick={() => setWallPoints([])}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-bold text-muted-foreground"
+                  title="إلغاء تحديد النطاق">
+                  إلغاء النطاق
+                </button>
+              )}
               <button onClick={openCamera}
                 className="ms-auto inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-bold">
                 <RefreshCw className="size-3.5" /> صورة جديدة
               </button>
+            </div>
+          )}
             </div>
           )}
 
