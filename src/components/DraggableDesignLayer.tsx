@@ -157,15 +157,49 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
         </span>
       )}
 
-      {/* resize handle */}
+      {/* resize handle (both axes) */}
       <button
         onPointerDown={onDown("resize")}
         aria-label="تكبير وتصغير"
+        title="تمديد بالعرض والارتفاع"
         className="absolute -left-1 -bottom-1 grid size-7 place-items-center rounded-full bg-primary text-primary-foreground shadow ring-2 ring-background"
         style={{ cursor: "nwse-resize" }}
       >
         <Maximize2 className="size-3.5" />
       </button>
+
+      {/* stretch handle — horizontal (width only) */}
+      <button
+        onPointerDown={onDown("resize-x")}
+        aria-label="تمديد عرضاً"
+        title="تمديد/تقليص العرض"
+        className="absolute -left-2 top-1/2 -translate-y-1/2 h-10 w-3 rounded-full bg-primary/90 text-primary-foreground shadow ring-2 ring-background"
+        style={{ cursor: "ew-resize" }}
+      />
+      <button
+        onPointerDown={onDown("resize-x")}
+        aria-label="تمديد عرضاً"
+        title="تمديد/تقليص العرض"
+        className="absolute -right-2 top-1/2 -translate-y-1/2 h-10 w-3 rounded-full bg-primary/90 text-primary-foreground shadow ring-2 ring-background"
+        style={{ cursor: "ew-resize" }}
+      />
+
+      {/* stretch handle — vertical (height only) */}
+      <button
+        onPointerDown={onDown("resize-y")}
+        aria-label="تمديد ارتفاعاً"
+        title="تمديد/تقليص الارتفاع"
+        className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-3 w-10 rounded-full bg-primary/90 text-primary-foreground shadow ring-2 ring-background"
+        style={{ cursor: "ns-resize" }}
+      />
+      <button
+        onPointerDown={onDown("resize-y")}
+        aria-label="تمديد ارتفاعاً"
+        title="تمديد/تقليص الارتفاع"
+        className="absolute -top-2 left-1/2 -translate-x-1/2 h-3 w-10 rounded-full bg-primary/90 text-primary-foreground shadow ring-2 ring-background"
+        style={{ cursor: "ns-resize" }}
+      />
+
     </div>
   );
 }
