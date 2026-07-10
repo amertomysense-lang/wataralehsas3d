@@ -612,11 +612,21 @@ function Simulator() {
             {aiBusy ? <><Loader2 className="size-4 animate-spin" /> جارٍ الدمج…</> : <><Wand2 className="size-4" /> ادمج بواقعية AI</>}
           </button>
           {aiResult && (
-            <button onClick={() => setAiResult(null)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-3 text-xs font-black text-foreground">
-              <RotateCcw className="size-4" /> رجوع للتحرير
-            </button>
+            <>
+              <button onClick={() => setPostEdit((v) => !v)}
+                title="أعد تمديد/تقليص التصميم فوق نتيجة الدمج"
+                className={`inline-flex items-center justify-center gap-1.5 rounded-2xl px-3 py-3 text-xs font-black shadow-soft ${
+                  postEdit ? "bg-primary text-primary-foreground" : "border border-primary/40 bg-primary/10 text-primary"
+                }`}>
+                <Sliders className="size-4" /> {postEdit ? "إنهاء التعديل" : "تمديد/تقليص"}
+              </button>
+              <button onClick={() => { setAiResult(null); setPostEdit(false); }}
+                className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-3 text-xs font-black text-foreground">
+                <RotateCcw className="size-4" /> رجوع للتحرير
+              </button>
+            </>
           )}
+
           <button onClick={downloadResult} disabled={!aiResult}
             className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-3 text-xs font-black text-foreground disabled:opacity-40">
             <Download className="size-4" /> حفظ
