@@ -62,6 +62,8 @@ function Simulator() {
   const [showEffects, setShowEffects] = useState(true);
   const [wallPoints, setWallPoints] = useState<{ x: number; y: number }[]>([]);
   const [defineMode, setDefineMode] = useState(false);
+  const [postEdit, setPostEdit] = useState(false);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
 
