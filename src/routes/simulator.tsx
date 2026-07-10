@@ -242,6 +242,10 @@ function Simulator() {
 
       <div className="mx-auto grid max-w-6xl gap-5 px-5 py-6 lg:grid-cols-[1fr_360px]">
         <div className="rounded-3xl border border-border bg-card p-3">
+          <DropZone
+            hint="أفلت صورة الجدار هنا"
+            onImage={(url) => { setBg(url); setAiResult(null); toast.success("تم تحديث صورة الجدار"); }}
+          >
           {!previewBg ? (
             <div className="grid h-[420px] place-items-center rounded-2xl bg-muted">
               <div className="w-full max-w-sm space-y-3 px-5 text-center">
@@ -249,6 +253,7 @@ function Simulator() {
                   <Camera className="size-7" />
                 </div>
                 <p className="text-sm font-black text-foreground">ابدأ بصورة جدارك</p>
+                <p className="text-[11px] text-muted-foreground">اسحب صورة من سطح المكتب أو الصق (Ctrl+V) — أو استخدم الكاميرا</p>
                 <button onClick={openCamera}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-primary to-primary-glow px-4 py-3 text-sm font-black text-primary-foreground shadow-soft">
                   <Camera className="size-4" /> التقط صورة جدارك مباشرة 📸
@@ -260,7 +265,21 @@ function Simulator() {
               </div>
             </div>
           ) : (
-            <div ref={stageRef} className="relative overflow-hidden rounded-2xl bg-muted">
+            <div
+              ref={stageRef}
+              className="relative overflow-hidden rounded-2xl bg-muted"
+              onDragOver={(e) => { if (e.dataTransfer.types.includes("application/x-watar-layer")) e.preventDefault(); }}
+              onDrop={(e) => {
+                const raw = e.dataTransfer.getData("application/x-watar-layer");
+                if (!raw) return;
+                try {
+                  const l = JSON.parse(raw) as Layer;
+                  setActive(l); setBox(resetBox()); setAiResult(null);
+                  toast.success(`تم إسقاط: ${l.name}`);
+                  e.preventDefault();
+                } catch { /* ignore */ }
+              }}
+            >
               <img src={previewBg} alt="preview" className="block w-full select-none" draggable={false} />
               {!aiResult && active && (
                 <DraggableDesignLayer
@@ -285,6 +304,7 @@ function Simulator() {
               </button>
             </div>
           )}
+          </DropZone>
           <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onUpload} />
 
           {/* Surface + embossed quick toggles */}
