@@ -12,9 +12,8 @@ import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { FloatingChat } from "../components/FloatingChat";
+import { FloatingDock } from "../components/FloatingDock";
 import { SiteBackground } from "../components/SiteBackground";
-import { FeaturesBubble } from "../components/FeaturesBubble";
 import { registerImageSW } from "../lib/register-sw";
 
 function NotFoundComponent() {
@@ -135,8 +134,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <SiteBackground />
       <Outlet />
-      <FloatingChat />
-      <FeaturesBubble />
+      <FloatingDock />
       <Toaster position="top-center" richColors dir="rtl" />
     </QueryClientProvider>
   );
