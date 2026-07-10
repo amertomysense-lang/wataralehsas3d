@@ -15,6 +15,7 @@ import { supabase, type Design } from "@/integrations/supabase/client";
 import { useCategories, idsForTab } from "@/lib/categories";
 import { toWebpQ92 } from "@/lib/webp-compress";
 import { DraggableDesignLayer, resetBox, type DesignBox } from "@/components/DraggableDesignLayer";
+import { DropZone } from "@/components/DropZone";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
