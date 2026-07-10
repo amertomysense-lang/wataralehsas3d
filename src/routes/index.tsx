@@ -96,17 +96,25 @@ function Home() {
 function Feature({ icon: Icon, title, body }: { icon: typeof Move; title: string; body: string }) {
   return (
     <div
-      className="rounded-3xl p-6"
-      style={{ background: "#FFFFFF", border: `1px solid ${GOLD_SOFT}`, boxShadow: "0 1px 2px rgba(26,26,26,0.04)" }}
+      className="group relative overflow-hidden rounded-3xl p-6 transition-all duration-500 hover:-translate-y-1.5 hover:shadow-2xl"
+      style={{
+        background: "linear-gradient(180deg, #FFFFFF 0%, #FBF6EC 100%)",
+        border: `1px solid ${GOLD_SOFT}`,
+        boxShadow: "0 1px 2px rgba(26,26,26,0.04), 0 20px 40px -30px rgba(184,137,58,0.35)",
+      }}
     >
       <div
-        className="grid size-12 place-items-center rounded-2xl"
+        className="absolute -top-16 -left-16 size-40 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-60"
+        style={{ background: GOLD_SOFT }}
+      />
+      <div
+        className="relative grid size-12 place-items-center rounded-2xl transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6"
         style={{ background: "#FBF6EC", color: GOLD, border: `1px solid ${GOLD_SOFT}` }}
       >
         <Icon className="size-6" />
       </div>
-      <h3 className="mt-4 text-base font-black" style={{ color: CHARCOAL }}>{title}</h3>
-      <p className="mt-2 text-xs leading-relaxed" style={{ color: CHARCOAL_SOFT }}>{body}</p>
+      <h3 className="relative mt-4 text-base font-black" style={{ color: CHARCOAL }}>{title}</h3>
+      <p className="relative mt-2 text-xs leading-relaxed" style={{ color: CHARCOAL_SOFT }}>{body}</p>
     </div>
   );
 }
