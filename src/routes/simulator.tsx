@@ -402,8 +402,7 @@ function Simulator() {
               </button>
             </div>
           )}
-            </div>
-          )}
+
 
           {/* Effects panel */}
           {previewBg && active && !aiResult && (
