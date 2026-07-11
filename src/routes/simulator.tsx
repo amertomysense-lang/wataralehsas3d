@@ -91,7 +91,9 @@ function Simulator() {
   const [savingProject, setSavingProject] = useState(false);
   const [showMyProjects, setShowMyProjects] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   const myProjects = useMyProjects();
 
   const fileRef = useRef<HTMLInputElement>(null);
