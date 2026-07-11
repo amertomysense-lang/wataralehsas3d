@@ -1101,6 +1101,14 @@ function Simulator() {
           </div>
         </div>
       )}
+
+      <CheckoutSheet
+        open={checkoutOpen}
+        onClose={() => setCheckoutOpen(false)}
+        onConfirm={submitCheckout}
+        submitting={sending}
+        totalLabel={`${grandTotal.toLocaleString("ar")} ${currency}`}
+      />
     </div>
   );
 }
