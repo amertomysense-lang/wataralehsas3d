@@ -42,7 +42,7 @@ export async function saveProject(input: SaveInput): Promise<SavedProject | null
   withHeader();
   const { data, error } = await supabase
     .from("saved_projects")
-    .insert({ ...input, device_id: getDeviceId() })
+    .insert({ ...input, device_id: getDeviceId() } as never)
     .select()
     .single();
   if (error) { console.error(error); return null; }
