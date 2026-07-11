@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X, Wand2, Loader2,
   Download, Camera, RefreshCw, Sliders, RotateCcw, Scissors, Check, Lock, Unlock, Target, Navigation,
-  Sun, Moon, Lightbulb, Printer, GitCompare, Ticket, Package,
+  Sun, Moon, Lightbulb, Printer, GitCompare, Ticket, Package, Save, FolderOpen, Share2, Wand,
 } from "lucide-react";
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
@@ -18,6 +18,7 @@ import { toWebpQ92 } from "@/lib/webp-compress";
 import { DraggableDesignLayer, resetBox, type DesignBox } from "@/components/DraggableDesignLayer";
 import { DropZone } from "@/components/DropZone";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
+import { saveProject, useMyProjects, togglePublic, deleteProject } from "@/lib/projects";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
@@ -82,6 +83,11 @@ function Simulator() {
   const [compareMode, setCompareMode] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [sampleOrder, setSampleOrder] = useState(false);
+  const [projectName, setProjectName] = useState("");
+  const [savingProject, setSavingProject] = useState(false);
+  const [showMyProjects, setShowMyProjects] = useState(false);
+  
+  const myProjects = useMyProjects();
 
   const fileRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -372,6 +378,71 @@ function Simulator() {
     );
   }
 
+  // مطابقة إضاءة الجدار — نقيس متوسط سطوع منطقة التصميم داخل صورة الجدار،
+  // ثم نضبط سطوع/تشبع طبقة التصميم لتنسجم مع الغرفة تلقائياً.
+  async function matchLighting() {
+    if (!bg || !active) { toast.error("ارفع الصورة واختر تصميماً أولاً"); return; }
+    try {
+      const img = new Image(); img.crossOrigin = "anonymous"; img.src = bg;
+      await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(); });
+      const W = 240, H = Math.round((img.naturalHeight / img.naturalWidth) * W) || 180;
+      const c = document.createElement("canvas"); c.width = W; c.height = H;
+      const ctx = c.getContext("2d"); if (!ctx) return;
+      ctx.drawImage(img, 0, 0, W, H);
+      const x0 = Math.max(0, Math.floor((box.x / 100) * W));
+      const y0 = Math.max(0, Math.floor((box.y / 100) * H));
+      const w = Math.max(4, Math.floor((box.w / 100) * W));
+      const h = Math.max(4, Math.floor((box.h / 100) * H));
+      const d = ctx.getImageData(x0, y0, Math.min(w, W - x0), Math.min(h, H - y0)).data;
+      let L = 0, S = 0, n = 0;
+      for (let i = 0; i < d.length; i += 16) {
+        const r = d[i], g = d[i + 1], b = d[i + 2];
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        L += (max + min) / 2;
+        S += max === 0 ? 0 : (max - min) / max;
+        n++;
+      }
+      const avgL = (L / n) / 255;              // 0..1
+      const avgS = S / n;                       // 0..1
+      const brightness = 0.7 + avgL * 0.9;      // 0.7..1.6
+      const saturation = 0.7 + avgS * 1.1;      // 0.7..1.8
+      setBox({ ...box, brightness: +brightness.toFixed(2), saturation: +saturation.toFixed(2) });
+      toast.success(`تمّت مطابقة إضاءة الغرفة (سطوع ${brightness.toFixed(2)}، تشبع ${saturation.toFixed(2)})`);
+    } catch { toast.error("تعذّرت قراءة الصورة (قد تكون من مصدر محمي)"); }
+  }
+
+  async function saveCurrentProject(makePublic: boolean) {
+    if (!bg) { toast.error("لا يوجد مشروع لحفظه"); return; }
+    setSavingProject(true);
+    const r = await saveProject({
+      name: projectName || `${active?.name ?? "مشروع"} — ${new Date().toLocaleDateString("ar")}`,
+      room_url: bg, design_url: active?.url ?? null, design_name: active?.name ?? null,
+      snapshot_url: aiResult ?? null,
+      box: box as unknown as Record<string, unknown>,
+      wall_points: wallPoints,
+      surface, width_m: width, height_m: height, is_public: makePublic,
+    });
+    setSavingProject(false);
+    if (r) {
+      toast.success(makePublic ? "تم الحفظ ونشره في المعرض العام ✨" : "تم حفظ المشروع سحابياً");
+      myProjects.refresh();
+    } else { toast.error("تعذّر الحفظ — تأكد من الاتصال"); }
+  }
+
+  function loadProject(p: ReturnType<typeof useMyProjects>["rows"][number]) {
+    if (p.room_url) setBg(p.room_url);
+    if (p.snapshot_url) setAiResult(p.snapshot_url); else setAiResult(null);
+    if (p.design_url) setActive({ id: p.id, name: p.design_name ?? "تصميم", url: p.design_url, opacity: 0.9 });
+    if (p.box) setBox({ ...resetBox(), ...(p.box as Partial<DesignBox>) });
+    if (Array.isArray(p.wall_points)) setWallPoints(p.wall_points);
+    if (p.surface) setSurface(p.surface as "wall" | "floor" | "ceiling");
+    if (p.width_m) setWidth(Number(p.width_m));
+    if (p.height_m) setHeight(Number(p.height_m));
+    setProjectName(p.name);
+    setShowMyProjects(false);
+    toast.success(`تم تحميل: ${p.name}`);
+  }
+
 
   return (
     <div className="min-h-screen bg-background pb-40" dir="rtl">
@@ -607,6 +678,11 @@ function Simulator() {
                   <l.icon className="size-3.5" /> {l.label}
                 </button>
               ))}
+              <button onClick={matchLighting} disabled={!active}
+                className="inline-flex items-center gap-1 rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-black text-primary disabled:opacity-40"
+                title="اقرأ متوسط سطوع الجدار حيث يجلس التصميم واضبطه تلقائياً">
+                <Wand className="size-3.5" /> مطابقة إضاءة تلقائية
+              </button>
               {aiResult && (
                 <button onClick={() => setCompareMode((v) => !v)}
                   className={`ms-auto inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
@@ -841,6 +917,37 @@ function Simulator() {
             </button>
           </div>
 
+          {/* Save / Load / Share — سحابي */}
+          <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 p-4">
+            <div className="flex items-center gap-2 text-sm font-black text-primary">
+              <Save className="size-4" /> مشاريعك محفوظة سحابياً
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              احفظ إعدادات هذا المشروع بلمسة — أو انشره في المعرض العام ليلهم الآخرين.
+            </p>
+            <input
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              placeholder="اسم المشروع (اختياري)"
+              className="mt-2 w-full rounded-lg bg-background px-2.5 py-2 text-xs"
+            />
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button onClick={() => saveCurrentProject(false)} disabled={savingProject || !bg}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary/10 border border-primary/30 px-2.5 py-2 text-[11px] font-black text-primary disabled:opacity-40">
+                {savingProject ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+                احفظ لديّ
+              </button>
+              <button onClick={() => saveCurrentProject(true)} disabled={savingProject || !bg}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-l from-primary to-accent px-2.5 py-2 text-[11px] font-black text-primary-foreground shadow disabled:opacity-40">
+                <Share2 className="size-3.5" /> شارك للمعرض
+              </button>
+            </div>
+            <button onClick={() => setShowMyProjects(true)}
+              className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-2 text-[11px] font-bold text-foreground">
+              <FolderOpen className="size-3.5" /> مشاريعي المحفوظة ({myProjects.rows.length})
+            </button>
+          </div>
+
         </aside>
       </div>
 
@@ -915,6 +1022,46 @@ function Simulator() {
           </button>
         </div>
       </div>
+
+      {/* My Projects modal */}
+      {showMyProjects && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" dir="rtl" onClick={() => setShowMyProjects(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="max-h-[85vh] w-full max-w-3xl overflow-hidden rounded-3xl bg-card shadow-lg">
+            <div className="flex items-center justify-between border-b border-border p-4">
+              <h3 className="text-sm font-black">مشاريعي المحفوظة</h3>
+              <button onClick={() => setShowMyProjects(false)} className="rounded-full bg-muted p-1.5"><X className="size-4" /></button>
+            </div>
+            <div className="max-h-[70vh] overflow-y-auto p-4">
+              {myProjects.loading && <p className="text-center text-xs text-muted-foreground py-6">جاري التحميل…</p>}
+              {!myProjects.loading && myProjects.rows.length === 0 && (
+                <p className="text-center text-xs text-muted-foreground py-10">لا مشاريع محفوظة بعد.</p>
+              )}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {myProjects.rows.map((p) => (
+                  <div key={p.id} className="overflow-hidden rounded-xl border border-border bg-background">
+                    <button onClick={() => loadProject(p)} className="block w-full text-start">
+                      <div className="aspect-video bg-muted">
+                        {(p.snapshot_url || p.room_url) && (
+                          <img src={p.snapshot_url ?? p.room_url ?? ""} alt={p.name} className="h-full w-full object-cover" />
+                        )}
+                      </div>
+                      <p className="px-2 py-1.5 text-[11px] font-black">{p.name}</p>
+                    </button>
+                    <div className="flex items-center justify-between border-t border-border px-2 py-1.5">
+                      <button onClick={async () => { await togglePublic(p.id, !p.is_public); myProjects.refresh(); }}
+                        className={`text-[10px] font-black ${p.is_public ? "text-emerald-600" : "text-muted-foreground"}`}>
+                        {p.is_public ? "منشور ✓" : "خاص"}
+                      </button>
+                      <button onClick={async () => { await deleteProject(p.id); myProjects.refresh(); }}
+                        className="text-[10px] font-bold text-destructive">حذف</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Live camera modal */}
       {camOpen && (

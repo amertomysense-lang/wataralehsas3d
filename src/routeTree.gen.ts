@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as MarketingToolRouteImport } from './routes/marketing-tool'
+import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as BulkUploadStudioRouteImport } from './routes/bulk-upload-studio'
 import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -28,6 +29,11 @@ const SimulatorRoute = SimulatorRouteImport.update({
 const MarketingToolRoute = MarketingToolRouteImport.update({
   id: '/marketing-tool',
   path: '/marketing-tool',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GalleryRoute = GalleryRouteImport.update({
+  id: '/gallery',
+  path: '/gallery',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BulkUploadStudioRoute = BulkUploadStudioRouteImport.update({
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
   '/bulk-upload-studio': typeof BulkUploadStudioRoute
+  '/gallery': typeof GalleryRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/simulator': typeof SimulatorRoute
   '/api/ai-image': typeof ApiAiImageRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
   '/bulk-upload-studio': typeof BulkUploadStudioRoute
+  '/gallery': typeof GalleryRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/simulator': typeof SimulatorRoute
   '/api/ai-image': typeof ApiAiImageRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/assistant': typeof AssistantRoute
   '/bulk-upload-studio': typeof BulkUploadStudioRoute
+  '/gallery': typeof GalleryRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/simulator': typeof SimulatorRoute
   '/api/ai-image': typeof ApiAiImageRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/assistant'
     | '/bulk-upload-studio'
+    | '/gallery'
     | '/marketing-tool'
     | '/simulator'
     | '/api/ai-image'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/assistant'
     | '/bulk-upload-studio'
+    | '/gallery'
     | '/marketing-tool'
     | '/simulator'
     | '/api/ai-image'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/assistant'
     | '/bulk-upload-studio'
+    | '/gallery'
     | '/marketing-tool'
     | '/simulator'
     | '/api/ai-image'
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AssistantRoute: typeof AssistantRoute
   BulkUploadStudioRoute: typeof BulkUploadStudioRoute
+  GalleryRoute: typeof GalleryRoute
   MarketingToolRoute: typeof MarketingToolRoute
   SimulatorRoute: typeof SimulatorRoute
   ApiAiImageRoute: typeof ApiAiImageRoute
@@ -174,6 +187,13 @@ declare module '@tanstack/react-router' {
       path: '/marketing-tool'
       fullPath: '/marketing-tool'
       preLoaderRoute: typeof MarketingToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gallery': {
+      id: '/gallery'
+      path: '/gallery'
+      fullPath: '/gallery'
+      preLoaderRoute: typeof GalleryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bulk-upload-studio': {
@@ -240,6 +260,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AssistantRoute: AssistantRoute,
   BulkUploadStudioRoute: BulkUploadStudioRoute,
+  GalleryRoute: GalleryRoute,
   MarketingToolRoute: MarketingToolRoute,
   SimulatorRoute: SimulatorRoute,
   ApiAiImageRoute: ApiAiImageRoute,
