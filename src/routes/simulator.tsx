@@ -917,6 +917,37 @@ function Simulator() {
             </button>
           </div>
 
+          {/* Save / Load / Share — سحابي */}
+          <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 p-4">
+            <div className="flex items-center gap-2 text-sm font-black text-primary">
+              <Save className="size-4" /> مشاريعك محفوظة سحابياً
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              احفظ إعدادات هذا المشروع بلمسة — أو انشره في المعرض العام ليلهم الآخرين.
+            </p>
+            <input
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              placeholder="اسم المشروع (اختياري)"
+              className="mt-2 w-full rounded-lg bg-background px-2.5 py-2 text-xs"
+            />
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button onClick={() => saveCurrentProject(false)} disabled={savingProject || !bg}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary/10 border border-primary/30 px-2.5 py-2 text-[11px] font-black text-primary disabled:opacity-40">
+                {savingProject ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+                احفظ لديّ
+              </button>
+              <button onClick={() => saveCurrentProject(true)} disabled={savingProject || !bg}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-l from-primary to-accent px-2.5 py-2 text-[11px] font-black text-primary-foreground shadow disabled:opacity-40">
+                <Share2 className="size-3.5" /> شارك للمعرض
+              </button>
+            </div>
+            <button onClick={() => setShowMyProjects(true)}
+              className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-2 text-[11px] font-bold text-foreground">
+              <FolderOpen className="size-3.5" /> مشاريعي المحفوظة ({myProjects.rows.length})
+            </button>
+          </div>
+
         </aside>
       </div>
 
