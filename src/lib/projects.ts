@@ -57,7 +57,7 @@ export async function listMyProjects(): Promise<SavedProject[]> {
     .eq("device_id", getDeviceId())
     .order("created_at", { ascending: false })
     .limit(60);
-  return (data ?? []) as SavedProject[];
+  return (data ?? []) as unknown as SavedProject[];
 }
 
 export async function listPublicProjects(): Promise<SavedProject[]> {
