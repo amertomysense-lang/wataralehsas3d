@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/chat")({
           if (body.productContext) {
             const p = body.productContext;
             knowledge = `معلومات المنتج المسؤول عنه فقط:
-- الاسم: ${p.title}
+- الاسم: ${p.name}
 - الفئة: ${p.category ?? "غير محددة"}
 - الوصف: ${p.description ?? "لا يوجد وصف"}
 - السعر: ${p.price != null ? `${p.price}` : "غير محدد — اطلب التواصل لمعرفته"}`;
