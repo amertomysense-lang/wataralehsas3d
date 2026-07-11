@@ -27,7 +27,7 @@ type Props = {
  * سحب حر + تكبير من الزاوية + تدوير من مقبض علوي +
  * تأثيرات (شفافية/طمس/إشراق/تشبع/تباين/وضع مزج) + بروز UV.
  */
-export function DraggableDesignLayer({ src, name, box, onChange, container, embossed }: Props) {
+export function DraggableDesignLayer({ src, name, box, onChange, container, embossed, lockAspect }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<"drag" | "resize" | "resize-x" | "resize-y" | "rotate" | null>(null);
   const start = useRef<{ px: number; py: number; box: DesignBox; cx?: number; cy?: number } | null>(null);
