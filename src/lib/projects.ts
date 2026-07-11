@@ -46,7 +46,7 @@ export async function saveProject(input: SaveInput): Promise<SavedProject | null
     .select()
     .single();
   if (error) { console.error(error); return null; }
-  return data as SavedProject;
+  return data as unknown as SavedProject;
 }
 
 export async function listMyProjects(): Promise<SavedProject[]> {
