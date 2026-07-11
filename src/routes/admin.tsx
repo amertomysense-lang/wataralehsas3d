@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal, Type, ToggleLeft, Sparkles, Wallet, Scissors, Check, Bell, Image as ImageIcon, Video } from "lucide-react";
+import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal, Type, ToggleLeft, Sparkles, Wallet, Scissors, Check, Bell, Image as ImageIcon, Video, BarChart3, LayoutGrid, Rows3 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase, type Design } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/AdminGate";
@@ -15,6 +15,9 @@ import { useVendorStore, DEFAULT_VENDOR_STATE, generateLoginToken, STATUS_LABELS
 import { usePaymentRequests, approveRequest, rejectRequest, grantCreditsByDevice, type PaymentPackage, type PaymentRequest } from "@/lib/payments";
 import { BatchImageUploader, type BatchItem } from "@/components/BatchImageUploader";
 import { useCategories, labelOf, type Category, type CategoryTab } from "@/lib/categories";
+import { NewOrdersBell } from "@/components/NewOrdersBell";
+import { KanbanBoard } from "@/components/KanbanBoard";
+import { AdminAnalytics } from "@/components/AdminAnalytics";
 
 
 export const Route = createFileRoute("/admin")({
