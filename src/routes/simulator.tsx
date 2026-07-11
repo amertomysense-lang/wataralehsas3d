@@ -235,6 +235,79 @@ function Simulator() {
 
   const previewBg = aiResult || bg;
 
+  /**
+   * الكشف التلقائي عن حدود الجدار عند النقر:
+   * نرسم صورة الجدار في كانفس مخفي، ثم نمسح أفقياً/عمودياً من نقطة النقر
+   * ونتوقف عندما يختلف اللون بشكل واضح (كشف حواف بسيط بمقارنة تباين اللونية).
+   * النتيجة: مستطيل يمثّل مساحة الجدار المتجانسة يحيط بنقطة النقر.
+   */
+  async function autoFitOnClick(clickXPct: number, clickYPct: number) {
+    if (!previewBg) return;
+    try {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = previewBg;
+      await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(); });
+      const W = Math.min(400, img.naturalWidth || 400);
+      const H = Math.round((img.naturalHeight / img.naturalWidth) * W) || 300;
+      const c = document.createElement("canvas");
+      c.width = W; c.height = H;
+      const ctx = c.getContext("2d"); if (!ctx) return;
+      ctx.drawImage(img, 0, 0, W, H);
+      const data = ctx.getImageData(0, 0, W, H).data;
+      const cx = Math.round((clickXPct / 100) * W);
+      const cy = Math.round((clickYPct / 100) * H);
+      const idx = (x: number, y: number) => (y * W + x) * 4;
+      const seed = [data[idx(cx, cy)], data[idx(cx, cy) + 1], data[idx(cx, cy) + 2]];
+      const TH = 42; // عتبة اختلاف اللون
+      const diff = (i: number) =>
+        Math.abs(data[i] - seed[0]) + Math.abs(data[i + 1] - seed[1]) + Math.abs(data[i + 2] - seed[2]);
+      // مسح رباعي الاتجاهات
+      let left = cx; while (left > 1 && diff(idx(left - 1, cy)) < TH) left--;
+      let right = cx; while (right < W - 2 && diff(idx(right + 1, cy)) < TH) right++;
+      let top = cy; while (top > 1 && diff(idx(cx, top - 1)) < TH) top--;
+      let bottom = cy; while (bottom < H - 2 && diff(idx(cx, bottom + 1)) < TH) bottom++;
+      // مسح إضافي على منتصفي الحدود لتحسين الدقة
+      const midX = Math.round((left + right) / 2);
+      while (top > 1 && diff(idx(midX, top - 1)) < TH) top--;
+      while (bottom < H - 2 && diff(idx(midX, bottom + 1)) < TH) bottom++;
+
+      const wPct = ((right - left) / W) * 100;
+      const hPct = ((bottom - top) / H) * 100;
+      if (wPct < 6 || hPct < 6) {
+        toast.error("لم أستطع تحديد الجدار — جرّب نقرة أوضح على منطقة متجانسة");
+        return;
+      }
+      // نُبقي التصميم داخل الجدار بهامش 12% ليبدو طبيعياً
+      const pad = 0.12;
+      const bx = (left / W) * 100 + wPct * pad;
+      const by = (top / H) * 100 + hPct * pad;
+      const bw = wPct * (1 - pad * 2);
+      const bh = hPct * (1 - pad * 2);
+      setBox({ ...box, x: bx, y: by, w: bw, h: bh });
+      toast.success("تم دمج التصميم داخل الجدار المُختار ✨");
+    } catch {
+      toast.error("تعذّر تحليل صورة الجدار (قد تكون من مصدر خارجي محمي)");
+    }
+  }
+
+  async function captureLocation() {
+    if (!navigator.geolocation) { toast.error("جهازك لا يدعم تحديد الموقع"); return; }
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const url = `https://maps.google.com/?q=${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+        setLocationUrl(url);
+        setGeoLoading(false);
+        toast.success("تم التقاط موقعك الحالي — سيُرسل مع الطلب");
+      },
+      () => { setGeoLoading(false); toast.error("رُفض إذن الموقع — يمكنك لصق رابط خرائط Google يدوياً"); },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+
   return (
     <div className="min-h-screen bg-background pb-40" dir="rtl">
       <div className="border-b border-border bg-card/40 backdrop-blur">
