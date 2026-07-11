@@ -32,31 +32,24 @@ export type SavedProject = {
 
 export type SaveInput = Omit<SavedProject, "id" | "device_id" | "created_at">;
 
-// نمرّر device_id عبر ترويسة كي تستفيد منها RLS
-function withHeader() {
-  // @ts-expect-error — العميل يقبل headers ديناميكياً
-  supabase.rest.headers = { ...(supabase as any).rest?.headers, "x-device-id": getDeviceId() };
-}
-
 export async function saveProject(input: SaveInput): Promise<SavedProject | null> {
-  withHeader();
   const { data, error } = await supabase
     .from("saved_projects")
     .insert({ ...input, device_id: getDeviceId() } as never)
     .select()
     .single();
-  if (error) { console.error(error); return null; }
+  if (error) { console.error("saveProject", error); return null; }
   return data as unknown as SavedProject;
 }
 
 export async function listMyProjects(): Promise<SavedProject[]> {
-  withHeader();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("saved_projects")
     .select("*")
     .eq("device_id", getDeviceId())
     .order("created_at", { ascending: false })
     .limit(60);
+  if (error) console.error("listMyProjects", error);
   return (data ?? []) as unknown as SavedProject[];
 }
 
@@ -71,13 +64,11 @@ export async function listPublicProjects(): Promise<SavedProject[]> {
 }
 
 export async function deleteProject(id: string) {
-  withHeader();
-  await supabase.from("saved_projects").delete().eq("id", id);
+  await supabase.from("saved_projects").delete().eq("id", id).eq("device_id", getDeviceId());
 }
 
 export async function togglePublic(id: string, is_public: boolean) {
-  withHeader();
-  await supabase.from("saved_projects").update({ is_public }).eq("id", id);
+  await supabase.from("saved_projects").update({ is_public }).eq("id", id).eq("device_id", getDeviceId());
 }
 
 export function useMyProjects() {

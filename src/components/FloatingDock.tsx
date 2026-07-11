@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   MessageCircle, X, Send, Loader2, Sparkles, Info, Layers, Move, Wand2, Shield,
-  Home, Images, Wand2 as WandNav, Calculator, RefreshCw, Upload,
+  Home, Images, Wand2 as WandNav, Settings, RefreshCw, Upload,
 } from "lucide-react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 
@@ -20,7 +20,7 @@ const NAV: NavItem[] = [
   { key: "home", label: "الرئيسية", icon: Home, to: "/", match: (p) => p === "/" },
   { key: "gallery", label: "المعرض", icon: Images, to: "/gallery", match: (p) => p.startsWith("/gallery") },
   { key: "sim", label: "المحاكي", icon: WandNav, to: "/simulator", match: (p) => p.startsWith("/simulator") },
-  { key: "calc", label: "الحاسبة", icon: Calculator, to: "/simulator", hash: "calc", match: () => false },
+  { key: "settings", label: "الإعدادات", icon: Settings, to: "/admin", match: (p) => p.startsWith("/admin") },
 ];
 
 export function FloatingDock() {
