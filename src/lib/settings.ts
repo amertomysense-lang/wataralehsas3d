@@ -13,6 +13,9 @@ export type CustomHaircut = {
 
 export type DesignSection = "haircut" | "simulator" | "marketing" | "tryon";
 
+// نظهر في الواجهة فقط الأقسام المتعلقة بالديكور — يمكن للأدمن استخدام هذه القائمة
+export const DECOR_SECTIONS: DesignSection[] = ["simulator", "marketing"];
+
 export const SECTION_LABELS: Record<DesignSection, string> = {
   haircut: "قصّات الشعر",
   simulator: "محاكي الجدران/الأرضيات",
