@@ -10,13 +10,18 @@ export type Category = {
   tab: CategoryTab; // ينتمي لعالم الديكور أم الأزياء
 };
 
+// كل الفئات ديكور — مجلدات جاهزة للأدمن تخص طباعة الجدران والأرضيات
 export const DEFAULT_CATEGORIES: Category[] = [
-  { id: "curtains",  label: "ستائر",      tab: "decor" },
-  { id: "sofa",      label: "كنب",        tab: "decor" },
-  { id: "furniture", label: "أثاث",       tab: "decor" },
-  { id: "fashion",   label: "أزياء",      tab: "fashion" },
-  { id: "haircut",   label: "قصّات شعر",  tab: "fashion" },
-  { id: "other",     label: "أخرى",       tab: "decor" },
+  { id: "flowers",   label: "ورود",        tab: "decor" },
+  { id: "fruits",    label: "فواكه",       tab: "decor" },
+  { id: "nature",    label: "طبيعة",       tab: "decor" },
+  { id: "marble",    label: "رخام",        tab: "decor" },
+  { id: "geometric", label: "هندسي",       tab: "decor" },
+  { id: "kids",      label: "أطفال",       tab: "decor" },
+  { id: "islamic",   label: "زخارف إسلامية", tab: "decor" },
+  { id: "3d",        label: "ثلاثي الأبعاد", tab: "decor" },
+  { id: "wood",      label: "خشب",         tab: "decor" },
+  { id: "other",     label: "أخرى",        tab: "decor" },
 ];
 
 const KEY = "watar.categories.v1";
