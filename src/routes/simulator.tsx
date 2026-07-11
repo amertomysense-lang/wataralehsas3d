@@ -577,8 +577,8 @@ function Simulator() {
               )}
             </div>
           )}
-          {false && (
-            <div>
+
+
 
 
 
