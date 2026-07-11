@@ -12,11 +12,13 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 export function FloatingDock() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [chatOpen, setChatOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
 
   // إخفاء المساعد داخل صفحة المنتج (لها محادثتها الخاصة)
   const hideChat = location.pathname.startsWith("/product/");
+  const hideAdmin = location.pathname.startsWith("/admin") || location.pathname.startsWith("/bulk-upload");
 
   return (
     <>
