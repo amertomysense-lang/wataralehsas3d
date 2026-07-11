@@ -20,14 +20,21 @@ export function FloatingDock() {
   const hideChat = location.pathname.startsWith("/product/");
   const hideAdmin = location.pathname.startsWith("/admin") || location.pathname.startsWith("/bulk-upload");
 
+  // في صفحات فيها شريط سفلي ثابت (المحاكي) نرفع الرصيف فوقه لئلا يختفي خلفه.
+  const hasBottomBar = location.pathname.startsWith("/simulator");
+  const bottomOffset = hasBottomBar
+    ? "calc(env(safe-area-inset-bottom) + 5.5rem)"
+    : "calc(env(safe-area-inset-bottom) + 1rem)";
+
   return (
     <>
       {/* الرصيف: عمود ثابت أسفل يسار الشاشة */}
       <div
         dir="rtl"
-        className="fixed left-3 z-30 flex flex-col items-center gap-2.5"
-        style={{ bottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
+        className="fixed left-3 z-50 flex flex-col items-center gap-2.5"
+        style={{ bottom: bottomOffset }}
       >
+
         {/* منفذ لأزرار سياقية (واتساب المنتج) */}
         <div id="watar-dock-slot" className="flex flex-col items-center gap-2.5" />
 
