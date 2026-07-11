@@ -985,12 +985,23 @@ function Simulator() {
               {couponCode && !coupon && <span className="rounded-md bg-destructive/80 px-2 py-0.5 text-[10px] font-black">غير صالح</span>}
             </div>
 
-            {/* Sample order toggle */}
-            <button onClick={() => setSampleOrder((v) => !v)}
-              className={`mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-black transition ${
-                sampleOrder ? "bg-background text-primary" : "bg-background/15 text-primary-foreground hover:bg-background/25"
-              }`}>
-              <Package className="size-3.5" /> {sampleOrder ? "إلغاء طلب العيّنة" : "اطلب عيّنة مطبوعة 20×20 سم"}
+            {/* Direct WhatsApp order for the selected region */}
+            <button onClick={() => {
+              if (!region) { toast.error("اختر المنطقة أولاً لأربط الطلب برقم واتساب الفرع"); return; }
+              const num = region.whatsapp_number || "963933000000";
+              const lines = [
+                `طلب جديد — ${region.name}`,
+                `التصميم: ${active?.name ?? "تصميم مخصص"}`,
+                `المقاس: ${width} م × ${height} م${embossed ? " · بروز UV" : ""}`,
+                `الإجمالي المقدّر: ${grandTotal.toLocaleString("ar", { maximumFractionDigits: 0 })} ${currency}`,
+                addressNote ? `العنوان: ${addressNote}` : "",
+                locationUrl ? `الموقع: ${locationUrl}` : "",
+                coupon ? `كوبون: ${coupon.code} (-${coupon.percent}%)` : "",
+              ].filter(Boolean).join("\n");
+              window.open(`https://wa.me/${num}?text=${encodeURIComponent(lines)}`, "_blank");
+            }}
+              className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-black text-white shadow hover:brightness-110 transition">
+              <Package className="size-3.5" /> اطلب عبر واتساب مباشرة
             </button>
           </div>
 
