@@ -10,8 +10,6 @@ import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platf
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
 import { toast } from "sonner";
 import { useSettings } from "@/lib/settings";
-import { CampaignSection } from "@/components/CampaignSection";
-import { AiImageStudio } from "@/components/AiImageStudio";
 import { supabase } from "@/integrations/supabase/client";
 import type { Design } from "@/lib/design-type";
 import { useCategories, idsForTab } from "@/lib/categories";
@@ -521,9 +519,6 @@ function Simulator() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-5 pt-6">
-        <CampaignSection compact />
-      </div>
 
       <div className="mx-auto grid max-w-6xl gap-5 px-5 py-6 lg:grid-cols-[1fr_360px]">
         <div className="rounded-3xl border border-border bg-card p-3">
@@ -1041,38 +1036,6 @@ function Simulator() {
         </aside>
       </div>
 
-      <div className="mx-auto max-w-6xl px-5 pb-10">
-        <details className="group rounded-2xl border border-dashed border-border bg-card/50 p-3">
-          <summary className="cursor-pointer list-none text-xs font-black text-muted-foreground">
-            <span className="inline-flex items-center gap-2">
-              <Wand2 className="size-3.5 text-primary" />
-              استوديو التوليد التخيلي لأفكار تصاميم جديدة
-              <span className="rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[10px]">إلهام</span>
-            </span>
-          </summary>
-          <div className="mt-3">
-            <AiImageStudio
-              section="simulator"
-              title="استوديو التوليد التخيلي للجدران"
-              subtitle="استلهم أفكار تصاميم جديدة — ثم اعتمدها ودمجها بالأعلى على جدارك الحقيقي."
-              accent="from-primary to-accent"
-              basePrompt="High-resolution interior wall/floor decorative design, photorealistic, premium material finish"
-              buildPrompt={({ basePrompt, presetPrompt, prompt }) => [
-                basePrompt, presetPrompt,
-                `Target surface: ${surface}.`,
-                "Generate only the decorative pattern element, tileable, sharp and print-ready.",
-                prompt,
-              ].filter(Boolean).join(" ")}
-              presets={[
-                { id: "rose", label: "حديقة ورود", prompt: "soft pink rose garden mural, romantic warm lighting" },
-                { id: "calli", label: "خط عربي ذهبي", prompt: "elegant golden arabic calligraphy on dark marble" },
-                { id: "marble", label: "رخام فاخر", prompt: "luxurious veined marble texture, ivory and gold" },
-                { id: "3d", label: "كسر 3D", prompt: "dramatic 3D broken wall illusion, depth, cinematic" },
-              ]}
-            />
-          </div>
-        </details>
-      </div>
 
       {/* Bottom action sheet */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] backdrop-blur supports-[backdrop-filter]:bg-card/80">
