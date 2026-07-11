@@ -373,18 +373,18 @@ function GlobalSettingsTab() {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <TextField label="العملة الافتراضية">
+          <Field label="العملة الافتراضية">
             <select value={draft.currency} onChange={(e) => update("currency", e.target.value)} className="input">
               {CURRENCY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           </Field>
-          <TextField label="السعر/متر² الافتراضي">
+          <Field label="السعر/متر² الافتراضي">
             <input type="number" step="0.5" value={draft.pricePerMeter} onChange={(e) => update("pricePerMeter", +e.target.value)} className="input" />
           </Field>
-          <TextField label={`رسوم الوقود لكل كم (${draft.currency})`}>
+          <Field label={`رسوم الوقود لكل كم (${draft.currency})`}>
             <input type="number" step="0.05" value={draft.fuelPerKm} onChange={(e) => update("fuelPerKm", +e.target.value)} className="input" />
           </Field>
-          <TextField label="نسبة البروز الملموس %">
+          <Field label="نسبة البروز الملموس %">
             <input type="number" step="1" value={Math.round(draft.embossedRate * 100)} onChange={(e) => update("embossedRate", +e.target.value / 100)} className="input" />
           </Field>
         </div>
@@ -392,10 +392,10 @@ function GlobalSettingsTab() {
         {/* رسائل واتساب */}
         <div className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-2">
           <p className="text-xs font-black text-foreground">قوالب واتساب</p>
-          <TextField label="تحية افتتاحية">
+          <Field label="تحية افتتاحية">
             <input value={draft.whatsappGreeting} onChange={(e) => update("whatsappGreeting", e.target.value)} className="input" />
           </Field>
-          <TextField label="نص طلب العيّنة">
+          <Field label="نص طلب العيّنة">
             <input value={draft.whatsappSampleNote} onChange={(e) => update("whatsappSampleNote", e.target.value)} className="input" />
           </Field>
         </div>
