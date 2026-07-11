@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CheckCircle2, Sparkles, Layers, Shirt, Scissors, Sofa, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminGate } from "@/components/AdminGate";
 import { BatchImageUploader, type BatchItem } from "@/components/BatchImageUploader";
 import { useCategories } from "@/lib/categories";
 
@@ -12,9 +13,10 @@ export const Route = createFileRoute("/bulk-upload-studio")({
     meta: [
       { title: "الاستوديو الذكي للرفع الجماعي — وتر الإحساس" },
       { name: "description", content: "ارفع حتى 100 صورة دفعة واحدة، تُضغط فوراً إلى WebP وتُصنّف تلقائياً." },
+      { name: "robots", content: "noindex" },
     ],
   }),
-  component: BulkUploadStudio,
+  component: () => <AdminGate title="الاستوديو الذكي — للأدمن فقط"><BulkUploadStudio /></AdminGate>,
 });
 
 const TAG_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -74,7 +76,7 @@ function BulkUploadStudio() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 px-4 py-6 pb-20" dir="rtl">
       <div className="mx-auto max-w-5xl">
-        <Link to="/workflow" className="text-sm font-bold text-primary hover:underline">← الوحدات</Link>
+        <Link to="/admin" className="text-sm font-bold text-primary hover:underline">← لوحة التحكم</Link>
 
         <div className="mt-3 rounded-3xl border border-primary/20 bg-gradient-to-tr from-primary/10 via-background to-accent/5 p-6 shadow-soft">
           <div className="flex items-center gap-3">

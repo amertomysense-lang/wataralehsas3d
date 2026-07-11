@@ -314,7 +314,7 @@ function Simulator() {
     <div className="min-h-screen bg-background pb-40" dir="rtl">
       <div className="border-b border-border bg-card/40 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
-          <Link to="/workflow" className="text-sm font-bold text-primary hover:underline">← الوحدات</Link>
+          <Link to="/" className="text-sm font-bold text-primary hover:underline">← الرئيسية</Link>
           <h1 className="text-sm font-black text-foreground">محاكي الجدران والأرضيات</h1>
           <span className="w-12" />
         </div>
