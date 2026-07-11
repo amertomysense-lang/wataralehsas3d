@@ -91,7 +91,7 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
     };
-  }, [mode, container, onChange]);
+  }, [mode, container, onChange, lockAspect]);
 
   const embossFilter = embossed ? "url(#watar-emboss)" : "";
   const embossShadow = embossed
