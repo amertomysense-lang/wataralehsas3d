@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { ArrowRight, Plus, Trash2, LogOut, Edit3, Save, X, Package, MapPin, DollarSign, ShoppingBag, Store, Download, Upload, Settings as SettingsIcon, SlidersHorizontal, Type, ToggleLeft, Sparkles, Wallet, Scissors, Check, Bell, Image as ImageIcon, Video, BarChart3, LayoutGrid, Rows3 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase, type Design } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+import type { Design } from "@/lib/design-type";
 import { AdminGate } from "@/components/AdminGate";
 import { logoutAdmin } from "@/lib/admin-gate";
 import { useRegions, usePricing, type Region, type Order } from "@/lib/platform";
@@ -315,8 +316,8 @@ function PricingTab() {
     };
     const rowId = pricing?._rowId ?? null;
     const res = rowId
-      ? await supabase.from("pricing_config").update(payload).eq("id", rowId as string)
-      : await supabase.from("pricing_config").insert(payload);
+      ? await supabase.from("pricing_config").update(payload as never).eq("id", Number(rowId))
+      : await supabase.from("pricing_config").insert(payload as never);
 
     if (res.error) toast.warning(`حُفظ محلياً — تعذر المزامنة: ${res.error.message}`);
     else toast.success("تم تحديث الأسعار");
@@ -679,16 +680,18 @@ function VendorsTab() {
     e.preventDefault();
     if (!form.name || !form.phone) { toast.error("الاسم والرقم مطلوبان"); return; }
     const payload = {
+      business_name: form.name,
       name: form.name,
       category: form.category,
       phone: form.phone.replace(/\D/g, ""),
+      whatsapp_number: form.phone.replace(/\D/g, ""),
       logo_url: form.logo_url || null,
       is_premium: form.is_premium,
       region_id: form.region_id || null,
     };
     const res = editing
-      ? await supabase.from("vendors").update(payload).eq("id", editing)
-      : await supabase.from("vendors").insert(payload);
+      ? await supabase.from("vendors").update(payload as never).eq("id", editing)
+      : await supabase.from("vendors").insert(payload as never);
     if (res.error) { toast.error(res.error.message); return; }
     toast.success("تم الحفظ");
     setForm(EMPTY_V); setEditing(null);
@@ -1027,7 +1030,7 @@ function CSVImportButton({ table, sample, map, onDone }: {
       const rows = parseCSV(text);
       if (!rows.length) { toast.error("لا توجد صفوف في الملف"); return; }
       const payload = rows.map(map);
-      const { error } = await supabase.from(table).insert(payload);
+      const { error } = await supabase.from(table as never).insert(payload as never);
       if (error) throw error;
       toast.success(`تم استيراد ${payload.length} صف`);
       onDone();

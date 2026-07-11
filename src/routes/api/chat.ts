@@ -16,7 +16,7 @@ type ChatBody = {
 async function fetchAllProducts() {
   const { data } = await supabase
     .from("products")
-    .select("id, name, description, category, price")
+    .select("id, title, description, category, price")
     .limit(100);
   return data ?? [];
 }
@@ -48,7 +48,7 @@ export const Route = createFileRoute("/api/chat")({
                   products
                     .map(
                       (p) =>
-                        `• [/product/${p.id}] ${p.name}${p.category ? ` — ${p.category}` : ""}${
+                        `• [/product/${p.id}] ${p.title}${p.category ? ` — ${p.category}` : ""}${
                           p.description ? ` — ${p.description}` : ""
                         }`
                     )
