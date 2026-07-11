@@ -723,6 +723,11 @@ function Simulator() {
                   إلغاء النطاق
                 </button>
               )}
+              <button onClick={smartBlend} disabled={!bg || !active}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-l from-primary to-accent px-3 py-1.5 text-[11px] font-black text-primary-foreground shadow-soft disabled:opacity-40"
+                title="ضبط تلقائي للشفافية والمزج ومطابقة الإضاءة — بضغطة واحدة">
+                <Sparkles className="size-3.5" /> دمج ذكي فوري
+              </button>
               <button onClick={openCamera}
                 className="ms-auto inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-bold">
                 <RefreshCw className="size-3.5" /> صورة جديدة
