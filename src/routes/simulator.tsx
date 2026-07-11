@@ -432,6 +432,26 @@ function Simulator() {
                 </div>
               )}
 
+              {autoFitMode && !defineMode && (
+                <>
+                  <button
+                    aria-label="انقر الجدار المطلوب"
+                    onClick={async (e) => {
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      const x = ((e.clientX - rect.left) / rect.width) * 100;
+                      const y = ((e.clientY - rect.top) / rect.height) * 100;
+                      await autoFitOnClick(x, y);
+                      setAutoFitMode(false);
+                    }}
+                    className="absolute inset-0 cursor-crosshair bg-primary/10"
+                  />
+                  <div className="absolute inset-x-0 top-2 mx-auto flex w-fit items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-black text-primary-foreground shadow">
+                    <Target className="size-3.5" /> انقر على الجدار الذي تريد الطباعة عليه
+                    <button onClick={() => setAutoFitMode(false)} className="ms-1 rounded bg-white/20 px-1.5 py-0.5">إلغاء</button>
+                  </div>
+                </>
+              )}
+
               {aiBusy && (
                 <div className="absolute inset-0 grid place-items-center bg-background/60 backdrop-blur-sm">
                   <div className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground">
