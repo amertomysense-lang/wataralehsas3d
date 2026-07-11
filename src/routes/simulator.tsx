@@ -1081,12 +1081,17 @@ function Simulator() {
           </button>
           {aiResult && (
             <>
-              <button onClick={() => setPostEdit((v) => !v)}
-                title="أعد تمديد/تقليص التصميم فوق نتيجة الدمج"
-                className={`inline-flex items-center justify-center gap-1.5 rounded-2xl px-3 py-3 text-xs font-black shadow-soft ${
-                  postEdit ? "bg-primary text-primary-foreground" : "border border-primary/40 bg-primary/10 text-primary"
-                }`}>
-                <Sliders className="size-4" /> {postEdit ? "إنهاء التعديل" : "تمديد/تقليص"}
+              <button onClick={() => {
+                // Promote the AI-merged image into the working canvas so any
+                // further stretch/shrink applies directly on the merged result
+                // instead of layering the original design over it as a separate
+                // layer with mismatched background.
+                if (aiResult) { setBg(aiResult); setAiResult(null); setPostEdit(false); }
+                toast.success("تم اعتماد نتيجة الدمج — عدّل التمديد والتقليص مباشرة عليها");
+              }}
+                title="تابع التمديد/التقليص على نفس الصورة المدموجة"
+                className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-primary text-primary-foreground px-3 py-3 text-xs font-black shadow-soft">
+                <Sliders className="size-4" /> تمديد/تقليص على النتيجة
               </button>
               <button onClick={() => { setAiResult(null); setPostEdit(false); }}
                 className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-3 text-xs font-black text-foreground">
