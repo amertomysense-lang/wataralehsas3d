@@ -83,6 +83,11 @@ function Simulator() {
   const [compareMode, setCompareMode] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [sampleOrder, setSampleOrder] = useState(false);
+  const [projectName, setProjectName] = useState("");
+  const [savingProject, setSavingProject] = useState(false);
+  const [showMyProjects, setShowMyProjects] = useState(false);
+  const [autoLightMatch, setAutoLightMatch] = useState(true);
+  const myProjects = useMyProjects();
 
   const fileRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -371,6 +376,71 @@ function Simulator() {
       () => { setGeoLoading(false); toast.error("رُفض إذن الموقع — يمكنك لصق رابط خرائط Google يدوياً"); },
       { enableHighAccuracy: true, timeout: 10000 },
     );
+  }
+
+  // مطابقة إضاءة الجدار — نقيس متوسط سطوع منطقة التصميم داخل صورة الجدار،
+  // ثم نضبط سطوع/تشبع طبقة التصميم لتنسجم مع الغرفة تلقائياً.
+  async function matchLighting() {
+    if (!bg || !active) { toast.error("ارفع الصورة واختر تصميماً أولاً"); return; }
+    try {
+      const img = new Image(); img.crossOrigin = "anonymous"; img.src = bg;
+      await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(); });
+      const W = 240, H = Math.round((img.naturalHeight / img.naturalWidth) * W) || 180;
+      const c = document.createElement("canvas"); c.width = W; c.height = H;
+      const ctx = c.getContext("2d"); if (!ctx) return;
+      ctx.drawImage(img, 0, 0, W, H);
+      const x0 = Math.max(0, Math.floor((box.x / 100) * W));
+      const y0 = Math.max(0, Math.floor((box.y / 100) * H));
+      const w = Math.max(4, Math.floor((box.w / 100) * W));
+      const h = Math.max(4, Math.floor((box.h / 100) * H));
+      const d = ctx.getImageData(x0, y0, Math.min(w, W - x0), Math.min(h, H - y0)).data;
+      let L = 0, S = 0, n = 0;
+      for (let i = 0; i < d.length; i += 16) {
+        const r = d[i], g = d[i + 1], b = d[i + 2];
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        L += (max + min) / 2;
+        S += max === 0 ? 0 : (max - min) / max;
+        n++;
+      }
+      const avgL = (L / n) / 255;              // 0..1
+      const avgS = S / n;                       // 0..1
+      const brightness = 0.7 + avgL * 0.9;      // 0.7..1.6
+      const saturation = 0.7 + avgS * 1.1;      // 0.7..1.8
+      setBox({ ...box, brightness: +brightness.toFixed(2), saturation: +saturation.toFixed(2) });
+      toast.success(`تمّت مطابقة إضاءة الغرفة (سطوع ${brightness.toFixed(2)}، تشبع ${saturation.toFixed(2)})`);
+    } catch { toast.error("تعذّرت قراءة الصورة (قد تكون من مصدر محمي)"); }
+  }
+
+  async function saveCurrentProject(makePublic: boolean) {
+    if (!bg) { toast.error("لا يوجد مشروع لحفظه"); return; }
+    setSavingProject(true);
+    const r = await saveProject({
+      name: projectName || `${active?.name ?? "مشروع"} — ${new Date().toLocaleDateString("ar")}`,
+      room_url: bg, design_url: active?.url ?? null, design_name: active?.name ?? null,
+      snapshot_url: aiResult ?? null,
+      box: box as unknown as Record<string, unknown>,
+      wall_points: wallPoints,
+      surface, width_m: width, height_m: height, is_public: makePublic,
+    });
+    setSavingProject(false);
+    if (r) {
+      toast.success(makePublic ? "تم الحفظ ونشره في المعرض العام ✨" : "تم حفظ المشروع سحابياً");
+      myProjects.refresh();
+    } else { toast.error("تعذّر الحفظ — تأكد من الاتصال"); }
+  }
+
+  function loadProject(p: ReturnType<typeof useMyProjects>["rows"][number]) {
+    if (p.room_url) setBg(p.room_url);
+    if (p.snapshot_url) setAiResult(p.snapshot_url); else setAiResult(null);
+    if (p.design_url) setActive({ id: p.id, name: p.design_name ?? "تصميم", url: p.design_url, opacity: 0.9 });
+    if (p.box) setBox({ ...resetBox(), ...(p.box as Partial<DesignBox>) });
+    if (Array.isArray(p.wall_points)) setWallPoints(p.wall_points);
+    if (p.surface) setSurface(p.surface as "wall" | "floor" | "ceiling");
+    if (p.width_m) setWidth(Number(p.width_m));
+    if (p.height_m) setHeight(Number(p.height_m));
+    setProjectName(p.name);
+    setShowMyProjects(false);
+    toast.success(`تم تحميل: ${p.name}`);
   }
 
 
