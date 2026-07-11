@@ -25,7 +25,7 @@ export const Route = createFileRoute("/admin")({
   component: () => <AdminGate title="لوحة تحكم المعرض"><AdminPage /></AdminGate>,
 });
 
-type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms" | "quota" | "payments" | "haircuts" | "categories" | "media" | "analytics";
+type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "cloud" | "schema" | "cms" | "quota" | "payments" | "haircuts" | "categories" | "media" | "analytics";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
@@ -67,6 +67,7 @@ function AdminPage() {
           <Link to="/bulk-upload-studio" className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-black text-primary-foreground shadow hover:opacity-90 whitespace-nowrap"><Upload className="size-3.5" /> الاستوديو الذكي (رفع جماعي)</Link>
           <TabBtn icon={<ShoppingBag className="size-4" />} label="الطلبات" active={tab === "orders"} onClick={() => setTab("orders")} />
           <TabBtn icon={<SettingsIcon className="size-4" />} label="إعدادات شاملة" active={tab === "settings"} onClick={() => setTab("settings")} />
+          <TabBtn icon={<Wallet className="size-4" />} label="إعدادات سحابية + شام كاش" active={tab === "cloud"} onClick={() => setTab("cloud")} />
           <TabBtn icon={<SlidersHorizontal className="size-4" />} label="إعدادات متقدّمة" active={tab === "schema"} onClick={() => setTab("schema")} />
           <TabBtn icon={<Type className="size-4" />} label="نصوص الموقع (CMS)" active={tab === "cms"} onClick={() => setTab("cms")} />
           <TabBtn icon={<Sparkles className="size-4" />} label="المحاولات والإعلانات" active={tab === "quota"} onClick={() => setTab("quota")} />
@@ -82,6 +83,7 @@ function AdminPage() {
         {tab === "vendors" && <VendorsTab />}
         {tab === "orders" && <OrdersTab />}
         {tab === "settings" && <GlobalSettingsTab />}
+        {tab === "cloud" && <CloudSettingsTab />}
         {tab === "schema" && <SchemaControllerTab />}
         {tab === "cms" && <CmsStringsTab />}
         {tab === "quota" && <QuotaSettingsTab />}
