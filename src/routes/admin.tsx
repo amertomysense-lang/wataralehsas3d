@@ -316,8 +316,8 @@ function PricingTab() {
     };
     const rowId = pricing?._rowId ?? null;
     const res = rowId
-      ? await supabase.from("pricing_config").update(payload).eq("id", rowId as string)
-      : await supabase.from("pricing_config").insert(payload);
+      ? await supabase.from("pricing_config").update(payload as never).eq("id", Number(rowId))
+      : await supabase.from("pricing_config").insert(payload as never);
 
     if (res.error) toast.warning(`حُفظ محلياً — تعذر المزامنة: ${res.error.message}`);
     else toast.success("تم تحديث الأسعار");
