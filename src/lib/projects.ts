@@ -67,7 +67,7 @@ export async function listPublicProjects(): Promise<SavedProject[]> {
     .eq("is_public", true)
     .order("created_at", { ascending: false })
     .limit(200);
-  return (data ?? []) as SavedProject[];
+  return (data ?? []) as unknown as SavedProject[];
 }
 
 export async function deleteProject(id: string) {
