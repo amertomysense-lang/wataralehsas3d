@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X, Wand2, Loader2,
-  Download, Camera, RefreshCw, Sliders, RotateCcw, Scissors, Check,
+  Download, Camera, RefreshCw, Sliders, RotateCcw, Scissors, Check, Lock, Unlock, Target, Navigation,
 } from "lucide-react";
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
@@ -63,6 +63,11 @@ function Simulator() {
   const [wallPoints, setWallPoints] = useState<{ x: number; y: number }[]>([]);
   const [defineMode, setDefineMode] = useState(false);
   const [postEdit, setPostEdit] = useState(false);
+  const [lockAspect, setLockAspect] = useState(true);
+  const [autoFitMode, setAutoFitMode] = useState(false);
+  const [addressNote, setAddressNote] = useState("");
+  const [locationUrl, setLocationUrl] = useState("");
+  const [geoLoading, setGeoLoading] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -216,6 +221,8 @@ function Simulator() {
       designName: active?.name ?? "تصميم مخصص",
       designUrl: active?.url ?? "",
       total: grandTotal, currency,
+      locationUrl: locationUrl || undefined,
+      addressNote: addressNote || undefined,
     });
     await insertOrderOrQueue({
       region_id: region.id, region_name: region.name,
@@ -229,6 +236,79 @@ function Simulator() {
   }
 
   const previewBg = aiResult || bg;
+
+  /**
+   * الكشف التلقائي عن حدود الجدار عند النقر:
+   * نرسم صورة الجدار في كانفس مخفي، ثم نمسح أفقياً/عمودياً من نقطة النقر
+   * ونتوقف عندما يختلف اللون بشكل واضح (كشف حواف بسيط بمقارنة تباين اللونية).
+   * النتيجة: مستطيل يمثّل مساحة الجدار المتجانسة يحيط بنقطة النقر.
+   */
+  async function autoFitOnClick(clickXPct: number, clickYPct: number) {
+    if (!previewBg) return;
+    try {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = previewBg;
+      await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(); });
+      const W = Math.min(400, img.naturalWidth || 400);
+      const H = Math.round((img.naturalHeight / img.naturalWidth) * W) || 300;
+      const c = document.createElement("canvas");
+      c.width = W; c.height = H;
+      const ctx = c.getContext("2d"); if (!ctx) return;
+      ctx.drawImage(img, 0, 0, W, H);
+      const data = ctx.getImageData(0, 0, W, H).data;
+      const cx = Math.round((clickXPct / 100) * W);
+      const cy = Math.round((clickYPct / 100) * H);
+      const idx = (x: number, y: number) => (y * W + x) * 4;
+      const seed = [data[idx(cx, cy)], data[idx(cx, cy) + 1], data[idx(cx, cy) + 2]];
+      const TH = 42; // عتبة اختلاف اللون
+      const diff = (i: number) =>
+        Math.abs(data[i] - seed[0]) + Math.abs(data[i + 1] - seed[1]) + Math.abs(data[i + 2] - seed[2]);
+      // مسح رباعي الاتجاهات
+      let left = cx; while (left > 1 && diff(idx(left - 1, cy)) < TH) left--;
+      let right = cx; while (right < W - 2 && diff(idx(right + 1, cy)) < TH) right++;
+      let top = cy; while (top > 1 && diff(idx(cx, top - 1)) < TH) top--;
+      let bottom = cy; while (bottom < H - 2 && diff(idx(cx, bottom + 1)) < TH) bottom++;
+      // مسح إضافي على منتصفي الحدود لتحسين الدقة
+      const midX = Math.round((left + right) / 2);
+      while (top > 1 && diff(idx(midX, top - 1)) < TH) top--;
+      while (bottom < H - 2 && diff(idx(midX, bottom + 1)) < TH) bottom++;
+
+      const wPct = ((right - left) / W) * 100;
+      const hPct = ((bottom - top) / H) * 100;
+      if (wPct < 6 || hPct < 6) {
+        toast.error("لم أستطع تحديد الجدار — جرّب نقرة أوضح على منطقة متجانسة");
+        return;
+      }
+      // نُبقي التصميم داخل الجدار بهامش 12% ليبدو طبيعياً
+      const pad = 0.12;
+      const bx = (left / W) * 100 + wPct * pad;
+      const by = (top / H) * 100 + hPct * pad;
+      const bw = wPct * (1 - pad * 2);
+      const bh = hPct * (1 - pad * 2);
+      setBox({ ...box, x: bx, y: by, w: bw, h: bh });
+      toast.success("تم دمج التصميم داخل الجدار المُختار ✨");
+    } catch {
+      toast.error("تعذّر تحليل صورة الجدار (قد تكون من مصدر خارجي محمي)");
+    }
+  }
+
+  async function captureLocation() {
+    if (!navigator.geolocation) { toast.error("جهازك لا يدعم تحديد الموقع"); return; }
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const url = `https://maps.google.com/?q=${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+        setLocationUrl(url);
+        setGeoLoading(false);
+        toast.success("تم التقاط موقعك الحالي — سيُرسل مع الطلب");
+      },
+      () => { setGeoLoading(false); toast.error("رُفض إذن الموقع — يمكنك لصق رابط خرائط Google يدوياً"); },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
 
   return (
     <div className="min-h-screen bg-background pb-40" dir="rtl">
@@ -303,6 +383,7 @@ function Simulator() {
                       onChange={setBox}
                       container={stageRef}
                       embossed={embossed}
+                      lockAspect={lockAspect}
                     />
                   </div>
                 </div>
@@ -351,6 +432,26 @@ function Simulator() {
                 </div>
               )}
 
+              {autoFitMode && !defineMode && (
+                <>
+                  <button
+                    aria-label="انقر الجدار المطلوب"
+                    onClick={async (e) => {
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      const x = ((e.clientX - rect.left) / rect.width) * 100;
+                      const y = ((e.clientY - rect.top) / rect.height) * 100;
+                      await autoFitOnClick(x, y);
+                      setAutoFitMode(false);
+                    }}
+                    className="absolute inset-0 cursor-crosshair bg-primary/10"
+                  />
+                  <div className="absolute inset-x-0 top-2 mx-auto flex w-fit items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-black text-primary-foreground shadow">
+                    <Target className="size-3.5" /> انقر على الجدار الذي تريد الطباعة عليه
+                    <button onClick={() => setAutoFitMode(false)} className="ms-1 rounded bg-white/20 px-1.5 py-0.5">إلغاء</button>
+                  </div>
+                </>
+              )}
+
               {aiBusy && (
                 <div className="absolute inset-0 grid place-items-center bg-background/60 backdrop-blur-sm">
                   <div className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-black text-primary-foreground">
@@ -384,6 +485,21 @@ function Simulator() {
                 className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-bold"
                 title="إعادة تعيين موضع وتأثيرات التصميم">
                 <RotateCcw className="size-3.5" /> إعادة تعيين
+              </button>
+              <button onClick={() => setAutoFitMode((v) => !v)}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
+                  autoFitMode ? "bg-primary text-primary-foreground" : "border border-primary/40 bg-primary/10 text-primary"
+                }`}
+                title="انقر أي جدار في الصورة وسيُدمج التصميم داخل حدوده تلقائياً">
+                <Target className="size-3.5" /> {autoFitMode ? "انقر الجدار…" : "دمج تلقائي على جدار"}
+              </button>
+              <button onClick={() => setLockAspect((v) => !v)}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
+                  lockAspect ? "bg-accent/20 text-accent-foreground border border-accent/40" : "border border-border bg-background text-muted-foreground"
+                }`}
+                title="تثبيت نسبة أبعاد التصميم أثناء التمديد لمنع التشويه">
+                {lockAspect ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
+                {lockAspect ? "نسبة مثبّتة" : "نسبة حرة"}
               </button>
               <button onClick={() => { setDefineMode((v) => !v); if (!defineMode) setWallPoints([]); }}
                 className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
@@ -525,6 +641,40 @@ function Simulator() {
               )}
             </div>
           </div>
+
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 text-sm font-bold"><Navigation className="size-4 text-primary" /> موقع التركيب</div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              أرسل عنوانك أو موقعك على الخريطة ليصل فريقنا مباشرة إلى مكان العمل.
+            </p>
+            <textarea
+              value={addressNote}
+              onChange={(e) => setAddressNote(e.target.value)}
+              rows={2}
+              placeholder="الحي / الشارع / علامة مميزة (اختياري)"
+              className="mt-2 w-full rounded-lg bg-muted px-2 py-2 text-xs"
+            />
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button onClick={captureLocation} disabled={geoLoading}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 border border-primary/40 px-2.5 py-1.5 text-[11px] font-black text-primary disabled:opacity-50">
+                {geoLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Target className="size-3.5" />}
+                التقاط موقعي الحالي
+              </button>
+              <input
+                value={locationUrl}
+                onChange={(e) => setLocationUrl(e.target.value)}
+                placeholder="أو الصق رابط خرائط Google"
+                className="flex-1 min-w-[160px] rounded-lg bg-muted px-2 py-1.5 text-[11px]"
+              />
+            </div>
+            {locationUrl && (
+              <a href={locationUrl} target="_blank" rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-primary underline">
+                <MapPin className="size-3" /> فتح الموقع للتحقق
+              </a>
+            )}
+          </div>
+
 
           <div className="rounded-2xl border border-border bg-card p-4">
             <div className="flex items-center gap-2 text-sm font-bold"><Truck className="size-4 text-primary" /> الشحن</div>

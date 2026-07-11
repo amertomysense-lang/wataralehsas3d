@@ -13,6 +13,9 @@ export type CustomHaircut = {
 
 export type DesignSection = "haircut" | "simulator" | "marketing" | "tryon";
 
+// نظهر في الواجهة فقط الأقسام المتعلقة بالديكور — يمكن للأدمن استخدام هذه القائمة
+export const DECOR_SECTIONS: DesignSection[] = ["simulator", "marketing"];
+
 export const SECTION_LABELS: Record<DesignSection, string> = {
   haircut: "قصّات الشعر",
   simulator: "محاكي الجدران/الأرضيات",
@@ -71,10 +74,12 @@ export type PlatformSettings = {
   // تصاميم مخصّصة (برومبتات جاهزة) لكل قسم AI — تُربط تلقائياً
   customDesigns: CustomDesign[];
 
-  // ميديا الواجهة — صورة خلفية شفافة + شريط فيديوهات تعريفية
+  // ميديا الواجهة — صورة/فيديو خلفية + شريط فيديوهات تعريفية
   customBgImage: string;        // data:URL أو رابط https — يُعرض كخلفية ثابتة للموقع
   customBgOpacity: number;      // 0 - 1
   customVideos: { id: string; url: string; title?: string }[]; // أشرطة فيديو على الواجهة
+  bgVideoEnabled: boolean;      // استخدام أول فيديو كخلفية متحركة للموقع
+  bgVideoOpacity: number;       // 0 - 1
 };
 
 export const DEFAULT_SETTINGS: PlatformSettings = {
@@ -111,8 +116,10 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
   customHaircuts: [],
   customDesigns: [],
   customBgImage: "",
-  customBgOpacity: 0.18,
+  customBgOpacity: 0.35,
   customVideos: [],
+  bgVideoEnabled: false,
+  bgVideoOpacity: 0.4,
 };
 
 const KEY = "watar.platform.settings.v2";

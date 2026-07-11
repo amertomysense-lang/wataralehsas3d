@@ -1138,7 +1138,7 @@ function PaymentsTab() {
 /* ============ تبويب قصّات الشعر المخصّصة ============ */
 function DesignsTab() {
   const [s, set] = useSettings();
-  const [section, setSection] = useState<DesignSection>("haircut");
+  const [section, setSection] = useState<DesignSection>("simulator");
   const [form, setForm] = useState<{ label: string; prompt: string; preview: string; gender: "m" | "f" | "u" }>({
     label: "", prompt: "", preview: "", gender: "u",
   });
@@ -1183,7 +1183,7 @@ function DesignsTab() {
     });
   }
 
-  const sections: DesignSection[] = ["haircut", "simulator", "marketing", "tryon"];
+  const sections: DesignSection[] = ["simulator", "marketing"];
 
   return (
     <div className="space-y-5">
@@ -1488,6 +1488,25 @@ function MediaTab() {
             </p>
           )}
         </div>
+
+        {(s.customVideos?.length ?? 0) > 0 && (
+          <div className="mt-4 rounded-xl border border-dashed border-primary/30 bg-primary/5 p-3">
+            <label className="flex items-center gap-2 text-xs font-black text-foreground">
+              <input type="checkbox" className="accent-primary"
+                checked={!!s.bgVideoEnabled}
+                onChange={(e) => setS({ ...s, bgVideoEnabled: e.target.checked })} />
+              استخدم أول فيديو كخلفية متحركة للموقع كاملاً
+            </label>
+            {s.bgVideoEnabled && (
+              <label className="mt-2 flex items-center gap-2 text-xs font-bold text-muted-foreground">
+                شفافية الفيديو:
+                <input type="range" min={0} max={100} value={Math.round((s.bgVideoOpacity ?? 0.4) * 100)}
+                  onChange={(e) => setS({ ...s, bgVideoOpacity: Number(e.target.value) / 100 })} />
+                <span className="w-8 text-end text-foreground">{Math.round((s.bgVideoOpacity ?? 0.4) * 100)}%</span>
+              </label>
+            )}
+          </div>
+        )}
       </section>
     </div>
   );
