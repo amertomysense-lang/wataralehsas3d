@@ -221,6 +221,8 @@ function Simulator() {
       designName: active?.name ?? "تصميم مخصص",
       designUrl: active?.url ?? "",
       total: grandTotal, currency,
+      locationUrl: locationUrl || undefined,
+      addressNote: addressNote || undefined,
     });
     await insertOrderOrQueue({
       region_id: region.id, region_name: region.name,
