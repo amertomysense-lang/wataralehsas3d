@@ -434,6 +434,47 @@ function Simulator() {
     } catch { toast.error("تعذّرت قراءة الصورة (قد تكون من مصدر محمي)"); }
   }
 
+  // ✨ دمج ذكي فوري بزر واحد — يضبط الشفافية والمزج ويطابق إضاءة الغرفة
+  async function smartBlend() {
+    if (!bg || !active) { toast.error("ارفع صورة الجدار ثم اختر تصميماً"); return; }
+    setBox((b) => ({
+      ...b,
+      opacity: 0.92,
+      blur: 0.5,
+      blendMode: surface === "floor" ? "multiply" : "overlay",
+      brightness: 1.0,
+      saturation: 1.05,
+      contrast: 1.05,
+    }));
+    // مطابقة تلقائية للإضاءة بعد لحظة (لضمان تحديث box أولاً)
+    setTimeout(() => { void matchLighting(); }, 60);
+    toast.success("تم الدمج الذكي — عدّل الحجم بحرية إن أردت");
+  }
+
+  // 📚 حفظ التصميم الحالي في المكتبة الدائمة (أدمن فقط)
+  async function saveActiveToLibrary() {
+    if (!active) { toast.error("لا يوجد تصميم لحفظه"); return; }
+    const name = window.prompt("اسم التصميم في المكتبة:", active.name) || active.name;
+    let url = active.url;
+    // إذا كانت data:URL نرفعها لسطل التخزين قبل الحفظ
+    if (url.startsWith("data:")) {
+      try {
+        const blob = await (await fetch(url)).blob();
+        const path = `admin/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+        const { error: upErr } = await supabase.storage.from("design-layers").upload(path, blob, {
+          contentType: blob.type || "image/webp", upsert: true,
+        });
+        if (upErr) throw upErr;
+        url = supabase.storage.from("design-layers").getPublicUrl(path).data.publicUrl;
+      } catch (e) { toast.error("تعذّر رفع الصورة إلى السطل"); return; }
+    }
+    const { error } = await supabase.from("products").insert({
+      title: name, image_url: url, type: "decor",
+    });
+    if (error) { toast.error("تعذّر الحفظ في المكتبة"); return; }
+    toast.success("تمت إضافة التصميم للمكتبة — سيظهر للزبائن فوراً ✨");
+  }
+
   async function saveCurrentProject(makePublic: boolean) {
     if (!bg) { toast.error("لا يوجد مشروع لحفظه"); return; }
     setSavingProject(true);
