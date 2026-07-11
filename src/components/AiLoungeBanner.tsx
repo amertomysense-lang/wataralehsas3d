@@ -22,9 +22,9 @@ export function AiLoungeBanner({ className = "" }: { className?: string }) {
       try {
         const { data } = await supabase.from("vendors").select("id,name").limit(8);
         if (!active || !data?.length) return;
-        const merchant = data.map((v: { id: string; name: string }) => ({
+        const merchant = data.map((v) => ({
           id: v.id,
-          title: `إعلان من ${v.name}`,
+          title: `إعلان من ${v.name ?? "متجر معتمد"}`,
           subtitle: "متجر معتمد على وتر الإحساس",
         }));
         setAds([...MASTER_ADS, ...merchant]);
