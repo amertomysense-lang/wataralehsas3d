@@ -86,7 +86,7 @@ function Simulator() {
   const [projectName, setProjectName] = useState("");
   const [savingProject, setSavingProject] = useState(false);
   const [showMyProjects, setShowMyProjects] = useState(false);
-  const [autoLightMatch, setAutoLightMatch] = useState(true);
+  const myProjectsPad = null; // reserved for future use
   const myProjects = useMyProjects();
 
   const fileRef = useRef<HTMLInputElement>(null);
