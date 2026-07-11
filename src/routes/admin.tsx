@@ -1183,7 +1183,7 @@ function DesignsTab() {
     });
   }
 
-  const sections: DesignSection[] = ["haircut", "simulator", "marketing", "tryon"];
+  const sections: DesignSection[] = ["simulator", "marketing"];
 
   return (
     <div className="space-y-5">
