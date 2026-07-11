@@ -373,18 +373,18 @@ function GlobalSettingsTab() {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="العملة الافتراضية">
+          <TextField label="العملة الافتراضية">
             <select value={draft.currency} onChange={(e) => update("currency", e.target.value)} className="input">
               {CURRENCY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           </Field>
-          <Field label="السعر/متر² الافتراضي">
+          <TextField label="السعر/متر² الافتراضي">
             <input type="number" step="0.5" value={draft.pricePerMeter} onChange={(e) => update("pricePerMeter", +e.target.value)} className="input" />
           </Field>
-          <Field label={`رسوم الوقود لكل كم (${draft.currency})`}>
+          <TextField label={`رسوم الوقود لكل كم (${draft.currency})`}>
             <input type="number" step="0.05" value={draft.fuelPerKm} onChange={(e) => update("fuelPerKm", +e.target.value)} className="input" />
           </Field>
-          <Field label="نسبة البروز الملموس %">
+          <TextField label="نسبة البروز الملموس %">
             <input type="number" step="1" value={Math.round(draft.embossedRate * 100)} onChange={(e) => update("embossedRate", +e.target.value / 100)} className="input" />
           </Field>
         </div>
@@ -392,10 +392,10 @@ function GlobalSettingsTab() {
         {/* رسائل واتساب */}
         <div className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-2">
           <p className="text-xs font-black text-foreground">قوالب واتساب</p>
-          <Field label="تحية افتتاحية">
+          <TextField label="تحية افتتاحية">
             <input value={draft.whatsappGreeting} onChange={(e) => update("whatsappGreeting", e.target.value)} className="input" />
           </Field>
-          <Field label="نص طلب العيّنة">
+          <TextField label="نص طلب العيّنة">
             <input value={draft.whatsappSampleNote} onChange={(e) => update("whatsappSampleNote", e.target.value)} className="input" />
           </Field>
         </div>
@@ -1650,10 +1650,10 @@ function CloudSettingsTab() {
       <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
         <h2 className="mb-4 text-lg font-black">هوية المنصة</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="اسم العلامة" value={current.brand_name} onChange={(v) => set("brand_name", v)} />
-          <Field label="واتساب" value={current.contact_whatsapp} onChange={(v) => set("contact_whatsapp", v)} />
-          <Field label="البريد الإلكتروني" value={current.contact_email ?? ""} onChange={(v) => set("contact_email", v)} />
-          <Field label="عنوان الواجهة" value={current.hero_title ?? ""} onChange={(v) => set("hero_title", v)} />
+          <TextField label="اسم العلامة" value={current.brand_name} onChange={(v) => set("brand_name", v)} />
+          <TextField label="واتساب" value={current.contact_whatsapp} onChange={(v) => set("contact_whatsapp", v)} />
+          <TextField label="البريد الإلكتروني" value={current.contact_email ?? ""} onChange={(v) => set("contact_email", v)} />
+          <TextField label="عنوان الواجهة" value={current.hero_title ?? ""} onChange={(v) => set("hero_title", v)} />
           <div className="sm:col-span-2">
             <label className="mb-1 block text-[11px] font-black text-muted-foreground">وصف الواجهة</label>
             <textarea rows={2} value={current.hero_subtitle ?? ""} onChange={(e) => set("hero_subtitle", e.target.value)}
@@ -1665,8 +1665,8 @@ function CloudSettingsTab() {
       <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
         <h2 className="mb-4 text-lg font-black">شام كاش</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="رقم شام كاش" value={current.sham_cash_number ?? ""} onChange={(v) => set("sham_cash_number", v)} />
-          <Field label="اسم صاحب الحساب" value={current.sham_cash_name ?? ""} onChange={(v) => set("sham_cash_name", v)} />
+          <TextField label="رقم شام كاش" value={current.sham_cash_number ?? ""} onChange={(v) => set("sham_cash_number", v)} />
+          <TextField label="اسم صاحب الحساب" value={current.sham_cash_name ?? ""} onChange={(v) => set("sham_cash_name", v)} />
           <div className="sm:col-span-2">
             <label className="mb-1 block text-[11px] font-black text-muted-foreground">ملاحظات الدفع</label>
             <textarea rows={2} value={current.sham_cash_notes ?? ""} onChange={(e) => set("sham_cash_notes", e.target.value)}
