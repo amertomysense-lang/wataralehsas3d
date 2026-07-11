@@ -308,6 +308,7 @@ function Simulator() {
                       onChange={setBox}
                       container={stageRef}
                       embossed={embossed}
+                      lockAspect={lockAspect}
                     />
                   </div>
                 </div>
