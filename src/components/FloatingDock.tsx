@@ -1,14 +1,27 @@
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, X, Send, Loader2, Sparkles, Info, Layers, Move, Wand2, Shield, Images } from "lucide-react";
+import {
+  MessageCircle, X, Send, Loader2, Sparkles, Info, Layers, Move, Wand2, Shield,
+  Home, Images, Wand2 as WandNav, Calculator, RefreshCw, Upload,
+} from "lucide-react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 
 /**
- * رصيف عائم موحّد لأزرار المساعد والمزايا والواتساب.
- * يوفّر ترتيباً عمودياً ثابتاً في الزاوية السفلى اليسرى بحيث لا تتصادم الأزرار ولا تغطّي محتوى.
- * زر الواتساب اختياري ويُفعّل عبر <FloatingDockSlot /> (Portal) من صفحة المنتج.
+ * دوك سفلي احترافي موحّد لكل التطبيق:
+ * - شريط تنقّل رئيسي (الرئيسية · المعرض · المحاكي · الحاسبة) بتصميم بيضاوي أخضر.
+ * - صف أدوات سريعة فوقه (محادثة · مزايا · تحديث · لوحة تحكم للأدمن).
+ * يحافظ على نفس المزايا الموجودة سابقاً (المحادثة، فقاعة المزايا، الوصول للوحة التحكم).
  */
 
 type Msg = { role: "user" | "assistant"; content: string };
+
+type NavItem = { key: string; label: string; icon: typeof Home; to: string; hash?: string; match: (p: string) => boolean };
+
+const NAV: NavItem[] = [
+  { key: "home", label: "الرئيسية", icon: Home, to: "/", match: (p) => p === "/" },
+  { key: "gallery", label: "المعرض", icon: Images, to: "/gallery", match: (p) => p.startsWith("/gallery") },
+  { key: "sim", label: "المحاكي", icon: WandNav, to: "/simulator", match: (p) => p.startsWith("/simulator") },
+  { key: "calc", label: "الحاسبة", icon: Calculator, to: "/simulator", hash: "calc", match: () => false },
+];
 
 export function FloatingDock() {
   const location = useLocation();
@@ -16,94 +29,95 @@ export function FloatingDock() {
   const [chatOpen, setChatOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
 
-  // إخفاء المساعد داخل صفحة المنتج (لها محادثتها الخاصة)
   const hideChat = location.pathname.startsWith("/product/");
   const hideAdmin = location.pathname.startsWith("/admin") || location.pathname.startsWith("/bulk-upload");
+  const hide = location.pathname.startsWith("/admin") || location.pathname.startsWith("/bulk-upload");
 
-  // في صفحات فيها شريط سفلي ثابت (المحاكي) نرفع الرصيف فوقه لئلا يختفي خلفه.
-  const hasBottomBar = location.pathname.startsWith("/simulator");
-  const bottomOffset = hasBottomBar
-    ? "calc(env(safe-area-inset-bottom) + 5.5rem)"
-    : "calc(env(safe-area-inset-bottom) + 1rem)";
+  if (hide) return null;
 
   return (
     <>
-      {/* الرصيف: عمود ثابت أسفل يسار الشاشة */}
+      {/* منطقة الأدوات + شريط التنقّل — ثابتة أسفل الشاشة */}
       <div
         dir="rtl"
-        className="fixed left-3 z-50 flex flex-col items-center gap-2.5"
-        style={{ bottom: bottomOffset }}
+        className="pointer-events-none fixed inset-x-0 z-40 flex flex-col items-stretch gap-2 px-3"
+        style={{ bottom: "calc(env(safe-area-inset-bottom) + 0.5rem)" }}
       >
+        {/* صف الأدوات السريعة */}
+        <div className="pointer-events-auto mx-auto flex w-full max-w-md items-center gap-2">
+          <button
+            onClick={() => setChatOpen(true)}
+            className="flex h-11 flex-1 items-center justify-between gap-2 rounded-full border border-primary/15 bg-card/95 px-4 shadow-lg backdrop-blur-lg transition active:scale-[0.98]"
+            aria-label="محادثة"
+          >
+            <span className="inline-flex items-center gap-2 text-[13px] font-bold text-primary">
+              <MessageCircle className="size-4" /> محادثة
+            </span>
+            <span className="grid size-7 place-items-center rounded-full bg-primary/10 text-primary">
+              <Upload className="size-3.5" />
+            </span>
+          </button>
+
+          <button
+            onClick={() => setInfoOpen(true)}
+            aria-label="مزايا المشروع"
+            title="مزايا المشروع"
+            className="grid size-11 place-items-center rounded-full border border-primary/15 bg-card/95 text-primary shadow-lg backdrop-blur-lg transition active:scale-95"
+          >
+            <Info className="size-4" />
+          </button>
+
+          <button
+            onClick={() => window.location.reload()}
+            aria-label="تحديث"
+            title="تحديث الصفحة"
+            className="grid size-11 place-items-center rounded-full border border-primary/15 bg-card/95 text-primary shadow-lg backdrop-blur-lg transition active:scale-95"
+          >
+            <RefreshCw className="size-4" />
+          </button>
+
+          {!hideAdmin && (
+            <button
+              onClick={() => navigate({ to: "/admin" })}
+              aria-label="لوحة التحكم"
+              title="لوحة التحكم"
+              className="grid size-11 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg transition active:scale-95"
+            >
+              <Shield className="size-4" />
+            </button>
+          )}
+        </div>
 
         {/* منفذ لأزرار سياقية (واتساب المنتج) */}
-        <div id="watar-dock-slot" className="flex flex-col items-center gap-2.5" />
+        <div id="watar-dock-slot" className="pointer-events-auto mx-auto flex w-full max-w-md flex-wrap items-center justify-center gap-2 empty:hidden" />
 
-        {!hideAdmin && (
-          <DockButton
-            label="لوحة التحكم"
-            tone="accent"
-            onClick={() => navigate({ to: "/admin" })}
-          >
-            <Shield className="size-4" />
-          </DockButton>
-        )}
-
-        <DockButton
-          label="معرض الأعمال"
-          tone="accent"
-          onClick={() => navigate({ to: "/gallery" })}
-        >
-          <Images className="size-4" />
-        </DockButton>
-
-        <DockButton
-          label="مزايا المشروع"
-          tone="accent"
-          onClick={() => setInfoOpen(true)}
-        >
-          <Info className="size-4" />
-        </DockButton>
-
-        {!hideChat && (
-          <DockButton
-            label="اسأل المساعد"
-            tone="primary"
-            onClick={() => setChatOpen(true)}
-            pulse
-          >
-            <MessageCircle className="size-5" />
-          </DockButton>
-        )}
+        {/* شريط التنقّل الرئيسي — بيضاوي أخضر */}
+        <nav className="pointer-events-auto mx-auto flex w-full max-w-md items-center justify-between gap-1 rounded-[28px] border border-white/5 bg-primary p-1.5 shadow-2xl shadow-primary/30">
+          {NAV.map((item) => {
+            const active = item.match(location.pathname);
+            return (
+              <button
+                key={item.key}
+                onClick={() => navigate({ to: item.to, hash: item.hash })}
+                aria-label={item.label}
+                aria-current={active ? "page" : undefined}
+                className={`flex flex-1 flex-col items-center justify-center gap-1 rounded-[22px] py-2.5 transition ${
+                  active
+                    ? "bg-[color-mix(in_oklab,var(--accent)_92%,white)] text-primary shadow-md"
+                    : "text-primary-foreground/60 hover:text-primary-foreground"
+                }`}
+              >
+                <item.icon className="size-[18px]" />
+                <span className="text-[10px] font-bold">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
-      {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} />}
+      {chatOpen && !hideChat && <ChatPanel onClose={() => setChatOpen(false)} />}
       {infoOpen && <FeaturesPanel onClose={() => setInfoOpen(false)} />}
     </>
-  );
-}
-
-function DockButton({
-  children, label, onClick, tone, pulse,
-}: {
-  children: React.ReactNode; label: string; onClick: () => void;
-  tone: "primary" | "accent" | "success"; pulse?: boolean;
-}) {
-  const bg =
-    tone === "primary" ? "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground"
-    : tone === "success" ? "bg-gradient-to-br from-green-600 to-green-500 text-white"
-    : "bg-card text-foreground border border-border";
-  return (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      className={`group relative grid size-11 place-items-center rounded-full shadow-xl ring-2 ring-background transition hover:scale-110 active:scale-95 ${bg} ${pulse ? "animate-float" : ""}`}
-    >
-      {children}
-      <span className="pointer-events-none absolute right-full mr-2 whitespace-nowrap rounded-md bg-foreground/90 px-2 py-1 text-[10px] font-black text-background opacity-0 shadow transition group-hover:opacity-100">
-        {label}
-      </span>
-    </button>
   );
 }
 
@@ -143,7 +157,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-start bg-black/40 backdrop-blur-sm sm:p-5" dir="rtl" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:p-5" dir="rtl" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()}
         className="flex h-[85vh] w-full flex-col rounded-t-3xl border border-border bg-card shadow-2xl sm:h-[600px] sm:max-w-md sm:rounded-3xl">
         <div className="flex items-center justify-between border-b border-border p-4">
