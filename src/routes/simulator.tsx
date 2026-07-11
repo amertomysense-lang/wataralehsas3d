@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X, Wand2, Loader2,
-  Download, Camera, RefreshCw, Sliders, RotateCcw, Scissors, Check,
+  Download, Camera, RefreshCw, Sliders, RotateCcw, Scissors, Check, Lock, Unlock, Target, Navigation,
 } from "lucide-react";
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
