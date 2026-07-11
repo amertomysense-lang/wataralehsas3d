@@ -133,9 +133,19 @@ function Simulator() {
     () => (pricing ? calcTotal(width, height, embossed, pricing) : 0),
     [pricing, width, height, embossed],
   );
-  const baseTotal = baseTotalUsd * fx;
+  const baseTotal = baseTotal_calc();
+  function baseTotal_calc() { return baseTotalUsd * fx; }
   const shippingCost = (shipping === "company" ? km * settings.fuelPerKm : 0) * fx;
-  const grandTotal = baseTotal + shippingCost;
+
+  // Coupon
+  const coupon = useMemo(() => {
+    const c = couponCode.trim().toUpperCase();
+    if (!c) return null;
+    return settings.coupons?.find((k) => k.code.toUpperCase() === c) ?? null;
+  }, [couponCode, settings.coupons]);
+  const subtotal = baseTotal + shippingCost;
+  const discount = coupon ? subtotal * (coupon.percent / 100) : 0;
+  const grandTotal = sampleOrder ? 15 * fx : subtotal - discount;
 
   function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
