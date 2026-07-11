@@ -838,7 +838,7 @@ function Simulator() {
                 }} />
               </label>
             </div>
-            {isAdmin() && active && (
+            {mounted && isAdmin() && active && (
               <button onClick={saveActiveToLibrary}
                 className="mb-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-2.5 py-1.5 text-[11px] font-black text-accent-foreground hover:bg-accent/20"
                 title="حفظ التصميم الحالي دائماً في مكتبة الزبائن">
