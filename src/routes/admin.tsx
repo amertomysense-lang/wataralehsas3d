@@ -1030,7 +1030,7 @@ function CSVImportButton({ table, sample, map, onDone }: {
       const rows = parseCSV(text);
       if (!rows.length) { toast.error("لا توجد صفوف في الملف"); return; }
       const payload = rows.map(map);
-      const { error } = await supabase.from(table).insert(payload);
+      const { error } = await supabase.from(table as never).insert(payload as never);
       if (error) throw error;
       toast.success(`تم استيراد ${payload.length} صف`);
       onDone();
