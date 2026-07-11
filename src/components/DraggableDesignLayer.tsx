@@ -59,15 +59,23 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
           y: Math.max(-20, Math.min(120 - s.box.h, s.box.y + dy)),
         });
       } else if (mode === "resize") {
-        onChange({
-          ...s.box,
-          w: Math.max(4, Math.min(200, s.box.w + dx)),
-          h: Math.max(4, Math.min(200, s.box.h + dy)),
-        });
+        let nw = Math.max(4, Math.min(200, s.box.w + dx));
+        let nh = Math.max(4, Math.min(200, s.box.h + dy));
+        if (lockAspect && s.box.h > 0) {
+          const ratio = s.box.w / s.box.h;
+          const scale = Math.max(nw / s.box.w, nh / s.box.h);
+          nw = Math.max(4, Math.min(200, s.box.w * scale));
+          nh = Math.max(4, Math.min(200, nw / ratio));
+        }
+        onChange({ ...s.box, w: nw, h: nh });
       } else if (mode === "resize-x") {
-        onChange({ ...s.box, w: Math.max(4, Math.min(200, s.box.w + dx)) });
+        const nw = Math.max(4, Math.min(200, s.box.w + dx));
+        const nh = lockAspect && s.box.w > 0 ? Math.max(4, Math.min(200, (nw / s.box.w) * s.box.h)) : s.box.h;
+        onChange({ ...s.box, w: nw, h: nh });
       } else if (mode === "resize-y") {
-        onChange({ ...s.box, h: Math.max(4, Math.min(200, s.box.h + dy)) });
+        const nh = Math.max(4, Math.min(200, s.box.h + dy));
+        const nw = lockAspect && s.box.h > 0 ? Math.max(4, Math.min(200, (nh / s.box.h) * s.box.w)) : s.box.w;
+        onChange({ ...s.box, w: nw, h: nh });
       } else if (mode === "rotate") {
         const angle = Math.atan2(e.clientY - (s.cy ?? 0), e.clientX - (s.cx ?? 0)) * (180 / Math.PI) + 90;
         onChange({ ...s.box, rotation: Math.round(angle) });
