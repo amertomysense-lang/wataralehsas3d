@@ -238,25 +238,65 @@ function Simulator() {
   async function sendOrder() {
     if (!region || !pricing) { toast.error("اختر المنطقة"); return; }
     setSending(true);
-    const url = buildWhatsAppUrl({
+    const extras: string[] = [];
+    if (settings.whatsappGreeting) extras.push(settings.whatsappGreeting);
+    if (sampleOrder) extras.push(`— ${settings.whatsappSampleNote}`);
+    if (coupon) extras.push(`— كوبون: ${coupon.code} (-${coupon.percent}%)`);
+    const baseUrl = buildWhatsAppUrl({
       number: region.whatsapp_number, region: region.name,
-      width, height, embossed,
+      width: sampleOrder ? 0.2 : width, height: sampleOrder ? 0.2 : height, embossed,
       designName: active?.name ?? "تصميم مخصص",
       designUrl: active?.url ?? "",
       total: grandTotal, currency,
       locationUrl: locationUrl || undefined,
       addressNote: addressNote || undefined,
     });
+    const glue = baseUrl.includes("text=") ? "%0A%0A" : "?text=";
+    const url = baseUrl + glue + encodeURIComponent(extras.join("\n"));
     await insertOrderOrQueue({
       region_id: region.id, region_name: region.name,
-      design_name: active?.name ?? "تصميم مخصص",
+      design_name: (active?.name ?? "تصميم مخصص") + (sampleOrder ? " (عيّنة 20×20)" : ""),
       design_url: active?.url ?? null,
-      width, height, embossed, total: grandTotal,
+      width: sampleOrder ? 0.2 : width, height: sampleOrder ? 0.2 : height,
+      embossed, total: grandTotal,
       shipping_mode: shipping, shipping_cost: shippingCost,
     });
     setSending(false);
     window.open(url, "_blank");
   }
+
+  // طباعة/PDF: نفتح نافذة صغيرة فيها نتيجة الدمج والتفاصيل جاهزة للطباعة كملف PDF.
+  function exportPdf() {
+    const img = aiResult || bg;
+    if (!img) { toast.error("لا توجد نتيجة لتصديرها"); return; }
+    const w = window.open("", "_blank", "width=900,height=1200");
+    if (!w) return;
+    const html = `<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>عرض تنفيذ — وتر الإحساس</title>
+      <style>body{font-family:Tajawal,system-ui,sans-serif;padding:24px;color:#222}
+      h1{color:#B8893A;margin:0 0 4px}small{color:#666}
+      .card{border:1px solid #eee;border-radius:14px;padding:14px;margin-top:14px}
+      img{max-width:100%;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.15)}
+      table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+      td{padding:6px 8px;border-bottom:1px dashed #eee}td:first-child{color:#666;width:38%}
+      .total{background:linear-gradient(135deg,#B8893A,#E8D5A8);color:#111;padding:14px;border-radius:12px;margin-top:14px;font-size:22px;font-weight:900;text-align:center}
+      </style></head><body>
+      <h1>وتر الإحساس — عرض تنفيذ ديكور</h1><small>${new Date().toLocaleString("ar")}</small>
+      <div class="card"><img src="${img}" alt="تصميم"></div>
+      <div class="card"><table>
+        <tr><td>التصميم</td><td>${active?.name ?? "—"}</td></tr>
+        <tr><td>السطح</td><td>${surface === "wall" ? "جدار" : surface === "floor" ? "أرضية" : "سقف"}</td></tr>
+        <tr><td>المقاس</td><td>${width} م × ${height} م</td></tr>
+        <tr><td>بروز Embossed</td><td>${embossed ? "نعم (+30%)" : "لا"}</td></tr>
+        <tr><td>المنطقة</td><td>${region?.name ?? "—"}</td></tr>
+        <tr><td>الشحن</td><td>${shipping === "company" ? `سيارة الشركة (${km} كم)` : "من طرف العميل"}</td></tr>
+        ${coupon ? `<tr><td>كوبون</td><td>${coupon.code} (-${coupon.percent}%)</td></tr>` : ""}
+      </table></div>
+      <div class="total">الإجمالي: ${grandTotal.toLocaleString("ar", { maximumFractionDigits: 0 })} ${currency}</div>
+      <script>window.onload=()=>setTimeout(()=>window.print(),400)</script>
+      </body></html>`;
+    w.document.write(html); w.document.close();
+  }
+
 
   const previewBg = aiResult || bg;
 
