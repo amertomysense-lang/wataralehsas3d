@@ -1023,6 +1023,46 @@ function Simulator() {
         </div>
       </div>
 
+      {/* My Projects modal */}
+      {showMyProjects && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" dir="rtl" onClick={() => setShowMyProjects(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="max-h-[85vh] w-full max-w-3xl overflow-hidden rounded-3xl bg-card shadow-lg">
+            <div className="flex items-center justify-between border-b border-border p-4">
+              <h3 className="text-sm font-black">مشاريعي المحفوظة</h3>
+              <button onClick={() => setShowMyProjects(false)} className="rounded-full bg-muted p-1.5"><X className="size-4" /></button>
+            </div>
+            <div className="max-h-[70vh] overflow-y-auto p-4">
+              {myProjects.loading && <p className="text-center text-xs text-muted-foreground py-6">جاري التحميل…</p>}
+              {!myProjects.loading && myProjects.rows.length === 0 && (
+                <p className="text-center text-xs text-muted-foreground py-10">لا مشاريع محفوظة بعد.</p>
+              )}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {myProjects.rows.map((p) => (
+                  <div key={p.id} className="overflow-hidden rounded-xl border border-border bg-background">
+                    <button onClick={() => loadProject(p)} className="block w-full text-start">
+                      <div className="aspect-video bg-muted">
+                        {(p.snapshot_url || p.room_url) && (
+                          <img src={p.snapshot_url ?? p.room_url ?? ""} alt={p.name} className="h-full w-full object-cover" />
+                        )}
+                      </div>
+                      <p className="px-2 py-1.5 text-[11px] font-black">{p.name}</p>
+                    </button>
+                    <div className="flex items-center justify-between border-t border-border px-2 py-1.5">
+                      <button onClick={async () => { await togglePublic(p.id, !p.is_public); myProjects.refresh(); }}
+                        className={`text-[10px] font-black ${p.is_public ? "text-emerald-600" : "text-muted-foreground"}`}>
+                        {p.is_public ? "منشور ✓" : "خاص"}
+                      </button>
+                      <button onClick={async () => { await deleteProject(p.id); myProjects.refresh(); }}
+                        className="text-[10px] font-bold text-destructive">حذف</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Live camera modal */}
       {camOpen && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/90 p-4" dir="rtl">
