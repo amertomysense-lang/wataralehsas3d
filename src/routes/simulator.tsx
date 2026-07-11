@@ -643,6 +643,40 @@ function Simulator() {
           </div>
 
           <div className="rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 text-sm font-bold"><Navigation className="size-4 text-primary" /> موقع التركيب</div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              أرسل عنوانك أو موقعك على الخريطة ليصل فريقنا مباشرة إلى مكان العمل.
+            </p>
+            <textarea
+              value={addressNote}
+              onChange={(e) => setAddressNote(e.target.value)}
+              rows={2}
+              placeholder="الحي / الشارع / علامة مميزة (اختياري)"
+              className="mt-2 w-full rounded-lg bg-muted px-2 py-2 text-xs"
+            />
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button onClick={captureLocation} disabled={geoLoading}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 border border-primary/40 px-2.5 py-1.5 text-[11px] font-black text-primary disabled:opacity-50">
+                {geoLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Target className="size-3.5" />}
+                التقاط موقعي الحالي
+              </button>
+              <input
+                value={locationUrl}
+                onChange={(e) => setLocationUrl(e.target.value)}
+                placeholder="أو الصق رابط خرائط Google"
+                className="flex-1 min-w-[160px] rounded-lg bg-muted px-2 py-1.5 text-[11px]"
+              />
+            </div>
+            {locationUrl && (
+              <a href={locationUrl} target="_blank" rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-primary underline">
+                <MapPin className="size-3" /> فتح الموقع للتحقق
+              </a>
+            )}
+          </div>
+
+
+          <div className="rounded-2xl border border-border bg-card p-4">
             <div className="flex items-center gap-2 text-sm font-bold"><Truck className="size-4 text-primary" /> الشحن</div>
             <div className="mt-3 grid gap-2">
               <button onClick={() => setShipping("self")}
