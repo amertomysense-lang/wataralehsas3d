@@ -32,6 +32,11 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
   const [mode, setMode] = useState<"drag" | "resize" | "resize-x" | "resize-y" | "rotate" | null>(null);
   const start = useRef<{ px: number; py: number; box: DesignBox; cx?: number; cy?: number } | null>(null);
 
+  // Multi-touch pinch state — tracks two active pointers to scale the design
+  // symmetrically from its center without distorting the image content.
+  const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchStart = useRef<{ dist: number; box: DesignBox } | null>(null);
+
   const onDown = useCallback((m: "drag" | "resize" | "resize-x" | "resize-y" | "rotate") => (e: React.PointerEvent) => {
     e.preventDefault(); e.stopPropagation();
     (e.target as Element).setPointerCapture?.(e.pointerId);
@@ -44,9 +49,54 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
     };
   }, [box, container]);
 
+  // Pinch-to-zoom handlers attached to the drag surface
+  const onDragPointerDown = useCallback((e: React.PointerEvent) => {
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size === 2) {
+      const [a, b] = Array.from(pointers.current.values());
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      pinchStart.current = { dist, box: { ...box } };
+      setMode(null); // stop drag while pinching
+      return;
+    }
+    onDown("drag")(e);
+  }, [box, onDown]);
+
+  useEffect(() => {
+    function onPointerMoveAll(e: PointerEvent) {
+      if (!pointers.current.has(e.pointerId)) return;
+      pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.current.size >= 2 && pinchStart.current) {
+        const [a, b] = Array.from(pointers.current.values());
+        const dist = Math.hypot(a.x - b.x, a.y - b.y);
+        const scale = Math.max(0.2, Math.min(4, dist / Math.max(8, pinchStart.current.dist)));
+        const s = pinchStart.current.box;
+        // Scale symmetrically around the design center — image aspect preserved.
+        const cx = s.x + s.w / 2;
+        const cy = s.y + s.h / 2;
+        const nw = Math.max(4, Math.min(200, s.w * scale));
+        const nh = Math.max(4, Math.min(200, s.h * scale));
+        onChange({ ...s, w: nw, h: nh, x: cx - nw / 2, y: cy - nh / 2 });
+      }
+    }
+    function onPointerUpAll(e: PointerEvent) {
+      pointers.current.delete(e.pointerId);
+      if (pointers.current.size < 2) pinchStart.current = null;
+    }
+    window.addEventListener("pointermove", onPointerMoveAll);
+    window.addEventListener("pointerup", onPointerUpAll);
+    window.addEventListener("pointercancel", onPointerUpAll);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMoveAll);
+      window.removeEventListener("pointerup", onPointerUpAll);
+      window.removeEventListener("pointercancel", onPointerUpAll);
+    };
+  }, [onChange]);
+
   useEffect(() => {
     if (!mode) return;
     function onMove(e: PointerEvent) {
+      if (pointers.current.size >= 2) return; // pinch takes over
       const s = start.current; const c = container.current;
       if (!s || !c) return;
       const rect = c.getBoundingClientRect();
@@ -132,14 +182,15 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
         alt={name ?? "design"}
         draggable={false}
         decoding="async"
-        className="size-full rounded-lg object-cover shadow-2xl ring-1 ring-white/20"
+        className="size-full rounded-lg object-contain shadow-2xl ring-1 ring-white/20"
         style={{ imageRendering: "crisp-edges", filter: cssFilter } as React.CSSProperties}
       />
-      {/* drag surface */}
+      {/* drag surface — also captures pinch-to-zoom with two fingers */}
       <button
-        onPointerDown={onDown("drag")}
-        aria-label="سحب التصميم"
+        onPointerDown={onDragPointerDown}
+        aria-label="سحب التصميم — قرصة بإصبعين للتكبير"
         className="absolute inset-0 cursor-move opacity-0"
+        style={{ touchAction: "none" }}
       >drag</button>
 
       {/* selection border */}

@@ -86,12 +86,14 @@ function Simulator() {
   const [lighting, setLighting] = useState<Lighting["key"]>("off");
   const [compareMode, setCompareMode] = useState(false);
   const [couponCode, setCouponCode] = useState("");
-  const [sampleOrder, setSampleOrder] = useState(false);
+  const [sampleOrder] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [savingProject, setSavingProject] = useState(false);
   const [showMyProjects, setShowMyProjects] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   const myProjects = useMyProjects();
 
   const fileRef = useRef<HTMLInputElement>(null);
@@ -510,7 +512,7 @@ function Simulator() {
 
 
   return (
-    <div className="min-h-screen bg-background pb-40" dir="rtl">
+    <div className="min-h-screen bg-background pb-40 overflow-x-hidden" dir="rtl">
       <div className="border-b border-border bg-card/40 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
           <Link to="/" className="text-sm font-bold text-primary hover:underline">← الرئيسية</Link>
@@ -836,7 +838,7 @@ function Simulator() {
                 }} />
               </label>
             </div>
-            {isAdmin() && active && (
+            {mounted && isAdmin() && active && (
               <button onClick={saveActiveToLibrary}
                 className="mb-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-2.5 py-1.5 text-[11px] font-black text-accent-foreground hover:bg-accent/20"
                 title="حفظ التصميم الحالي دائماً في مكتبة الزبائن">
@@ -985,12 +987,23 @@ function Simulator() {
               {couponCode && !coupon && <span className="rounded-md bg-destructive/80 px-2 py-0.5 text-[10px] font-black">غير صالح</span>}
             </div>
 
-            {/* Sample order toggle */}
-            <button onClick={() => setSampleOrder((v) => !v)}
-              className={`mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-black transition ${
-                sampleOrder ? "bg-background text-primary" : "bg-background/15 text-primary-foreground hover:bg-background/25"
-              }`}>
-              <Package className="size-3.5" /> {sampleOrder ? "إلغاء طلب العيّنة" : "اطلب عيّنة مطبوعة 20×20 سم"}
+            {/* Direct WhatsApp order for the selected region */}
+            <button onClick={() => {
+              if (!region) { toast.error("اختر المنطقة أولاً لأربط الطلب برقم واتساب الفرع"); return; }
+              const num = region.whatsapp_number || "963933000000";
+              const lines = [
+                `طلب جديد — ${region.name}`,
+                `التصميم: ${active?.name ?? "تصميم مخصص"}`,
+                `المقاس: ${width} م × ${height} م${embossed ? " · بروز UV" : ""}`,
+                `الإجمالي المقدّر: ${grandTotal.toLocaleString("ar", { maximumFractionDigits: 0 })} ${currency}`,
+                addressNote ? `العنوان: ${addressNote}` : "",
+                locationUrl ? `الموقع: ${locationUrl}` : "",
+                coupon ? `كوبون: ${coupon.code} (-${coupon.percent}%)` : "",
+              ].filter(Boolean).join("\n");
+              window.open(`https://wa.me/${num}?text=${encodeURIComponent(lines)}`, "_blank");
+            }}
+              className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#25D366] px-3 py-2 text-[11px] font-black text-white shadow hover:brightness-110 transition">
+              <Package className="size-3.5" /> اطلب عبر واتساب مباشرة
             </button>
           </div>
 
@@ -1070,12 +1083,17 @@ function Simulator() {
           </button>
           {aiResult && (
             <>
-              <button onClick={() => setPostEdit((v) => !v)}
-                title="أعد تمديد/تقليص التصميم فوق نتيجة الدمج"
-                className={`inline-flex items-center justify-center gap-1.5 rounded-2xl px-3 py-3 text-xs font-black shadow-soft ${
-                  postEdit ? "bg-primary text-primary-foreground" : "border border-primary/40 bg-primary/10 text-primary"
-                }`}>
-                <Sliders className="size-4" /> {postEdit ? "إنهاء التعديل" : "تمديد/تقليص"}
+              <button onClick={() => {
+                // Promote the AI-merged image into the working canvas so any
+                // further stretch/shrink applies directly on the merged result
+                // instead of layering the original design over it as a separate
+                // layer with mismatched background.
+                if (aiResult) { setBg(aiResult); setAiResult(null); setPostEdit(false); }
+                toast.success("تم اعتماد نتيجة الدمج — عدّل التمديد والتقليص مباشرة عليها");
+              }}
+                title="تابع التمديد/التقليص على نفس الصورة المدموجة"
+                className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-primary text-primary-foreground px-3 py-3 text-xs font-black shadow-soft">
+                <Sliders className="size-4" /> تمديد/تقليص على النتيجة
               </button>
               <button onClick={() => { setAiResult(null); setPostEdit(false); }}
                 className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-3 text-xs font-black text-foreground">
