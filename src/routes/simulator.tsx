@@ -678,6 +678,11 @@ function Simulator() {
                   <l.icon className="size-3.5" /> {l.label}
                 </button>
               ))}
+              <button onClick={matchLighting} disabled={!active}
+                className="inline-flex items-center gap-1 rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-black text-primary disabled:opacity-40"
+                title="اقرأ متوسط سطوع الجدار حيث يجلس التصميم واضبطه تلقائياً">
+                <Wand className="size-3.5" /> مطابقة إضاءة تلقائية
+              </button>
               {aiResult && (
                 <button onClick={() => setCompareMode((v) => !v)}
                   className={`ms-auto inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
