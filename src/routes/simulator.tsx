@@ -46,6 +46,14 @@ const BLEND_MODES: { key: NonNullable<DesignBox["blendMode"]>; label: string }[]
   { key: "luminosity", label: "إضاءة" },
 ];
 
+type Lighting = { key: string; label: string; icon: typeof Sun; filter: string };
+const LIGHTING_PRESETS: Lighting[] = [
+  { key: "off", label: "بلا", icon: Sun, filter: "none" },
+  { key: "day", label: "نهار", icon: Sun, filter: "brightness(1.08) contrast(1.05) saturate(1.05)" },
+  { key: "warm", label: "دافئ", icon: Lightbulb, filter: "sepia(0.15) saturate(1.15) brightness(1.02) hue-rotate(-8deg)" },
+  { key: "evening", label: "مساء", icon: Moon, filter: "brightness(0.78) contrast(1.1) saturate(0.9) hue-rotate(8deg)" },
+];
+
 function Simulator() {
   useOnlineSync();
   const [bg, setBg] = useState<string | null>(DEFAULT_ROOM);
