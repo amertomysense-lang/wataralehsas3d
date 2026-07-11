@@ -78,6 +78,10 @@ function Simulator() {
   const [addressNote, setAddressNote] = useState("");
   const [locationUrl, setLocationUrl] = useState("");
   const [geoLoading, setGeoLoading] = useState(false);
+  const [lighting, setLighting] = useState<Lighting["key"]>("off");
+  const [compareMode, setCompareMode] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [sampleOrder, setSampleOrder] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
