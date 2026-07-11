@@ -58,7 +58,7 @@ function AdminPage() {
           <TabBtn icon={<Package className="size-4" />} label="المنتجات" active={tab === "products"} onClick={() => setTab("products")} />
           <TabBtn icon={<MapPin className="size-4" />} label="المناطق" active={tab === "regions"} onClick={() => setTab("regions")} />
           <TabBtn icon={<DollarSign className="size-4" />} label="الأسعار" active={tab === "pricing"} onClick={() => setTab("pricing")} />
-          <TabBtn icon={<Store className="size-4" />} label="السوق" active={tab === "vendors"} onClick={() => setTab("vendors")} />
+          <Link to="/bulk-upload-studio" className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-black text-primary-foreground shadow hover:opacity-90 whitespace-nowrap"><Upload className="size-3.5" /> الاستوديو الذكي (رفع جماعي)</Link>
           <TabBtn icon={<ShoppingBag className="size-4" />} label="الطلبات" active={tab === "orders"} onClick={() => setTab("orders")} />
           <TabBtn icon={<SettingsIcon className="size-4" />} label="إعدادات شاملة" active={tab === "settings"} onClick={() => setTab("settings")} />
           <TabBtn icon={<SlidersHorizontal className="size-4" />} label="إعدادات متقدّمة" active={tab === "schema"} onClick={() => setTab("schema")} />
