@@ -31,6 +31,16 @@ export function FloatingDock() {
         {/* منفذ لأزرار سياقية (واتساب المنتج) */}
         <div id="watar-dock-slot" className="flex flex-col items-center gap-2.5" />
 
+        {!hideAdmin && (
+          <DockButton
+            label="لوحة التحكم"
+            tone="accent"
+            onClick={() => navigate({ to: "/admin" })}
+          >
+            <Shield className="size-4" />
+          </DockButton>
+        )}
+
         <DockButton
           label="مزايا المشروع"
           tone="accent"
