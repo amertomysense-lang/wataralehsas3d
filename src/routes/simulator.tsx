@@ -904,6 +904,11 @@ function Simulator() {
             className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-3 text-xs font-black text-foreground disabled:opacity-40">
             <Download className="size-4" /> حفظ
           </button>
+          <button onClick={exportPdf} disabled={!bg}
+            className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-primary/40 bg-primary/10 px-3 py-3 text-xs font-black text-primary disabled:opacity-40"
+            title="تصدير عرض تنفيذ جاهز للطباعة أو الحفظ كـ PDF">
+            <Printer className="size-4" /> PDF
+          </button>
           <button onClick={sendOrder} disabled={sending || !regionId}
             className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-foreground px-3 py-3 text-xs font-black text-background disabled:opacity-40">
             <ShoppingBag className="size-4" /> طلب
