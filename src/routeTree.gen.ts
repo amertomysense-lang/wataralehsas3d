@@ -9,39 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WorkflowRouteImport } from './routes/workflow'
-import { Route as VendorRouteImport } from './routes/vendor'
 import { Route as SimulatorRouteImport } from './routes/simulator'
-import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MarketingToolRouteImport } from './routes/marketing-tool'
 import { Route as BulkUploadStudioRouteImport } from './routes/bulk-upload-studio'
 import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as ApiRemoveBgRouteImport } from './routes/api/remove-bg'
 import { Route as ApiDecorProjectRouteImport } from './routes/api/decor-project'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiAiImageRouteImport } from './routes/api/ai-image'
 
-const WorkflowRoute = WorkflowRouteImport.update({
-  id: '/workflow',
-  path: '/workflow',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VendorRoute = VendorRouteImport.update({
-  id: '/vendor',
-  path: '/vendor',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SimulatorRoute = SimulatorRouteImport.update({
   id: '/simulator',
   path: '/simulator',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MarketplaceRoute = MarketplaceRouteImport.update({
-  id: '/marketplace',
-  path: '/marketplace',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketingToolRoute = MarketingToolRouteImport.update({
@@ -67,11 +48,6 @@ const AdminRoute = AdminRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductIdRoute = ProductIdRouteImport.update({
-  id: '/product/$id',
-  path: '/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiRemoveBgRoute = ApiRemoveBgRouteImport.update({
@@ -101,15 +77,11 @@ export interface FileRoutesByFullPath {
   '/assistant': typeof AssistantRoute
   '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/marketing-tool': typeof MarketingToolRoute
-  '/marketplace': typeof MarketplaceRoute
   '/simulator': typeof SimulatorRoute
-  '/vendor': typeof VendorRoute
-  '/workflow': typeof WorkflowRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
   '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
-  '/product/$id': typeof ProductIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -117,15 +89,11 @@ export interface FileRoutesByTo {
   '/assistant': typeof AssistantRoute
   '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/marketing-tool': typeof MarketingToolRoute
-  '/marketplace': typeof MarketplaceRoute
   '/simulator': typeof SimulatorRoute
-  '/vendor': typeof VendorRoute
-  '/workflow': typeof WorkflowRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
   '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
-  '/product/$id': typeof ProductIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,15 +102,11 @@ export interface FileRoutesById {
   '/assistant': typeof AssistantRoute
   '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/marketing-tool': typeof MarketingToolRoute
-  '/marketplace': typeof MarketplaceRoute
   '/simulator': typeof SimulatorRoute
-  '/vendor': typeof VendorRoute
-  '/workflow': typeof WorkflowRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
   '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
-  '/product/$id': typeof ProductIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -152,15 +116,11 @@ export interface FileRouteTypes {
     | '/assistant'
     | '/bulk-upload-studio'
     | '/marketing-tool'
-    | '/marketplace'
     | '/simulator'
-    | '/vendor'
-    | '/workflow'
     | '/api/ai-image'
     | '/api/chat'
     | '/api/decor-project'
     | '/api/remove-bg'
-    | '/product/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -168,15 +128,11 @@ export interface FileRouteTypes {
     | '/assistant'
     | '/bulk-upload-studio'
     | '/marketing-tool'
-    | '/marketplace'
     | '/simulator'
-    | '/vendor'
-    | '/workflow'
     | '/api/ai-image'
     | '/api/chat'
     | '/api/decor-project'
     | '/api/remove-bg'
-    | '/product/$id'
   id:
     | '__root__'
     | '/'
@@ -184,15 +140,11 @@ export interface FileRouteTypes {
     | '/assistant'
     | '/bulk-upload-studio'
     | '/marketing-tool'
-    | '/marketplace'
     | '/simulator'
-    | '/vendor'
-    | '/workflow'
     | '/api/ai-image'
     | '/api/chat'
     | '/api/decor-project'
     | '/api/remove-bg'
-    | '/product/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -201,45 +153,20 @@ export interface RootRouteChildren {
   AssistantRoute: typeof AssistantRoute
   BulkUploadStudioRoute: typeof BulkUploadStudioRoute
   MarketingToolRoute: typeof MarketingToolRoute
-  MarketplaceRoute: typeof MarketplaceRoute
   SimulatorRoute: typeof SimulatorRoute
-  VendorRoute: typeof VendorRoute
-  WorkflowRoute: typeof WorkflowRoute
   ApiAiImageRoute: typeof ApiAiImageRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiDecorProjectRoute: typeof ApiDecorProjectRoute
   ApiRemoveBgRoute: typeof ApiRemoveBgRoute
-  ProductIdRoute: typeof ProductIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/workflow': {
-      id: '/workflow'
-      path: '/workflow'
-      fullPath: '/workflow'
-      preLoaderRoute: typeof WorkflowRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/vendor': {
-      id: '/vendor'
-      path: '/vendor'
-      fullPath: '/vendor'
-      preLoaderRoute: typeof VendorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/simulator': {
       id: '/simulator'
       path: '/simulator'
       fullPath: '/simulator'
       preLoaderRoute: typeof SimulatorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/marketplace': {
-      id: '/marketplace'
-      path: '/marketplace'
-      fullPath: '/marketplace'
-      preLoaderRoute: typeof MarketplaceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketing-tool': {
@@ -275,13 +202,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/$id': {
-      id: '/product/$id'
-      path: '/product/$id'
-      fullPath: '/product/$id'
-      preLoaderRoute: typeof ProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/remove-bg': {
@@ -321,15 +241,11 @@ const rootRouteChildren: RootRouteChildren = {
   AssistantRoute: AssistantRoute,
   BulkUploadStudioRoute: BulkUploadStudioRoute,
   MarketingToolRoute: MarketingToolRoute,
-  MarketplaceRoute: MarketplaceRoute,
   SimulatorRoute: SimulatorRoute,
-  VendorRoute: VendorRoute,
-  WorkflowRoute: WorkflowRoute,
   ApiAiImageRoute: ApiAiImageRoute,
   ApiChatRoute: ApiChatRoute,
   ApiDecorProjectRoute: ApiDecorProjectRoute,
   ApiRemoveBgRoute: ApiRemoveBgRoute,
-  ProductIdRoute: ProductIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
