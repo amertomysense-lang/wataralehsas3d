@@ -46,7 +46,7 @@ export async function saveProject(input: SaveInput): Promise<SavedProject | null
     .select()
     .single();
   if (error) { console.error(error); return null; }
-  return data as SavedProject;
+  return data as unknown as SavedProject;
 }
 
 export async function listMyProjects(): Promise<SavedProject[]> {
@@ -57,7 +57,7 @@ export async function listMyProjects(): Promise<SavedProject[]> {
     .eq("device_id", getDeviceId())
     .order("created_at", { ascending: false })
     .limit(60);
-  return (data ?? []) as SavedProject[];
+  return (data ?? []) as unknown as SavedProject[];
 }
 
 export async function listPublicProjects(): Promise<SavedProject[]> {
@@ -67,7 +67,7 @@ export async function listPublicProjects(): Promise<SavedProject[]> {
     .eq("is_public", true)
     .order("created_at", { ascending: false })
     .limit(200);
-  return (data ?? []) as SavedProject[];
+  return (data ?? []) as unknown as SavedProject[];
 }
 
 export async function deleteProject(id: string) {
