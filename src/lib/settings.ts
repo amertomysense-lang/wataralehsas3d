@@ -116,8 +116,10 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
   customHaircuts: [],
   customDesigns: [],
   customBgImage: "",
-  customBgOpacity: 0.18,
+  customBgOpacity: 0.35,
   customVideos: [],
+  bgVideoEnabled: false,
+  bgVideoOpacity: 0.4,
 };
 
 const KEY = "watar.platform.settings.v2";
