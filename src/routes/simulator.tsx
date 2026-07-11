@@ -510,7 +510,7 @@ function Simulator() {
 
 
   return (
-    <div className="min-h-screen bg-background pb-40" dir="rtl">
+    <div className="min-h-screen bg-background pb-40 overflow-x-hidden" dir="rtl">
       <div className="border-b border-border bg-card/40 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
           <Link to="/" className="text-sm font-bold text-primary hover:underline">← الرئيسية</Link>
