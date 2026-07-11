@@ -555,6 +555,32 @@ function Simulator() {
             </div>
           )}
 
+          {/* Lighting presets — يحاكي إضاءة الغرفة على الصورة */}
+          {previewBg && (
+            <div className="mt-3 flex flex-wrap items-center gap-1.5 rounded-2xl border border-border bg-card/60 p-2">
+              <span className="ms-1 text-[11px] font-black text-muted-foreground">إضاءة الغرفة:</span>
+              {LIGHTING_PRESETS.map((l) => (
+                <button key={l.key} onClick={() => setLighting(l.key)}
+                  className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
+                    lighting === l.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-primary/10"
+                  }`}>
+                  <l.icon className="size-3.5" /> {l.label}
+                </button>
+              ))}
+              {aiResult && (
+                <button onClick={() => setCompareMode((v) => !v)}
+                  className={`ms-auto inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
+                    compareMode ? "bg-accent text-accent-foreground" : "border border-accent/50 bg-accent/10 text-accent-foreground"
+                  }`}>
+                  <GitCompare className="size-3.5" /> {compareMode ? "إغلاق المقارنة" : "قبل / بعد"}
+                </button>
+              )}
+            </div>
+          )}
+          {false && (
+            <div>
+
+
 
           {/* Effects panel */}
           {previewBg && active && !aiResult && (
