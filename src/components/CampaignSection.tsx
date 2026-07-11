@@ -57,11 +57,11 @@ export function CampaignSection({ compact = false }: { compact?: boolean }) {
               <Truck className="size-6" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-black text-foreground">تعبئة أسطول لحظية للعقود الكبرى</p>
+              <p className="text-sm font-black text-foreground">جاهزون لتلبية المشاريع الكبرى</p>
               <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
-                للقصور، المولات، الفنادق والمشاريع التجارية الضخمة — فريق استجابة سريع
-                <b className="text-accent"> بخمس طابعات هايبرد </b>
-                جاهز للتعبئة الفورية في أي منطقة بسوريا.
+                للقصور، المولات، الفنادق والمشاريع التجارية الضخمة — آلة
+                <b className="text-accent"> Epson i3200-U1 </b>
+                فائقة السرعة تُنفّذ عقود الديكور الواسعة بجودة موحّدة وبزمن قياسي.
               </p>
             </div>
           </div>
