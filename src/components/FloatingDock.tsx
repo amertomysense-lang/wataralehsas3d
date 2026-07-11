@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, X, Send, Loader2, Sparkles, Info, Layers, Move, Wand2, Shield } from "lucide-react";
+import { MessageCircle, X, Send, Loader2, Sparkles, Info, Layers, Move, Wand2, Shield, Images } from "lucide-react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 
 /**
@@ -47,6 +47,14 @@ export function FloatingDock() {
             <Shield className="size-4" />
           </DockButton>
         )}
+
+        <DockButton
+          label="معرض الأعمال"
+          tone="accent"
+          onClick={() => navigate({ to: "/gallery" })}
+        >
+          <Images className="size-4" />
+        </DockButton>
 
         <DockButton
           label="مزايا المشروع"
