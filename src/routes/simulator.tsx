@@ -835,6 +835,13 @@ function Simulator() {
                 }} />
               </label>
             </div>
+            {isAdmin() && active && (
+              <button onClick={saveActiveToLibrary}
+                className="mb-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-2.5 py-1.5 text-[11px] font-black text-accent-foreground hover:bg-accent/20"
+                title="حفظ التصميم الحالي دائماً في مكتبة الزبائن">
+                <Library className="size-3.5" /> احفظ «{active.name}» في المكتبة الدائمة (أدمن)
+              </button>
+            )}
             <p className="mb-2 text-[10px] text-muted-foreground">تلميح: اسحب أي تصميم بالماوس وأفلته فوق الجدار ✨</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {allLayers.map((l) => (
