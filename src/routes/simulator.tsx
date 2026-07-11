@@ -387,7 +387,17 @@ function Simulator() {
                 } catch { /* ignore */ }
               }}
             >
-              <img src={previewBg} alt="preview" className="block w-full select-none" draggable={false} />
+              {compareMode && aiResult && bg ? (
+                <BeforeAfterSlider beforeSrc={bg} afterSrc={aiResult} />
+              ) : (
+                <img
+                  src={previewBg}
+                  alt="preview"
+                  className="block w-full select-none"
+                  draggable={false}
+                  style={{ filter: LIGHTING_PRESETS.find((l) => l.key === lighting)?.filter }}
+                />
+              )}
 
               {/* clipped design layer — التصميم يظهر فقط داخل نطاق الجدار المحدَّد */}
               {((!aiResult || postEdit) && active) && (
