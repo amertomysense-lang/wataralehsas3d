@@ -486,6 +486,21 @@ function Simulator() {
                 title="إعادة تعيين موضع وتأثيرات التصميم">
                 <RotateCcw className="size-3.5" /> إعادة تعيين
               </button>
+              <button onClick={() => setAutoFitMode((v) => !v)}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
+                  autoFitMode ? "bg-primary text-primary-foreground" : "border border-primary/40 bg-primary/10 text-primary"
+                }`}
+                title="انقر أي جدار في الصورة وسيُدمج التصميم داخل حدوده تلقائياً">
+                <Target className="size-3.5" /> {autoFitMode ? "انقر الجدار…" : "دمج تلقائي على جدار"}
+              </button>
+              <button onClick={() => setLockAspect((v) => !v)}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
+                  lockAspect ? "bg-accent/20 text-accent-foreground border border-accent/40" : "border border-border bg-background text-muted-foreground"
+                }`}
+                title="تثبيت نسبة أبعاد التصميم أثناء التمديد لمنع التشويه">
+                {lockAspect ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
+                {lockAspect ? "نسبة مثبّتة" : "نسبة حرة"}
+              </button>
               <button onClick={() => { setDefineMode((v) => !v); if (!defineMode) setWallPoints([]); }}
                 className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
                   defineMode ? "bg-primary text-primary-foreground" : "border border-primary/40 bg-primary/10 text-primary"
