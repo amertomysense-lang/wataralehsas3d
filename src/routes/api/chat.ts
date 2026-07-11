@@ -16,7 +16,7 @@ type ChatBody = {
 async function fetchAllProducts() {
   const { data } = await supabase
     .from("products")
-    .select("id, name, description, category, price")
+    .select("id, title, description, category, price")
     .limit(100);
   return data ?? [];
 }
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/chat")({
           if (body.productContext) {
             const p = body.productContext;
             knowledge = `معلومات المنتج المسؤول عنه فقط:
-- الاسم: ${p.name}
+- الاسم: ${p.title}
 - الفئة: ${p.category ?? "غير محددة"}
 - الوصف: ${p.description ?? "لا يوجد وصف"}
 - السعر: ${p.price != null ? `${p.price}` : "غير محدد — اطلب التواصل لمعرفته"}`;
@@ -48,7 +48,7 @@ export const Route = createFileRoute("/api/chat")({
                   products
                     .map(
                       (p) =>
-                        `• [/product/${p.id}] ${p.name}${p.category ? ` — ${p.category}` : ""}${
+                        `• [/product/${p.id}] ${p.title}${p.category ? ` — ${p.category}` : ""}${
                           p.description ? ` — ${p.description}` : ""
                         }`
                     )
