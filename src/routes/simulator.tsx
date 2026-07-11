@@ -775,8 +775,32 @@ function Simulator() {
             <p className="mt-1 text-3xl font-black">{grandTotal.toLocaleString("ar", { maximumFractionDigits: 0 })} {currency}</p>
             <p className="mt-1 text-[11px] opacity-80">
               طباعة: {baseTotal.toLocaleString("ar", { maximumFractionDigits: 0 })} + شحن: {shippingCost.toLocaleString("ar", { maximumFractionDigits: 0 })}
+              {discount > 0 && <> − خصم: {discount.toLocaleString("ar", { maximumFractionDigits: 0 })}</>}
+              {sampleOrder && <> · <b>وضع العيّنة 20×20</b></>}
             </p>
+
+            {/* Coupon */}
+            <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-background/15 p-1.5 backdrop-blur">
+              <Ticket className="size-3.5 opacity-80" />
+              <input
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                placeholder="كود خصم (اختياري)"
+                className="flex-1 rounded-md bg-background/20 px-2 py-1 text-[11px] text-primary-foreground placeholder:text-primary-foreground/60 outline-none"
+              />
+              {coupon && <span className="rounded-md bg-success px-2 py-0.5 text-[10px] font-black">-{coupon.percent}%</span>}
+              {couponCode && !coupon && <span className="rounded-md bg-destructive/80 px-2 py-0.5 text-[10px] font-black">غير صالح</span>}
+            </div>
+
+            {/* Sample order toggle */}
+            <button onClick={() => setSampleOrder((v) => !v)}
+              className={`mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-black transition ${
+                sampleOrder ? "bg-background text-primary" : "bg-background/15 text-primary-foreground hover:bg-background/25"
+              }`}>
+              <Package className="size-3.5" /> {sampleOrder ? "إلغاء طلب العيّنة" : "اطلب عيّنة مطبوعة 20×20 سم"}
+            </button>
           </div>
+
         </aside>
       </div>
 
