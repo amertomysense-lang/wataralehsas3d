@@ -18,6 +18,7 @@ import { useCategories, labelOf, type Category, type CategoryTab } from "@/lib/c
 import { NewOrdersBell } from "@/components/NewOrdersBell";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { AdminAnalytics } from "@/components/AdminAnalytics";
+import { useCloudSettings, useSaveCloudSettings, DEFAULT_CLOUD, type CloudSettings } from "@/lib/cloud-settings";
 
 
 export const Route = createFileRoute("/admin")({
@@ -1623,14 +1624,13 @@ function MediaTab() {
 
 /* ============ الإعدادات السحابية (Supabase) + شام كاش ============ */
 function CloudSettingsTab() {
-  const { useCloudSettings, useSaveCloudSettings, DEFAULT_CLOUD } = require("@/lib/cloud-settings");
   const { data, isLoading } = useCloudSettings();
   const save = useSaveCloudSettings();
-  const [form, setForm] = useState<any>(null);
+  const [form, setForm] = useState<CloudSettings | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const current = form ?? data ?? DEFAULT_CLOUD;
-  const set = (k: string, v: any) => setForm({ ...current, [k]: v });
+  const current: CloudSettings = form ?? data ?? DEFAULT_CLOUD;
+  const set = <K extends keyof CloudSettings>(k: K, v: CloudSettings[K]) => setForm({ ...current, [k]: v });
 
   function onUploadQR(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]; if (!f) return;
