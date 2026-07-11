@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { X, Send, Loader2, Sparkles } from "lucide-react";
-import type { Design } from "@/integrations/supabase/client";
+import type { Design } from "@/lib/design-type";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
