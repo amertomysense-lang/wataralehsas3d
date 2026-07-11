@@ -18,6 +18,7 @@ import { useCategories, labelOf, type Category, type CategoryTab } from "@/lib/c
 import { NewOrdersBell } from "@/components/NewOrdersBell";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { AdminAnalytics } from "@/components/AdminAnalytics";
+import { useCloudSettings, useSaveCloudSettings, DEFAULT_CLOUD, type CloudSettings } from "@/lib/cloud-settings";
 
 
 export const Route = createFileRoute("/admin")({
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/admin")({
   component: () => <AdminGate title="لوحة تحكم المعرض"><AdminPage /></AdminGate>,
 });
 
-type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms" | "quota" | "payments" | "haircuts" | "categories" | "media" | "analytics";
+type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "cloud" | "schema" | "cms" | "quota" | "payments" | "haircuts" | "categories" | "media" | "analytics";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
@@ -67,6 +68,7 @@ function AdminPage() {
           <Link to="/bulk-upload-studio" className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-black text-primary-foreground shadow hover:opacity-90 whitespace-nowrap"><Upload className="size-3.5" /> الاستوديو الذكي (رفع جماعي)</Link>
           <TabBtn icon={<ShoppingBag className="size-4" />} label="الطلبات" active={tab === "orders"} onClick={() => setTab("orders")} />
           <TabBtn icon={<SettingsIcon className="size-4" />} label="إعدادات شاملة" active={tab === "settings"} onClick={() => setTab("settings")} />
+          <TabBtn icon={<Wallet className="size-4" />} label="إعدادات سحابية + شام كاش" active={tab === "cloud"} onClick={() => setTab("cloud")} />
           <TabBtn icon={<SlidersHorizontal className="size-4" />} label="إعدادات متقدّمة" active={tab === "schema"} onClick={() => setTab("schema")} />
           <TabBtn icon={<Type className="size-4" />} label="نصوص الموقع (CMS)" active={tab === "cms"} onClick={() => setTab("cms")} />
           <TabBtn icon={<Sparkles className="size-4" />} label="المحاولات والإعلانات" active={tab === "quota"} onClick={() => setTab("quota")} />
@@ -82,6 +84,7 @@ function AdminPage() {
         {tab === "vendors" && <VendorsTab />}
         {tab === "orders" && <OrdersTab />}
         {tab === "settings" && <GlobalSettingsTab />}
+        {tab === "cloud" && <CloudSettingsTab />}
         {tab === "schema" && <SchemaControllerTab />}
         {tab === "cms" && <CmsStringsTab />}
         {tab === "quota" && <QuotaSettingsTab />}
@@ -1615,6 +1618,109 @@ function MediaTab() {
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+/* ============ الإعدادات السحابية (Supabase) + شام كاش ============ */
+function CloudSettingsTab() {
+  const { data, isLoading } = useCloudSettings();
+  const save = useSaveCloudSettings();
+  const [form, setForm] = useState<CloudSettings | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const current: CloudSettings = form ?? data ?? DEFAULT_CLOUD;
+  const set = <K extends keyof CloudSettings>(k: K, v: CloudSettings[K]) => setForm({ ...current, [k]: v });
+
+  function onUploadQR(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]; if (!f) return;
+    if (!f.type.startsWith("image/")) { toast.error("صورة فقط"); return; }
+    if (f.size > 2 * 1024 * 1024) { toast.error("الحد الأقصى 2MB"); return; }
+    const r = new FileReader();
+    r.onload = () => set("sham_cash_qr_url", r.result as string);
+    r.readAsDataURL(f);
+  }
+
+  if (isLoading) {
+    return <div className="space-y-3">{[1,2,3,4].map(i => <div key={i} className="h-16 animate-pulse rounded-2xl bg-muted" />)}</div>;
+  }
+
+  return (
+    <section className="space-y-6">
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+        <h2 className="mb-4 text-lg font-black">هوية المنصة</h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <TextField label="اسم العلامة" value={current.brand_name} onChange={(v) => set("brand_name", v)} />
+          <TextField label="واتساب" value={current.contact_whatsapp} onChange={(v) => set("contact_whatsapp", v)} />
+          <TextField label="البريد الإلكتروني" value={current.contact_email ?? ""} onChange={(v) => set("contact_email", v)} />
+          <TextField label="عنوان الواجهة" value={current.hero_title ?? ""} onChange={(v) => set("hero_title", v)} />
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-[11px] font-black text-muted-foreground">وصف الواجهة</label>
+            <textarea rows={2} value={current.hero_subtitle ?? ""} onChange={(e) => set("hero_subtitle", e.target.value)}
+              className="w-full rounded-xl bg-muted px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+        <h2 className="mb-4 text-lg font-black">شام كاش</h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <TextField label="رقم شام كاش" value={current.sham_cash_number ?? ""} onChange={(v) => set("sham_cash_number", v)} />
+          <TextField label="اسم صاحب الحساب" value={current.sham_cash_name ?? ""} onChange={(v) => set("sham_cash_name", v)} />
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-[11px] font-black text-muted-foreground">ملاحظات الدفع</label>
+            <textarea rows={2} value={current.sham_cash_notes ?? ""} onChange={(e) => set("sham_cash_notes", e.target.value)}
+              className="w-full rounded-xl bg-muted px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="mb-2 block text-[11px] font-black text-muted-foreground">صورة QR (تظهر للزبون في نافذة الدفع)</label>
+            <div className="flex items-center gap-3">
+              <div className="grid size-32 place-items-center rounded-2xl border border-dashed border-border bg-muted">
+                {current.sham_cash_qr_url
+                  ? <img src={current.sham_cash_qr_url} alt="QR" className="h-full w-full rounded-2xl object-contain bg-white" />
+                  : <ImageIcon className="size-8 text-muted-foreground" />}
+              </div>
+              <div className="space-y-2">
+                <input ref={fileRef} type="file" accept="image/*" hidden onChange={onUploadQR} />
+                <button onClick={() => fileRef.current?.click()}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-black text-primary-foreground">
+                  <Upload className="size-3.5" /> رفع صورة QR
+                </button>
+                {current.sham_cash_qr_url && (
+                  <button onClick={() => set("sham_cash_qr_url", "")}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-destructive/10 px-4 py-2 text-xs font-black text-destructive">
+                    <Trash2 className="size-3.5" /> إزالة
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button disabled={!form || save.isPending}
+          onClick={() => form && save.mutate(form)}
+          className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-black text-primary-foreground shadow-soft disabled:opacity-50">
+          <Save className="size-4" /> {save.isPending ? "جاري الحفظ…" : "حفظ الإعدادات السحابية"}
+        </button>
+        {form && (
+          <button onClick={() => setForm(null)}
+            className="inline-flex items-center gap-1 rounded-2xl bg-muted px-4 py-3 text-xs font-black">
+            <X className="size-4" /> تراجع
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function TextField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="mb-1 block text-[11px] font-black text-muted-foreground">{label}</label>
+      <input value={value} onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-xl bg-muted px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
     </div>
   );
 }
