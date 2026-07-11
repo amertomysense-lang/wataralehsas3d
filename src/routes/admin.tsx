@@ -25,7 +25,7 @@ export const Route = createFileRoute("/admin")({
   component: () => <AdminGate title="لوحة تحكم المعرض"><AdminPage /></AdminGate>,
 });
 
-type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms" | "quota" | "payments" | "haircuts" | "categories" | "media";
+type Tab = "products" | "regions" | "pricing" | "orders" | "vendors" | "settings" | "schema" | "cms" | "quota" | "payments" | "haircuts" | "categories" | "media" | "analytics";
 
 function AdminPage() {
   const [tab, setTab] = useState<Tab>("products");
@@ -38,7 +38,9 @@ function AdminPage() {
             <ArrowRight className="size-4" /> المعرض
           </Link>
           <div className="flex items-center gap-3">
+            <NewOrdersBell />
             <CurrencyQuickSwitch />
+            <SettingsBackupButtons />
             <button onClick={async () => { try { await exportPlatformSnapshot(); toast.success("تم تصدير لقطة المنصة"); } catch (e) { toast.error("فشل التصدير"); } }}
               className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/20">
               <Download className="size-3.5" /> تصدير
@@ -58,6 +60,7 @@ function AdminPage() {
         </div>
 
         <div className="flex gap-2 overflow-x-auto">
+          <TabBtn icon={<BarChart3 className="size-4" />} label="تحليلات حيّة" active={tab === "analytics"} onClick={() => setTab("analytics")} />
           <TabBtn icon={<Package className="size-4" />} label="المنتجات" active={tab === "products"} onClick={() => setTab("products")} />
           <TabBtn icon={<MapPin className="size-4" />} label="المناطق" active={tab === "regions"} onClick={() => setTab("regions")} />
           <TabBtn icon={<DollarSign className="size-4" />} label="الأسعار" active={tab === "pricing"} onClick={() => setTab("pricing")} />
@@ -86,6 +89,7 @@ function AdminPage() {
         {tab === "haircuts" && <DesignsTab />}
         {tab === "categories" && <CategoriesTab />}
         {tab === "media" && <MediaTab />}
+        {tab === "analytics" && <AdminAnalytics />}
       </div>
     </div>
   );
@@ -511,73 +515,138 @@ function OrdersTab() {
   const { data: regions } = useRegions();
   const [filterRegion, setFilterRegion] = useState<string>("");
   const [filterStatus, setFilterStatus] = useState<string>("");
+  const [view, setView] = useState<"list" | "kanban">("kanban");
 
   const { data: orders } = useQuery({
     queryKey: ["orders", filterRegion, filterStatus],
     queryFn: async () => {
       let q = supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(300);
       if (filterRegion) q = q.eq("region_name", filterRegion);
-      if (filterStatus) q = q.eq("status", filterStatus);
+      if (filterStatus && view === "list") q = q.eq("status", filterStatus);
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Order[];
     },
+    refetchInterval: 15_000,
   });
 
   async function setStatus(id: string, status: string) {
     await supabase.from("orders").update({ status }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["orders"] });
+    toast.success("تم تحديث الحالة");
   }
 
   return (
     <div className="rounded-2xl bg-card p-5 shadow-card border border-border space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-black">الطلبات الواردة ({orders?.length ?? 0})</h2>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-lg bg-muted p-0.5 text-[11px] font-black">
+            <button onClick={() => setView("kanban")}
+              className={`inline-flex items-center gap-1 rounded-md px-2 py-1 ${view === "kanban" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+              <LayoutGrid className="size-3" /> Kanban
+            </button>
+            <button onClick={() => setView("list")}
+              className={`inline-flex items-center gap-1 rounded-md px-2 py-1 ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+              <Rows3 className="size-3" /> قائمة
+            </button>
+          </div>
           <select value={filterRegion} onChange={(e) => setFilterRegion(e.target.value)}
             className="rounded-lg bg-muted px-2 py-1 text-xs">
             <option value="">كل المناطق</option>
             {regions?.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
           </select>
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-            className="rounded-lg bg-muted px-2 py-1 text-xs">
-            <option value="">كل الحالات</option>
-            <option value="new">جديد</option>
-            <option value="inspected">تم المعاينة</option>
-            <option value="active">قيد التنفيذ</option>
-            <option value="finished">منتهي</option>
-            <option value="contacted">تم التواصل</option>
-            <option value="done">منجز</option>
-            <option value="cancelled">ملغى</option>
-          </select>
+          {view === "list" && (
+            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+              className="rounded-lg bg-muted px-2 py-1 text-xs">
+              <option value="">كل الحالات</option>
+              <option value="new">جديد</option>
+              <option value="inspected">تم المعاينة</option>
+              <option value="active">قيد التنفيذ</option>
+              <option value="finished">منتهي</option>
+              <option value="contacted">تم التواصل</option>
+              <option value="done">منجز</option>
+              <option value="cancelled">ملغى</option>
+            </select>
+          )}
         </div>
       </div>
-      <div className="space-y-2">
-        {orders?.map((o) => (
-          <div key={o.id} className="rounded-xl border border-border bg-background p-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold">{o.design_name ?? "—"} · {o.region_name ?? "—"}</p>
-                <p className="text-xs text-muted-foreground">
-                  {o.width}م × {o.height}م {o.embossed ? "· بروز" : ""} · {Number(o.total).toLocaleString("ar")}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-1">{new Date(o.created_at).toLocaleString("ar")}</p>
+
+      {view === "kanban" ? (
+        <KanbanBoard orders={orders ?? []} onMove={setStatus} />
+      ) : (
+        <div className="space-y-2">
+          {orders?.map((o) => (
+            <div key={o.id} className="rounded-xl border border-border bg-background p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold">{o.design_name ?? "—"} · {o.region_name ?? "—"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {o.width}م × {o.height}م {o.embossed ? "· بروز" : ""} · {Number(o.total).toLocaleString("ar")}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{new Date(o.created_at).toLocaleString("ar")}</p>
+                </div>
+                <select value={o.status} onChange={(e) => setStatus(o.id, e.target.value)}
+                  className="rounded-lg bg-muted px-2 py-1 text-xs">
+                  <option value="new">جديد</option>
+                  <option value="inspected">تم المعاينة</option>
+                  <option value="active">قيد التنفيذ</option>
+                  <option value="finished">منتهي</option>
+                  <option value="contacted">تم التواصل</option>
+                  <option value="done">منجز</option>
+                  <option value="cancelled">ملغى</option>
+                </select>
               </div>
-              <select value={o.status} onChange={(e) => setStatus(o.id, e.target.value)}
-                className="rounded-lg bg-muted px-2 py-1 text-xs">
-                <option value="new">جديد</option>
-                <option value="inspected">تم المعاينة</option>
-                <option value="active">قيد التنفيذ</option>
-                <option value="finished">منتهي</option>
-                <option value="contacted">تم التواصل</option>
-                <option value="done">منجز</option>
-                <option value="cancelled">ملغى</option>
-              </select>
             </div>
-          </div>
-        ))}
-        {(!orders || orders.length === 0) && <p className="text-center text-sm text-muted-foreground py-8">لا طلبات بعد.</p>}
-      </div>
+          ))}
+          {(!orders || orders.length === 0) && <p className="text-center text-sm text-muted-foreground py-8">لا طلبات بعد.</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// أزرار نسخة احتياطية للإعدادات — تصدير/استيراد كل شيء من localStorage
+function SettingsBackupButtons() {
+  function exportAll() {
+    const dump: Record<string, string> = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith("watar.")) continue;
+      const v = localStorage.getItem(k); if (v != null) dump[k] = v;
+    }
+    const blob = new Blob([JSON.stringify({ v: 1, ts: Date.now(), data: dump }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `watar-backup-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    toast.success("تم تنزيل نسخة احتياطية للإعدادات");
+  }
+  function importAll() {
+    const inp = document.createElement("input");
+    inp.type = "file"; inp.accept = "application/json";
+    inp.onchange = async () => {
+      const f = inp.files?.[0]; if (!f) return;
+      try {
+        const j = JSON.parse(await f.text()) as { data?: Record<string, string> };
+        if (!j.data) throw new Error("bad file");
+        Object.entries(j.data).forEach(([k, v]) => localStorage.setItem(k, v));
+        toast.success("تم الاستيراد — سيتم إعادة التحميل");
+        setTimeout(() => location.reload(), 700);
+      } catch { toast.error("ملف غير صالح"); }
+    };
+    inp.click();
+  }
+  return (
+    <div className="inline-flex overflow-hidden rounded-lg border border-border">
+      <button onClick={exportAll} title="تنزيل نسخة احتياطية"
+        className="inline-flex items-center gap-1 bg-background px-2 py-1.5 text-[10px] font-black hover:bg-muted">
+        <Download className="size-3" /> نسخة
+      </button>
+      <button onClick={importAll} title="استيراد نسخة احتياطية"
+        className="inline-flex items-center gap-1 border-r border-border bg-background px-2 py-1.5 text-[10px] font-black hover:bg-muted">
+        <Upload className="size-3" /> استيراد
+      </button>
     </div>
   );
 }
