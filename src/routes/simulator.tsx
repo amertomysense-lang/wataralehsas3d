@@ -19,6 +19,7 @@ import { DraggableDesignLayer, resetBox, type DesignBox } from "@/components/Dra
 import { DropZone } from "@/components/DropZone";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { saveProject, useMyProjects, togglePublic, deleteProject } from "@/lib/projects";
+import { CheckoutSheet, type CheckoutPayload } from "@/components/CheckoutSheet";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
@@ -86,6 +87,7 @@ function Simulator() {
   const [projectName, setProjectName] = useState("");
   const [savingProject, setSavingProject] = useState(false);
   const [showMyProjects, setShowMyProjects] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   
   const myProjects = useMyProjects();
 
@@ -241,34 +243,53 @@ function Simulator() {
     a.href = aiResult; a.download = `watar-room-${Date.now()}.${ext}`; a.click();
   }
 
-  async function sendOrder() {
+  async function submitCheckout(p: CheckoutPayload) {
     if (!region || !pricing) { toast.error("اختر المنطقة"); return; }
     setSending(true);
-    const extras: string[] = [];
-    if (settings.whatsappGreeting) extras.push(settings.whatsappGreeting);
-    if (sampleOrder) extras.push(`— ${settings.whatsappSampleNote}`);
-    if (coupon) extras.push(`— كوبون: ${coupon.code} (-${coupon.percent}%)`);
-    const baseUrl = buildWhatsAppUrl({
-      number: region.whatsapp_number, region: region.name,
-      width: sampleOrder ? 0.2 : width, height: sampleOrder ? 0.2 : height, embossed,
-      designName: active?.name ?? "تصميم مخصص",
-      designUrl: active?.url ?? "",
-      total: grandTotal, currency,
-      locationUrl: locationUrl || undefined,
-      addressNote: addressNote || undefined,
-    });
-    const glue = baseUrl.includes("text=") ? "%0A%0A" : "?text=";
-    const url = baseUrl + glue + encodeURIComponent(extras.join("\n"));
-    await insertOrderOrQueue({
-      region_id: region.id, region_name: region.name,
-      design_name: (active?.name ?? "تصميم مخصص") + (sampleOrder ? " (عيّنة 20×20)" : ""),
-      design_url: active?.url ?? null,
-      width: sampleOrder ? 0.2 : width, height: sampleOrder ? 0.2 : height,
-      embossed, total: grandTotal,
-      shipping_mode: shipping, shipping_cost: shippingCost,
-    });
-    setSending(false);
-    window.open(url, "_blank");
+    try {
+      const extras: string[] = [];
+      if (settings.whatsappGreeting) extras.push(settings.whatsappGreeting);
+      if (sampleOrder) extras.push(`— ${settings.whatsappSampleNote}`);
+      if (coupon) extras.push(`— كوبون: ${coupon.code} (-${coupon.percent}%)`);
+      extras.push(`— العميل: ${p.customer_name} · ${p.customer_phone}`);
+      extras.push(`— العنوان: ${p.customer_address}`);
+      extras.push(`— حالة السطح: ${p.surface_status === "ready" ? "جاهز/مبيض" : "يحتاج تحضير"}`);
+      extras.push(`— الدفع: ${p.payment_method === "cod" ? "عند التسليم" : "شام كاش"}`);
+
+      await insertOrderOrQueue({
+        region_id: region.id, region_name: region.name,
+        design_name: (active?.name ?? "تصميم مخصص") + (sampleOrder ? " (عيّنة 20×20)" : ""),
+        design_url: active?.url ?? null,
+        width: sampleOrder ? 0.2 : width, height: sampleOrder ? 0.2 : height,
+        embossed, total: grandTotal,
+        shipping_mode: shipping, shipping_cost: shippingCost,
+        customer_name: p.customer_name,
+        customer_phone: p.customer_phone,
+        customer_address: p.customer_address,
+        surface_status: p.surface_status,
+        payment_method: p.payment_method,
+        status: "inspection",
+      });
+
+      const baseUrl = buildWhatsAppUrl({
+        number: region.whatsapp_number, region: region.name,
+        width: sampleOrder ? 0.2 : width, height: sampleOrder ? 0.2 : height, embossed,
+        designName: active?.name ?? "تصميم مخصص",
+        designUrl: active?.url ?? "",
+        total: grandTotal, currency,
+        locationUrl: locationUrl || undefined,
+        addressNote: addressNote || p.customer_address,
+      });
+      const glue = baseUrl.includes("text=") ? "%0A%0A" : "?text=";
+      const url = baseUrl + glue + encodeURIComponent(extras.join("\n"));
+      toast.success("تم تسجيل طلبك بنجاح ✓");
+      setCheckoutOpen(false);
+      window.open(url, "_blank");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "تعذّر إرسال الطلب");
+    } finally {
+      setSending(false);
+    }
   }
 
   // طباعة/PDF: نفتح نافذة صغيرة فيها نتيجة الدمج والتفاصيل جاهزة للطباعة كملف PDF.
@@ -1016,9 +1037,10 @@ function Simulator() {
             title="تصدير عرض تنفيذ جاهز للطباعة أو الحفظ كـ PDF">
             <Printer className="size-4" /> PDF
           </button>
-          <button onClick={sendOrder} disabled={sending || !regionId}
+          <button onClick={() => { if (!regionId) { toast.error("اختر المنطقة أولاً"); return; } setCheckoutOpen(true); }}
+            disabled={sending || !regionId}
             className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-foreground px-3 py-3 text-xs font-black text-background disabled:opacity-40">
-            <ShoppingBag className="size-4" /> طلب
+            <ShoppingBag className="size-4" /> إتمام الطلب
           </button>
         </div>
       </div>
