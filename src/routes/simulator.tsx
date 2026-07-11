@@ -20,6 +20,8 @@ import { DropZone } from "@/components/DropZone";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { saveProject, useMyProjects, togglePublic, deleteProject } from "@/lib/projects";
 import { CheckoutSheet, type CheckoutPayload } from "@/components/CheckoutSheet";
+import { isAdmin } from "@/lib/admin-gate";
+import { Sparkles, Library } from "lucide-react";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
@@ -432,6 +434,47 @@ function Simulator() {
     } catch { toast.error("تعذّرت قراءة الصورة (قد تكون من مصدر محمي)"); }
   }
 
+  // ✨ دمج ذكي فوري بزر واحد — يضبط الشفافية والمزج ويطابق إضاءة الغرفة
+  async function smartBlend() {
+    if (!bg || !active) { toast.error("ارفع صورة الجدار ثم اختر تصميماً"); return; }
+    setBox((b) => ({
+      ...b,
+      opacity: 0.92,
+      blur: 0.5,
+      blendMode: surface === "floor" ? "multiply" : "overlay",
+      brightness: 1.0,
+      saturation: 1.05,
+      contrast: 1.05,
+    }));
+    // مطابقة تلقائية للإضاءة بعد لحظة (لضمان تحديث box أولاً)
+    setTimeout(() => { void matchLighting(); }, 60);
+    toast.success("تم الدمج الذكي — عدّل الحجم بحرية إن أردت");
+  }
+
+  // 📚 حفظ التصميم الحالي في المكتبة الدائمة (أدمن فقط)
+  async function saveActiveToLibrary() {
+    if (!active) { toast.error("لا يوجد تصميم لحفظه"); return; }
+    const name = window.prompt("اسم التصميم في المكتبة:", active.name) || active.name;
+    let url = active.url;
+    // إذا كانت data:URL نرفعها لسطل التخزين قبل الحفظ
+    if (url.startsWith("data:")) {
+      try {
+        const blob = await (await fetch(url)).blob();
+        const path = `admin/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+        const { error: upErr } = await supabase.storage.from("design-layers").upload(path, blob, {
+          contentType: blob.type || "image/webp", upsert: true,
+        });
+        if (upErr) throw upErr;
+        url = supabase.storage.from("design-layers").getPublicUrl(path).data.publicUrl;
+      } catch (e) { toast.error("تعذّر رفع الصورة إلى السطل"); return; }
+    }
+    const { error } = await supabase.from("products").insert({
+      title: name, image_url: url, type: "decor",
+    });
+    if (error) { toast.error("تعذّر الحفظ في المكتبة"); return; }
+    toast.success("تمت إضافة التصميم للمكتبة — سيظهر للزبائن فوراً ✨");
+  }
+
   async function saveCurrentProject(makePublic: boolean) {
     if (!bg) { toast.error("لا يوجد مشروع لحفظه"); return; }
     setSavingProject(true);
@@ -680,6 +723,11 @@ function Simulator() {
                   إلغاء النطاق
                 </button>
               )}
+              <button onClick={smartBlend} disabled={!bg || !active}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-l from-primary to-accent px-3 py-1.5 text-[11px] font-black text-primary-foreground shadow-soft disabled:opacity-40"
+                title="ضبط تلقائي للشفافية والمزج ومطابقة الإضاءة — بضغطة واحدة">
+                <Sparkles className="size-3.5" /> دمج ذكي فوري
+              </button>
               <button onClick={openCamera}
                 className="ms-auto inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-bold">
                 <RefreshCw className="size-3.5" /> صورة جديدة
@@ -787,6 +835,13 @@ function Simulator() {
                 }} />
               </label>
             </div>
+            {isAdmin() && active && (
+              <button onClick={saveActiveToLibrary}
+                className="mb-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-2.5 py-1.5 text-[11px] font-black text-accent-foreground hover:bg-accent/20"
+                title="حفظ التصميم الحالي دائماً في مكتبة الزبائن">
+                <Library className="size-3.5" /> احفظ «{active.name}» في المكتبة الدائمة (أدمن)
+              </button>
+            )}
             <p className="mb-2 text-[10px] text-muted-foreground">تلميح: اسحب أي تصميم بالماوس وأفلته فوق الجدار ✨</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {allLayers.map((l) => (
