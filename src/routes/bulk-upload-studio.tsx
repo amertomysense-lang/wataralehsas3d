@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CheckCircle2, Sparkles, Layers, Shirt, Scissors, Sofa, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminGate } from "@/components/AdminGate";
 import { BatchImageUploader, type BatchItem } from "@/components/BatchImageUploader";
 import { useCategories } from "@/lib/categories";
 
@@ -12,9 +13,10 @@ export const Route = createFileRoute("/bulk-upload-studio")({
     meta: [
       { title: "الاستوديو الذكي للرفع الجماعي — وتر الإحساس" },
       { name: "description", content: "ارفع حتى 100 صورة دفعة واحدة، تُضغط فوراً إلى WebP وتُصنّف تلقائياً." },
+      { name: "robots", content: "noindex" },
     ],
   }),
-  component: BulkUploadStudio,
+  component: () => <AdminGate title="الاستوديو الذكي — للأدمن فقط"><BulkUploadStudio /></AdminGate>,
 });
 
 const TAG_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
