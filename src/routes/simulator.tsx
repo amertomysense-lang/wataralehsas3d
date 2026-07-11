@@ -133,8 +133,7 @@ function Simulator() {
     () => (pricing ? calcTotal(width, height, embossed, pricing) : 0),
     [pricing, width, height, embossed],
   );
-  const baseTotal = baseTotal_calc();
-  function baseTotal_calc() { return baseTotalUsd * fx; }
+  const baseTotal = baseTotalUsd * fx;
   const shippingCost = (shipping === "company" ? km * settings.fuelPerKm : 0) * fx;
 
   // Coupon
