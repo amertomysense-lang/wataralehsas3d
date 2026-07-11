@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Upload, Layers, Calculator, MapPin, Truck, ShoppingBag, X, Wand2, Loader2,
   Download, Camera, RefreshCw, Sliders, RotateCcw, Scissors, Check, Lock, Unlock, Target, Navigation,
+  Sun, Moon, Lightbulb, Printer, GitCompare, Ticket, Package,
 } from "lucide-react";
 import { useRegions, usePricing, calcTotal, buildWhatsAppUrl } from "@/lib/platform";
 import { insertOrderOrQueue, useOnlineSync } from "@/lib/offline-sync";
@@ -16,6 +17,7 @@ import { useCategories, idsForTab } from "@/lib/categories";
 import { toWebpQ92 } from "@/lib/webp-compress";
 import { DraggableDesignLayer, resetBox, type DesignBox } from "@/components/DraggableDesignLayer";
 import { DropZone } from "@/components/DropZone";
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
@@ -44,6 +46,14 @@ const BLEND_MODES: { key: NonNullable<DesignBox["blendMode"]>; label: string }[]
   { key: "luminosity", label: "إضاءة" },
 ];
 
+type Lighting = { key: string; label: string; icon: typeof Sun; filter: string };
+const LIGHTING_PRESETS: Lighting[] = [
+  { key: "off", label: "بلا", icon: Sun, filter: "none" },
+  { key: "day", label: "نهار", icon: Sun, filter: "brightness(1.08) contrast(1.05) saturate(1.05)" },
+  { key: "warm", label: "دافئ", icon: Lightbulb, filter: "sepia(0.15) saturate(1.15) brightness(1.02) hue-rotate(-8deg)" },
+  { key: "evening", label: "مساء", icon: Moon, filter: "brightness(0.78) contrast(1.1) saturate(0.9) hue-rotate(8deg)" },
+];
+
 function Simulator() {
   useOnlineSync();
   const [bg, setBg] = useState<string | null>(DEFAULT_ROOM);
@@ -68,6 +78,10 @@ function Simulator() {
   const [addressNote, setAddressNote] = useState("");
   const [locationUrl, setLocationUrl] = useState("");
   const [geoLoading, setGeoLoading] = useState(false);
+  const [lighting, setLighting] = useState<Lighting["key"]>("off");
+  const [compareMode, setCompareMode] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [sampleOrder, setSampleOrder] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -121,7 +135,16 @@ function Simulator() {
   );
   const baseTotal = baseTotalUsd * fx;
   const shippingCost = (shipping === "company" ? km * settings.fuelPerKm : 0) * fx;
-  const grandTotal = baseTotal + shippingCost;
+
+  // Coupon
+  const coupon = useMemo(() => {
+    const c = couponCode.trim().toUpperCase();
+    if (!c) return null;
+    return settings.coupons?.find((k) => k.code.toUpperCase() === c) ?? null;
+  }, [couponCode, settings.coupons]);
+  const subtotal = baseTotal + shippingCost;
+  const discount = coupon ? subtotal * (coupon.percent / 100) : 0;
+  const grandTotal = sampleOrder ? 15 * fx : subtotal - discount;
 
   function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -215,25 +238,65 @@ function Simulator() {
   async function sendOrder() {
     if (!region || !pricing) { toast.error("اختر المنطقة"); return; }
     setSending(true);
-    const url = buildWhatsAppUrl({
+    const extras: string[] = [];
+    if (settings.whatsappGreeting) extras.push(settings.whatsappGreeting);
+    if (sampleOrder) extras.push(`— ${settings.whatsappSampleNote}`);
+    if (coupon) extras.push(`— كوبون: ${coupon.code} (-${coupon.percent}%)`);
+    const baseUrl = buildWhatsAppUrl({
       number: region.whatsapp_number, region: region.name,
-      width, height, embossed,
+      width: sampleOrder ? 0.2 : width, height: sampleOrder ? 0.2 : height, embossed,
       designName: active?.name ?? "تصميم مخصص",
       designUrl: active?.url ?? "",
       total: grandTotal, currency,
       locationUrl: locationUrl || undefined,
       addressNote: addressNote || undefined,
     });
+    const glue = baseUrl.includes("text=") ? "%0A%0A" : "?text=";
+    const url = baseUrl + glue + encodeURIComponent(extras.join("\n"));
     await insertOrderOrQueue({
       region_id: region.id, region_name: region.name,
-      design_name: active?.name ?? "تصميم مخصص",
+      design_name: (active?.name ?? "تصميم مخصص") + (sampleOrder ? " (عيّنة 20×20)" : ""),
       design_url: active?.url ?? null,
-      width, height, embossed, total: grandTotal,
+      width: sampleOrder ? 0.2 : width, height: sampleOrder ? 0.2 : height,
+      embossed, total: grandTotal,
       shipping_mode: shipping, shipping_cost: shippingCost,
     });
     setSending(false);
     window.open(url, "_blank");
   }
+
+  // طباعة/PDF: نفتح نافذة صغيرة فيها نتيجة الدمج والتفاصيل جاهزة للطباعة كملف PDF.
+  function exportPdf() {
+    const img = aiResult || bg;
+    if (!img) { toast.error("لا توجد نتيجة لتصديرها"); return; }
+    const w = window.open("", "_blank", "width=900,height=1200");
+    if (!w) return;
+    const html = `<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>عرض تنفيذ — وتر الإحساس</title>
+      <style>body{font-family:Tajawal,system-ui,sans-serif;padding:24px;color:#222}
+      h1{color:#B8893A;margin:0 0 4px}small{color:#666}
+      .card{border:1px solid #eee;border-radius:14px;padding:14px;margin-top:14px}
+      img{max-width:100%;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.15)}
+      table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+      td{padding:6px 8px;border-bottom:1px dashed #eee}td:first-child{color:#666;width:38%}
+      .total{background:linear-gradient(135deg,#B8893A,#E8D5A8);color:#111;padding:14px;border-radius:12px;margin-top:14px;font-size:22px;font-weight:900;text-align:center}
+      </style></head><body>
+      <h1>وتر الإحساس — عرض تنفيذ ديكور</h1><small>${new Date().toLocaleString("ar")}</small>
+      <div class="card"><img src="${img}" alt="تصميم"></div>
+      <div class="card"><table>
+        <tr><td>التصميم</td><td>${active?.name ?? "—"}</td></tr>
+        <tr><td>السطح</td><td>${surface === "wall" ? "جدار" : surface === "floor" ? "أرضية" : "سقف"}</td></tr>
+        <tr><td>المقاس</td><td>${width} م × ${height} م</td></tr>
+        <tr><td>بروز Embossed</td><td>${embossed ? "نعم (+30%)" : "لا"}</td></tr>
+        <tr><td>المنطقة</td><td>${region?.name ?? "—"}</td></tr>
+        <tr><td>الشحن</td><td>${shipping === "company" ? `سيارة الشركة (${km} كم)` : "من طرف العميل"}</td></tr>
+        ${coupon ? `<tr><td>كوبون</td><td>${coupon.code} (-${coupon.percent}%)</td></tr>` : ""}
+      </table></div>
+      <div class="total">الإجمالي: ${grandTotal.toLocaleString("ar", { maximumFractionDigits: 0 })} ${currency}</div>
+      <script>window.onload=()=>setTimeout(()=>window.print(),400)</script>
+      </body></html>`;
+    w.document.write(html); w.document.close();
+  }
+
 
   const previewBg = aiResult || bg;
 
@@ -364,7 +427,17 @@ function Simulator() {
                 } catch { /* ignore */ }
               }}
             >
-              <img src={previewBg} alt="preview" className="block w-full select-none" draggable={false} />
+              {compareMode && aiResult && bg ? (
+                <BeforeAfterSlider beforeSrc={bg} afterSrc={aiResult} />
+              ) : (
+                <img
+                  src={previewBg}
+                  alt="preview"
+                  className="block w-full select-none"
+                  draggable={false}
+                  style={{ filter: LIGHTING_PRESETS.find((l) => l.key === lighting)?.filter }}
+                />
+              )}
 
               {/* clipped design layer — التصميم يظهر فقط داخل نطاق الجدار المحدَّد */}
               {((!aiResult || postEdit) && active) && (
@@ -521,6 +594,32 @@ function Simulator() {
               </button>
             </div>
           )}
+
+          {/* Lighting presets — يحاكي إضاءة الغرفة على الصورة */}
+          {previewBg && (
+            <div className="mt-3 flex flex-wrap items-center gap-1.5 rounded-2xl border border-border bg-card/60 p-2">
+              <span className="ms-1 text-[11px] font-black text-muted-foreground">إضاءة الغرفة:</span>
+              {LIGHTING_PRESETS.map((l) => (
+                <button key={l.key} onClick={() => setLighting(l.key)}
+                  className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
+                    lighting === l.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-primary/10"
+                  }`}>
+                  <l.icon className="size-3.5" /> {l.label}
+                </button>
+              ))}
+              {aiResult && (
+                <button onClick={() => setCompareMode((v) => !v)}
+                  className={`ms-auto inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-black transition ${
+                    compareMode ? "bg-accent text-accent-foreground" : "border border-accent/50 bg-accent/10 text-accent-foreground"
+                  }`}>
+                  <GitCompare className="size-3.5" /> {compareMode ? "إغلاق المقارنة" : "قبل / بعد"}
+                </button>
+              )}
+            </div>
+          )}
+
+
+
 
 
           {/* Effects panel */}
@@ -716,8 +815,32 @@ function Simulator() {
             <p className="mt-1 text-3xl font-black">{grandTotal.toLocaleString("ar", { maximumFractionDigits: 0 })} {currency}</p>
             <p className="mt-1 text-[11px] opacity-80">
               طباعة: {baseTotal.toLocaleString("ar", { maximumFractionDigits: 0 })} + شحن: {shippingCost.toLocaleString("ar", { maximumFractionDigits: 0 })}
+              {discount > 0 && <> − خصم: {discount.toLocaleString("ar", { maximumFractionDigits: 0 })}</>}
+              {sampleOrder && <> · <b>وضع العيّنة 20×20</b></>}
             </p>
+
+            {/* Coupon */}
+            <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-background/15 p-1.5 backdrop-blur">
+              <Ticket className="size-3.5 opacity-80" />
+              <input
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                placeholder="كود خصم (اختياري)"
+                className="flex-1 rounded-md bg-background/20 px-2 py-1 text-[11px] text-primary-foreground placeholder:text-primary-foreground/60 outline-none"
+              />
+              {coupon && <span className="rounded-md bg-success px-2 py-0.5 text-[10px] font-black">-{coupon.percent}%</span>}
+              {couponCode && !coupon && <span className="rounded-md bg-destructive/80 px-2 py-0.5 text-[10px] font-black">غير صالح</span>}
+            </div>
+
+            {/* Sample order toggle */}
+            <button onClick={() => setSampleOrder((v) => !v)}
+              className={`mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-black transition ${
+                sampleOrder ? "bg-background text-primary" : "bg-background/15 text-primary-foreground hover:bg-background/25"
+              }`}>
+              <Package className="size-3.5" /> {sampleOrder ? "إلغاء طلب العيّنة" : "اطلب عيّنة مطبوعة 20×20 سم"}
+            </button>
           </div>
+
         </aside>
       </div>
 
@@ -780,6 +903,11 @@ function Simulator() {
           <button onClick={downloadResult} disabled={!aiResult}
             className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-3 text-xs font-black text-foreground disabled:opacity-40">
             <Download className="size-4" /> حفظ
+          </button>
+          <button onClick={exportPdf} disabled={!bg}
+            className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-primary/40 bg-primary/10 px-3 py-3 text-xs font-black text-primary disabled:opacity-40"
+            title="تصدير عرض تنفيذ جاهز للطباعة أو الحفظ كـ PDF">
+            <Printer className="size-4" /> PDF
           </button>
           <button onClick={sendOrder} disabled={sending || !regionId}
             className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-foreground px-3 py-3 text-xs font-black text-background disabled:opacity-40">

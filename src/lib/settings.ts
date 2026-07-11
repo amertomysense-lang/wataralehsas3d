@@ -80,7 +80,16 @@ export type PlatformSettings = {
   customVideos: { id: string; url: string; title?: string }[]; // أشرطة فيديو على الواجهة
   bgVideoEnabled: boolean;      // استخدام أول فيديو كخلفية متحركة للموقع
   bgVideoOpacity: number;       // 0 - 1
+  maxHomeVideos: number;        // كم فيديو نعرض في شريط الواجهة (0 = إخفاء الشريط)
+
+  // قوالب رسائل واتساب — تُستخدم عند إرسال الطلب / التواصل مع الأدمن
+  whatsappGreeting: string;
+  whatsappSampleNote: string;   // نص خاص عند طلب عيّنة مطبوعة صغيرة
+
+  // كوبونات خصم — يُدخلها الأدمن ويطبّقها الزبون بكتابة الكود
+  coupons: { code: string; percent: number; note?: string }[];
 };
+
 
 export const DEFAULT_SETTINGS: PlatformSettings = {
   currency: "$",
@@ -120,7 +129,12 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
   customVideos: [],
   bgVideoEnabled: false,
   bgVideoOpacity: 0.4,
+  maxHomeVideos: 1,
+  whatsappGreeting: "السلام عليكم، أرغب بتنفيذ تصميم ديكور جداري عبر منصة وتر الإحساس.",
+  whatsappSampleNote: "أرغب بطلب عيّنة مطبوعة صغيرة 20×20 سم قبل تنفيذ المشروع الكامل.",
+  coupons: [],
 };
+
 
 const KEY = "watar.platform.settings.v2";
 

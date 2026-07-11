@@ -379,6 +379,41 @@ function GlobalSettingsTab() {
           </Field>
         </div>
 
+        {/* رسائل واتساب */}
+        <div className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-2">
+          <p className="text-xs font-black text-foreground">قوالب واتساب</p>
+          <Field label="تحية افتتاحية">
+            <input value={draft.whatsappGreeting} onChange={(e) => update("whatsappGreeting", e.target.value)} className="input" />
+          </Field>
+          <Field label="نص طلب العيّنة">
+            <input value={draft.whatsappSampleNote} onChange={(e) => update("whatsappSampleNote", e.target.value)} className="input" />
+          </Field>
+        </div>
+
+        {/* الكوبونات */}
+        <div className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-black text-foreground">كوبونات الخصم</p>
+            <button onClick={() => update("coupons", [...(draft.coupons ?? []), { code: "NEW10", percent: 10 }])}
+              className="rounded-lg bg-primary/10 px-2 py-1 text-[11px] font-black text-primary">+ إضافة</button>
+          </div>
+          {(draft.coupons ?? []).length === 0 && <p className="text-[11px] text-muted-foreground">لا توجد كوبونات بعد.</p>}
+          {(draft.coupons ?? []).map((c, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <input value={c.code} onChange={(e) => {
+                const arr = [...(draft.coupons ?? [])]; arr[i] = { ...arr[i], code: e.target.value.toUpperCase() }; update("coupons", arr);
+              }} placeholder="CODE" className="input flex-1" />
+              <input type="number" min={1} max={90} value={c.percent} onChange={(e) => {
+                const arr = [...(draft.coupons ?? [])]; arr[i] = { ...arr[i], percent: +e.target.value }; update("coupons", arr);
+              }} className="input w-24" />
+              <span className="text-xs">%</span>
+              <button onClick={() => update("coupons", (draft.coupons ?? []).filter((_, j) => j !== i))}
+                className="rounded-lg bg-destructive/10 px-2 py-1 text-[11px] font-black text-destructive">حذف</button>
+            </div>
+          ))}
+        </div>
+
+
         <div className="flex gap-2">
           <button onClick={() => setS(draft)}
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft hover:opacity-90">
