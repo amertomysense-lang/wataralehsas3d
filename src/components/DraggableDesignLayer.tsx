@@ -19,6 +19,7 @@ type Props = {
   onChange: (b: DesignBox) => void;
   container: React.RefObject<HTMLDivElement | null>;
   embossed?: boolean;
+  lockAspect?: boolean;
 };
 
 /**
