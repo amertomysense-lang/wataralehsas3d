@@ -680,16 +680,18 @@ function VendorsTab() {
     e.preventDefault();
     if (!form.name || !form.phone) { toast.error("الاسم والرقم مطلوبان"); return; }
     const payload = {
+      business_name: form.name,
       name: form.name,
       category: form.category,
       phone: form.phone.replace(/\D/g, ""),
+      whatsapp_number: form.phone.replace(/\D/g, ""),
       logo_url: form.logo_url || null,
       is_premium: form.is_premium,
       region_id: form.region_id || null,
     };
     const res = editing
-      ? await supabase.from("vendors").update(payload).eq("id", editing)
-      : await supabase.from("vendors").insert(payload);
+      ? await supabase.from("vendors").update(payload as never).eq("id", editing)
+      : await supabase.from("vendors").insert(payload as never);
     if (res.error) { toast.error(res.error.message); return; }
     toast.success("تم الحفظ");
     setForm(EMPTY_V); setEditing(null);
