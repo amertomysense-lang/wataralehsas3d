@@ -86,7 +86,7 @@ function Simulator() {
   const [lighting, setLighting] = useState<Lighting["key"]>("off");
   const [compareMode, setCompareMode] = useState(false);
   const [couponCode, setCouponCode] = useState("");
-  const [sampleOrder, setSampleOrder] = useState(false);
+  const [sampleOrder] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [savingProject, setSavingProject] = useState(false);
   const [showMyProjects, setShowMyProjects] = useState(false);
