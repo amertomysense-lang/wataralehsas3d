@@ -1138,7 +1138,7 @@ function PaymentsTab() {
 /* ============ تبويب قصّات الشعر المخصّصة ============ */
 function DesignsTab() {
   const [s, set] = useSettings();
-  const [section, setSection] = useState<DesignSection>("haircut");
+  const [section, setSection] = useState<DesignSection>("simulator");
   const [form, setForm] = useState<{ label: string; prompt: string; preview: string; gender: "m" | "f" | "u" }>({
     label: "", prompt: "", preview: "", gender: "u",
   });
