@@ -63,6 +63,11 @@ function Simulator() {
   const [wallPoints, setWallPoints] = useState<{ x: number; y: number }[]>([]);
   const [defineMode, setDefineMode] = useState(false);
   const [postEdit, setPostEdit] = useState(false);
+  const [lockAspect, setLockAspect] = useState(true);
+  const [autoFitMode, setAutoFitMode] = useState(false);
+  const [addressNote, setAddressNote] = useState("");
+  const [locationUrl, setLocationUrl] = useState("");
+  const [geoLoading, setGeoLoading] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
