@@ -182,14 +182,15 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
         alt={name ?? "design"}
         draggable={false}
         decoding="async"
-        className="size-full rounded-lg object-cover shadow-2xl ring-1 ring-white/20"
+        className="size-full rounded-lg object-contain shadow-2xl ring-1 ring-white/20"
         style={{ imageRendering: "crisp-edges", filter: cssFilter } as React.CSSProperties}
       />
-      {/* drag surface */}
+      {/* drag surface — also captures pinch-to-zoom with two fingers */}
       <button
-        onPointerDown={onDown("drag")}
-        aria-label="سحب التصميم"
+        onPointerDown={onDragPointerDown}
+        aria-label="سحب التصميم — قرصة بإصبعين للتكبير"
         className="absolute inset-0 cursor-move opacity-0"
+        style={{ touchAction: "none" }}
       >drag</button>
 
       {/* selection border */}
