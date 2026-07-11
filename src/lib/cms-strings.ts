@@ -1,72 +1,98 @@
-// CMS Zero-Code: تحرير كل النصوص دون لمس الكود
+// CMS Zero-Code: تحرير كل النصوص في التطبيق دون لمس الكود
+// النصوص تُخزَّن سحابياً في جدول public.cms_strings ثم تُكاش محلياً — أي تعديل
+// يقوم به الأدمن يظهر فوراً لكل الزبائن على كل الأجهزة.
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const KEY = "watar.cms.strings.v1";
 
 // السجل الافتراضي — مفاتيح مع نصوص أصلية (Arabic)
 export const DEFAULT_STRINGS: Record<string, string> = {
   "brand.name": "وتر الإحساس",
-  "brand.tagline": "مستقبل الديكور والذكاء الاصطناعي",
+  "brand.tagline": "طباعة جدارية وأرضيات — دمج ذكي بلمسة",
 
-  "home.badge": "وتر الإحساس · النسخة الاحترافية",
-  "home.title_1": "مستقبل الديكور الرقمي",
-  "home.title_2": "والتجارة الذكية في الشمال",
-  "home.subtitle": "طباعة جدارية وأرضيات بدقة 8K، تأثيرات بروز 3D، وغرفة تجربة AI افتراضية للأزياء وقصات الشعر.",
-  "home.cta_primary": "ابدأ التجربة التفاعلية الآن",
+  "home.badge": "وتر الإحساس · محاكي الديكور",
+  "home.title_1": "حوّل جدارك إلى تحفة",
+  "home.title_2": "بدمج ذكي وواقعي",
+  "home.subtitle": "ارفع صورة جدارك، اسحب التصميم فوقه، اضبطه بلمسة، وأتمم طلبك بضغطة.",
+  "home.cta_primary": "ابدأ الآن — محاكي الديكور",
   "home.cta_admin": "لوحة التحكم",
 
-  "workflow.title": "اختر تجربتك",
-  "workflow.subtitle": "أربع وحدات احترافية — كلٌ منها تعمل بشكل مستقل.",
-
-  "module.simulator.title": "محاكي الجدران والأرضيات",
-  "module.simulator.desc": "ارفع صورة الغرفة وجرّب طبقات الخط العربي، الرخام والإيبوكسي.",
-  "module.marketplace.title": "سوق شركاء الديكور والأزياء",
-  "module.marketplace.desc": "محلات معتمدة مع تواصل واتساب مباشر.",
-  "module.tryon.title": "غرفة تجربة الأزياء AI",
-  "module.tryon.desc": "ارفع صورتك واختر قطعة من بوتيك الشريك.",
-  "module.haircut.title": "تجربة قصات الشعر بالذكاء الاصطناعي",
-  "module.haircut.desc": "ارفع صورة وجهك واختر قصّة/لون شعر بشكل افتراضي قبل الزيارة.",
-
-  "marketplace.title_1": "سوق",
-  "marketplace.title_2": "شركاء الديكور والأزياء",
-  "marketplace.tab_decor": "عالم الديكور والأثاث",
-  "marketplace.tab_fashion": "عالم الأزياء والموضة",
-  "marketplace.empty": "لا يوجد شركاء في هذا العالم بعد",
-
-  "haircut.title_1": "تجربة قصات الشعر",
-  "haircut.title_2": "بالذكاء الاصطناعي",
-  "haircut.upload_hint": "ارفع صورة وجه واضحة",
-  "haircut.run": "محاكاة القصّة فوراً",
-  "haircut.color": "لون الشعر",
+  "sim.badge": "محاكي الديكور",
+  "sim.smart_blend": "دمج ذكي فوري",
+  "sim.free_place": "ضع التصميم في أي مكان — اسحبه واضبط حجمه بحرية",
+  "sim.upload_hint": "اسحب صورة جدارك — أو استخدم الكاميرا",
 
   "wa.cta": "تواصل واتساب",
+  "checkout.title": "إتمام الطلب",
+  "checkout.cod": "الدفع عند الاستلام",
+  "checkout.sham": "شام كاش",
 };
 
-export function readStrings(): Record<string, string> {
+function readLocal(): Record<string, string> {
   if (typeof window === "undefined") return DEFAULT_STRINGS;
   try {
     const raw = window.localStorage.getItem(KEY);
-    if (!raw) return DEFAULT_STRINGS;
-    return { ...DEFAULT_STRINGS, ...JSON.parse(raw) };
+    return raw ? { ...DEFAULT_STRINGS, ...JSON.parse(raw) } : DEFAULT_STRINGS;
   } catch { return DEFAULT_STRINGS; }
 }
 
-export function writeStrings(next: Record<string, string>) {
+function writeLocal(next: Record<string, string>) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(KEY, JSON.stringify(next));
   window.dispatchEvent(new CustomEvent("watar:cms"));
 }
 
+/** يقرأ أحدث النصوص من السحابة ويحدّث الكاش المحلي */
+export async function refreshFromCloud(): Promise<Record<string, string>> {
+  try {
+    const { data, error } = await supabase.from("cms_strings").select("key,value");
+    if (error || !data) return readLocal();
+    const merged: Record<string, string> = { ...DEFAULT_STRINGS };
+    for (const row of data as { key: string; value: string }[]) merged[row.key] = row.value;
+    writeLocal(merged);
+    return merged;
+  } catch { return readLocal(); }
+}
+
+/** يحفظ مفتاحاً واحداً سحابياً + محلياً — يستخدمه الأدمن */
+export async function saveString(key: string, value: string) {
+  const local = { ...readLocal(), [key]: value };
+  writeLocal(local);
+  try {
+    await supabase.from("cms_strings").upsert(
+      { key, value, updated_at: new Date().toISOString() },
+      { onConflict: "key" },
+    );
+  } catch (e) { console.warn("CMS cloud save failed", e); }
+}
+
+/** يحفظ دفعة كاملة سحابياً — يستخدمه الأدمن عند الاستيراد */
+export async function saveStringsBatch(next: Record<string, string>) {
+  writeLocal(next);
+  try {
+    const rows = Object.entries(next).map(([key, value]) => ({
+      key, value, updated_at: new Date().toISOString(),
+    }));
+    if (rows.length) await supabase.from("cms_strings").upsert(rows, { onConflict: "key" });
+  } catch (e) { console.warn("CMS batch save failed", e); }
+}
+
+export function readStrings(): Record<string, string> { return readLocal(); }
+export function writeStrings(next: Record<string, string>) { void saveStringsBatch(next); }
+
+/** Hook — يعطيك النصوص الحية ودالة تعديل تُزامن سحابياً */
 export function useCmsStrings(): [Record<string, string>, (n: Record<string, string>) => void] {
   const [s, setS] = useState<Record<string, string>>(DEFAULT_STRINGS);
   useEffect(() => {
-    setS(readStrings());
-    const h = () => setS(readStrings());
+    setS(readLocal());
+    refreshFromCloud().then(setS).catch(() => {});
+    const h = () => setS(readLocal());
     window.addEventListener("watar:cms", h);
     window.addEventListener("storage", h);
     return () => { window.removeEventListener("watar:cms", h); window.removeEventListener("storage", h); };
   }, []);
-  return [s, (n) => { writeStrings(n); setS(n); }];
+  return [s, (n) => { void saveStringsBatch(n); setS(n); }];
 }
 
 export function useStr(key: string, fallback?: string): string {
