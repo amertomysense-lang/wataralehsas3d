@@ -76,7 +76,7 @@ function BulkUploadStudio() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 px-4 py-6 pb-20" dir="rtl">
       <div className="mx-auto max-w-5xl">
-        <Link to="/workflow" className="text-sm font-bold text-primary hover:underline">← الوحدات</Link>
+        <Link to="/admin" className="text-sm font-bold text-primary hover:underline">← لوحة التحكم</Link>
 
         <div className="mt-3 rounded-3xl border border-primary/20 bg-gradient-to-tr from-primary/10 via-background to-accent/5 p-6 shadow-soft">
           <div className="flex items-center gap-3">
