@@ -89,13 +89,19 @@ export function buildWhatsAppUrl(opts: {
   designUrl: string;
   total: number;
   currency: string;
+  locationUrl?: string;
+  addressNote?: string;
 }) {
-  const txt = `مرحباً فريق طابعات الجدران الرقمية - فرع ${opts.region}.
-لقد قمت بمعاينة المحاكي وأرغب بحجز موعد.
-المدينة/المنطقة: ${opts.region}
-المقاسات: ${opts.width}م × ${opts.height}م | ميزة البروز: ${opts.embossed ? "نعم" : "لا"}
-التصميم: ${opts.designName}
-رابط التصميم: ${opts.designUrl}
-التكلفة المقدرة: ${opts.total.toLocaleString("ar")} ${opts.currency}`;
-  return `https://wa.me/${opts.number}?text=${encodeURIComponent(txt)}`;
+  const lines = [
+    `مرحباً فريق طابعات الجدران الرقمية - فرع ${opts.region}.`,
+    `لقد قمت بمعاينة المحاكي وأرغب بحجز موعد.`,
+    `المدينة/المنطقة: ${opts.region}`,
+    `المقاسات: ${opts.width}م × ${opts.height}م | ميزة البروز: ${opts.embossed ? "نعم" : "لا"}`,
+    `التصميم: ${opts.designName}`,
+    `رابط التصميم: ${opts.designUrl}`,
+    `التكلفة المقدرة: ${opts.total.toLocaleString("ar")} ${opts.currency}`,
+  ];
+  if (opts.addressNote) lines.push(`العنوان التفصيلي: ${opts.addressNote}`);
+  if (opts.locationUrl) lines.push(`📍 الموقع على الخريطة: ${opts.locationUrl}`);
+  return `https://wa.me/${opts.number}?text=${encodeURIComponent(lines.join("\n"))}`;
 }
