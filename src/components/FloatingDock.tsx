@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, X, Send, Loader2, Sparkles, Info, Layers, Move, Wand2 } from "lucide-react";
-import { useLocation } from "@tanstack/react-router";
+import { MessageCircle, X, Send, Loader2, Sparkles, Info, Layers, Move, Wand2, Shield } from "lucide-react";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 
 /**
  * رصيف عائم موحّد لأزرار المساعد والمزايا والواتساب.
@@ -12,11 +12,13 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 export function FloatingDock() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [chatOpen, setChatOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
 
   // إخفاء المساعد داخل صفحة المنتج (لها محادثتها الخاصة)
   const hideChat = location.pathname.startsWith("/product/");
+  const hideAdmin = location.pathname.startsWith("/admin") || location.pathname.startsWith("/bulk-upload");
 
   return (
     <>
@@ -28,6 +30,16 @@ export function FloatingDock() {
       >
         {/* منفذ لأزرار سياقية (واتساب المنتج) */}
         <div id="watar-dock-slot" className="flex flex-col items-center gap-2.5" />
+
+        {!hideAdmin && (
+          <DockButton
+            label="لوحة التحكم"
+            tone="accent"
+            onClick={() => navigate({ to: "/admin" })}
+          >
+            <Shield className="size-4" />
+          </DockButton>
+        )}
 
         <DockButton
           label="مزايا المشروع"
