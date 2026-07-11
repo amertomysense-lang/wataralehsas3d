@@ -20,6 +20,8 @@ import { DropZone } from "@/components/DropZone";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { saveProject, useMyProjects, togglePublic, deleteProject } from "@/lib/projects";
 import { CheckoutSheet, type CheckoutPayload } from "@/components/CheckoutSheet";
+import { isAdmin } from "@/lib/admin-gate";
+import { Sparkles, Library } from "lucide-react";
 
 export const Route = createFileRoute("/simulator")({
   head: () => ({ meta: [{ title: "محاكي الجدران والأرضيات — وتر الإحساس" }] }),
