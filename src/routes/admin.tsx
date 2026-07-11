@@ -1700,7 +1700,7 @@ function CloudSettingsTab() {
 
       <div className="flex gap-2">
         <button disabled={!form || save.isPending}
-          onClick={() => save.mutate(form)}
+          onClick={() => form && save.mutate(form)}
           className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-black text-primary-foreground shadow-soft disabled:opacity-50">
           <Save className="size-4" /> {save.isPending ? "جاري الحفظ…" : "حفظ الإعدادات السحابية"}
         </button>
@@ -1715,7 +1715,7 @@ function CloudSettingsTab() {
   );
 }
 
-function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function TextField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div>
       <label className="mb-1 block text-[11px] font-black text-muted-foreground">{label}</label>
