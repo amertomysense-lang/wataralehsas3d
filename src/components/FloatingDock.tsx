@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, X, Send, Loader2, Sparkles, Info, Layers, Move, Wand2 } from "lucide-react";
-import { useLocation } from "@tanstack/react-router";
+import { MessageCircle, X, Send, Loader2, Sparkles, Info, Layers, Move, Wand2, Shield } from "lucide-react";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 
 /**
  * رصيف عائم موحّد لأزرار المساعد والمزايا والواتساب.
