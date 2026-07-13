@@ -24,14 +24,6 @@ type Props = {
   embossed?: boolean;
   lockAspect?: boolean;
 };
-  src: string;
-  name?: string;
-  box: DesignBox;
-  onChange: (b: DesignBox) => void;
-  container: React.RefObject<HTMLDivElement | null>;
-  embossed?: boolean;
-  lockAspect?: boolean;
-};
 
 /**
  * طبقة تصميم فوق صورة الجدار الثابتة:
