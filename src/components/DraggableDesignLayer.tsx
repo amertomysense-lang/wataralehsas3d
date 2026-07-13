@@ -32,7 +32,7 @@ type Props = {
  */
 export function DraggableDesignLayer({ src, name, box, onChange, container, embossed, lockAspect }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const [mode, setMode] = useState<"drag" | "resize" | "resize-x" | "resize-y" | "rotate" | null>(null);
+  const [mode, setMode] = useState<Mode | null>(null);
   const start = useRef<{ px: number; py: number; box: DesignBox; cx?: number; cy?: number } | null>(null);
 
   // Multi-touch pinch state — tracks two active pointers to scale the design
@@ -40,7 +40,7 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const pinchStart = useRef<{ dist: number; box: DesignBox } | null>(null);
 
-  const onDown = useCallback((m: "drag" | "resize" | "resize-x" | "resize-y" | "rotate") => (e: React.PointerEvent) => {
+  const onDown = useCallback((m: Mode) => (e: React.PointerEvent) => {
     e.preventDefault(); e.stopPropagation();
     (e.target as Element).setPointerCapture?.(e.pointerId);
     setMode(m);
