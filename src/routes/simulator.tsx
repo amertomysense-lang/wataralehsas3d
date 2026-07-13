@@ -72,7 +72,7 @@ function Simulator() {
   const [aiBusy, setAiBusy] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [surface, setSurface] = useState<"wall" | "floor" | "ceiling">("wall");
-  const [showEffects, setShowEffects] = useState(true);
+  const [showEffects, setShowEffects] = useState(false);
   const [wallPoints, setWallPoints] = useState<{ x: number; y: number }[]>([]);
   const [defineMode, setDefineMode] = useState(false);
   const [postEdit, setPostEdit] = useState(false);
