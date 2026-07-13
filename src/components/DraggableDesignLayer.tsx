@@ -12,7 +12,18 @@ export type DesignBox = {
   blendMode: React.CSSProperties["mixBlendMode"];
 };
 
+type Corner = "nw" | "ne" | "sw" | "se";
+type Mode = "drag" | "resize-nw" | "resize-ne" | "resize-sw" | "resize-se" | "resize-x" | "resize-y" | "rotate";
+
 type Props = {
+  src: string;
+  name?: string;
+  box: DesignBox;
+  onChange: (b: DesignBox) => void;
+  container: React.RefObject<HTMLDivElement | null>;
+  embossed?: boolean;
+  lockAspect?: boolean;
+};
   src: string;
   name?: string;
   box: DesignBox;
