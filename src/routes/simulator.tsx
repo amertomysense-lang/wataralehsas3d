@@ -1126,9 +1126,15 @@ function Simulator() {
             </>
           )}
 
+          <button onClick={downloadManualComposite} disabled={!bg || !active}
+            className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-3 text-xs font-black text-foreground disabled:opacity-40"
+            title="حفظ الجدار مع التصميم فوقه كصورة واحدة (بدون AI)">
+            <Download className="size-4" /> حفظ يدوي
+          </button>
           <button onClick={downloadResult} disabled={!aiResult}
-            className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-3 text-xs font-black text-foreground disabled:opacity-40">
-            <Download className="size-4" /> حفظ
+            className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-primary/50 bg-primary/10 px-3 py-3 text-xs font-black text-primary disabled:opacity-40"
+            title="حفظ نتيجة الدمج بالذكاء الاصطناعي">
+            <Wand2 className="size-4" /> حفظ AI
           </button>
           <button onClick={exportPdf} disabled={!bg}
             className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-primary/40 bg-primary/10 px-3 py-3 text-xs font-black text-primary disabled:opacity-40"
