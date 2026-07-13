@@ -111,16 +111,22 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
           x: Math.max(-20, Math.min(120 - s.box.w, s.box.x + dx)),
           y: Math.max(-20, Math.min(120 - s.box.h, s.box.y + dy)),
         });
-      } else if (mode === "resize") {
-        let nw = Math.max(4, Math.min(200, s.box.w + dx));
-        let nh = Math.max(4, Math.min(200, s.box.h + dy));
-        if (lockAspect && s.box.h > 0) {
+      } else if (mode === "resize-se" || mode === "resize-sw" || mode === "resize-ne" || mode === "resize-nw") {
+        // resize من أي زاوية — الاتجاه يحدد إشارات dx/dy وموضع الصندوق
+        const dirX = mode === "resize-ne" || mode === "resize-se" ? 1 : -1;
+        const dirY = mode === "resize-sw" || mode === "resize-se" ? 1 : -1;
+        let nw = Math.max(4, Math.min(200, s.box.w + dirX * dx));
+        let nh = Math.max(4, Math.min(200, s.box.h + dirY * dy));
+        if (lockAspect && s.box.h > 0 && s.box.w > 0) {
           const ratio = s.box.w / s.box.h;
           const scale = Math.max(nw / s.box.w, nh / s.box.h);
           nw = Math.max(4, Math.min(200, s.box.w * scale));
           nh = Math.max(4, Math.min(200, nw / ratio));
         }
-        onChange({ ...s.box, w: nw, h: nh });
+        // ثبّت الزاوية المقابلة — يعطي إحساساً طبيعياً في السحب من كل الزوايا
+        const nx = dirX === 1 ? s.box.x : s.box.x + (s.box.w - nw);
+        const ny = dirY === 1 ? s.box.y : s.box.y + (s.box.h - nh);
+        onChange({ ...s.box, w: nw, h: nh, x: nx, y: ny });
       } else if (mode === "resize-x") {
         const nw = Math.max(4, Math.min(200, s.box.w + dx));
         const nh = lockAspect && s.box.w > 0 ? Math.max(4, Math.min(200, (nw / s.box.w) * s.box.h)) : s.box.h;
