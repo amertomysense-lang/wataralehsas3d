@@ -31,7 +31,12 @@ export function FloatingDock() {
 
   const hideChat = location.pathname.startsWith("/product/");
   const hideAdmin = location.pathname.startsWith("/admin") || location.pathname.startsWith("/bulk-upload");
-  const hide = location.pathname.startsWith("/admin") || location.pathname.startsWith("/bulk-upload");
+  // نُخفي الدوك في صفحات لها شريط سفلي خاص بها (المحاكي/الأدمن/الرفع الجماعي)
+  // لتفادي تراكب أزرار الإجراءات فوق بعضها البعض.
+  const hide =
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/bulk-upload") ||
+    location.pathname.startsWith("/simulator");
 
   if (hide) return null;
 
