@@ -72,7 +72,7 @@ function Simulator() {
   const [aiBusy, setAiBusy] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [surface, setSurface] = useState<"wall" | "floor" | "ceiling">("wall");
-  const [showEffects, setShowEffects] = useState(true);
+  const [showEffects, setShowEffects] = useState(false);
   const [wallPoints, setWallPoints] = useState<{ x: number; y: number }[]>([]);
   const [defineMode, setDefineMode] = useState(false);
   const [postEdit, setPostEdit] = useState(false);
@@ -243,7 +243,68 @@ function Simulator() {
     if (!aiResult) return;
     const a = document.createElement("a");
     const ext = aiResult.startsWith("data:image/webp") ? "webp" : "jpg";
-    a.href = aiResult; a.download = `watar-room-${Date.now()}.${ext}`; a.click();
+    a.href = aiResult; a.download = `watar-ai-${Date.now()}.${ext}`; a.click();
+  }
+
+  // 💾 حفظ يدوي — يدمج صورة الجدار مع طبقة التصميم (بموضعها، تدويرها، شفافيتها،
+  // ووضع المزج) في صورة JPG واحدة قابلة للحفظ. لا يتطلب ذكاءً اصطناعياً.
+  async function downloadManualComposite() {
+    if (!bg) { toast.error("لا توجد صورة جدار"); return; }
+    if (!active) { toast.error("اختر تصميماً أولاً"); return; }
+    try {
+      const room = new Image(); room.crossOrigin = "anonymous"; room.src = bg;
+      await new Promise<void>((res, rej) => { room.onload = () => res(); room.onerror = () => rej(new Error("room load")); });
+      const design = new Image(); design.crossOrigin = "anonymous"; design.src = active.url;
+      await new Promise<void>((res, rej) => { design.onload = () => res(); design.onerror = () => rej(new Error("design load")); });
+
+      const W = room.naturalWidth || 1600;
+      const H = room.naturalHeight || 1200;
+      const c = document.createElement("canvas");
+      c.width = W; c.height = H;
+      const ctx = c.getContext("2d"); if (!ctx) throw new Error("no ctx");
+      ctx.drawImage(room, 0, 0, W, H);
+
+      // مربع التصميم
+      const dx = (box.x / 100) * W;
+      const dy = (box.y / 100) * H;
+      const dw = (box.w / 100) * W;
+      const dh = (box.h / 100) * H;
+
+      ctx.save();
+      ctx.globalAlpha = box.opacity;
+      ctx.globalCompositeOperation = (box.blendMode as GlobalCompositeOperation) || "source-over";
+      ctx.filter = `blur(${box.blur}px) brightness(${box.brightness}) saturate(${box.saturation}) contrast(${box.contrast})`;
+      // تدوير حول مركز التصميم
+      ctx.translate(dx + dw / 2, dy + dh / 2);
+      ctx.rotate((box.rotation * Math.PI) / 180);
+      // clip داخل نطاق الجدار إن وُجد
+      if (wallPoints.length >= 3) {
+        ctx.restore();
+        ctx.save();
+        ctx.beginPath();
+        wallPoints.forEach((p, i) => {
+          const px = (p.x / 100) * W;
+          const py = (p.y / 100) * H;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        });
+        ctx.closePath();
+        ctx.clip();
+        ctx.globalAlpha = box.opacity;
+        ctx.globalCompositeOperation = (box.blendMode as GlobalCompositeOperation) || "source-over";
+        ctx.filter = `blur(${box.blur}px) brightness(${box.brightness}) saturate(${box.saturation}) contrast(${box.contrast})`;
+        ctx.translate(dx + dw / 2, dy + dh / 2);
+        ctx.rotate((box.rotation * Math.PI) / 180);
+      }
+      ctx.drawImage(design, -dw / 2, -dh / 2, dw, dh);
+      ctx.restore();
+
+      const url = c.toDataURL("image/jpeg", 0.92);
+      const a = document.createElement("a");
+      a.href = url; a.download = `watar-manual-${Date.now()}.jpg`; a.click();
+      toast.success("تم حفظ الدمج اليدوي (الجدار + التصميم)");
+    } catch {
+      toast.error("تعذّر حفظ الصورة (قد يكون مصدر الصورة محمياً — جرّب رفع صورة من جهازك)");
+    }
   }
 
   async function submitCheckout(p: CheckoutPayload) {
@@ -1065,9 +1126,15 @@ function Simulator() {
             </>
           )}
 
+          <button onClick={downloadManualComposite} disabled={!bg || !active}
+            className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-3 text-xs font-black text-foreground disabled:opacity-40"
+            title="حفظ الجدار مع التصميم فوقه كصورة واحدة (بدون AI)">
+            <Download className="size-4" /> حفظ يدوي
+          </button>
           <button onClick={downloadResult} disabled={!aiResult}
-            className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-border bg-background px-3 py-3 text-xs font-black text-foreground disabled:opacity-40">
-            <Download className="size-4" /> حفظ
+            className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-primary/50 bg-primary/10 px-3 py-3 text-xs font-black text-primary disabled:opacity-40"
+            title="حفظ نتيجة الدمج بالذكاء الاصطناعي">
+            <Wand2 className="size-4" /> حفظ AI
           </button>
           <button onClick={exportPdf} disabled={!bg}
             className="inline-flex items-center justify-center gap-1.5 rounded-2xl border border-primary/40 bg-primary/10 px-3 py-3 text-xs font-black text-primary disabled:opacity-40"

@@ -12,6 +12,9 @@ export type DesignBox = {
   blendMode: React.CSSProperties["mixBlendMode"];
 };
 
+type Corner = "nw" | "ne" | "sw" | "se";
+type Mode = "drag" | "resize-nw" | "resize-ne" | "resize-sw" | "resize-se" | "resize-x" | "resize-y" | "rotate";
+
 type Props = {
   src: string;
   name?: string;
@@ -29,7 +32,7 @@ type Props = {
  */
 export function DraggableDesignLayer({ src, name, box, onChange, container, embossed, lockAspect }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const [mode, setMode] = useState<"drag" | "resize" | "resize-x" | "resize-y" | "rotate" | null>(null);
+  const [mode, setMode] = useState<Mode | null>(null);
   const start = useRef<{ px: number; py: number; box: DesignBox; cx?: number; cy?: number } | null>(null);
 
   // Multi-touch pinch state — tracks two active pointers to scale the design
@@ -37,7 +40,7 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const pinchStart = useRef<{ dist: number; box: DesignBox } | null>(null);
 
-  const onDown = useCallback((m: "drag" | "resize" | "resize-x" | "resize-y" | "rotate") => (e: React.PointerEvent) => {
+  const onDown = useCallback((m: Mode) => (e: React.PointerEvent) => {
     e.preventDefault(); e.stopPropagation();
     (e.target as Element).setPointerCapture?.(e.pointerId);
     setMode(m);
@@ -108,16 +111,22 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
           x: Math.max(-20, Math.min(120 - s.box.w, s.box.x + dx)),
           y: Math.max(-20, Math.min(120 - s.box.h, s.box.y + dy)),
         });
-      } else if (mode === "resize") {
-        let nw = Math.max(4, Math.min(200, s.box.w + dx));
-        let nh = Math.max(4, Math.min(200, s.box.h + dy));
-        if (lockAspect && s.box.h > 0) {
+      } else if (mode === "resize-se" || mode === "resize-sw" || mode === "resize-ne" || mode === "resize-nw") {
+        // resize من أي زاوية — الاتجاه يحدد إشارات dx/dy وموضع الصندوق
+        const dirX = mode === "resize-ne" || mode === "resize-se" ? 1 : -1;
+        const dirY = mode === "resize-sw" || mode === "resize-se" ? 1 : -1;
+        let nw = Math.max(4, Math.min(200, s.box.w + dirX * dx));
+        let nh = Math.max(4, Math.min(200, s.box.h + dirY * dy));
+        if (lockAspect && s.box.h > 0 && s.box.w > 0) {
           const ratio = s.box.w / s.box.h;
           const scale = Math.max(nw / s.box.w, nh / s.box.h);
           nw = Math.max(4, Math.min(200, s.box.w * scale));
           nh = Math.max(4, Math.min(200, nw / ratio));
         }
-        onChange({ ...s.box, w: nw, h: nh });
+        // ثبّت الزاوية المقابلة — يعطي إحساساً طبيعياً في السحب من كل الزوايا
+        const nx = dirX === 1 ? s.box.x : s.box.x + (s.box.w - nw);
+        const ny = dirY === 1 ? s.box.y : s.box.y + (s.box.h - nh);
+        onChange({ ...s.box, w: nw, h: nh, x: nx, y: ny });
       } else if (mode === "resize-x") {
         const nw = Math.max(4, Math.min(200, s.box.w + dx));
         const nh = lockAspect && s.box.w > 0 ? Math.max(4, Math.min(200, (nw / s.box.w) * s.box.h)) : s.box.h;
@@ -217,16 +226,24 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
         </span>
       )}
 
-      {/* resize handle (both axes) */}
-      <button
-        onPointerDown={onDown("resize")}
-        aria-label="تكبير وتصغير"
-        title="تمديد بالعرض والارتفاع"
-        className="absolute -left-1 -bottom-1 grid size-7 place-items-center rounded-full bg-primary text-primary-foreground shadow ring-2 ring-background"
-        style={{ cursor: "nwse-resize" }}
-      >
-        <Maximize2 className="size-3.5" />
-      </button>
+      {/* مقابض الزوايا الأربع — تكبير/تصغير سلس من أي زاوية (أكبر وأسهل للسحب) */}
+      {([
+        { m: "resize-nw" as const, pos: "-right-3 -top-3", cur: "nwse-resize" },
+        { m: "resize-ne" as const, pos: "-left-3 -top-3", cur: "nesw-resize" },
+        { m: "resize-sw" as const, pos: "-right-3 -bottom-3", cur: "nesw-resize" },
+        { m: "resize-se" as const, pos: "-left-3 -bottom-3", cur: "nwse-resize" },
+      ]).map(({ m, pos, cur }) => (
+        <button
+          key={m}
+          onPointerDown={onDown(m)}
+          aria-label="تكبير/تصغير من الزاوية"
+          title="اسحب من الزاوية"
+          className={`absolute ${pos} grid size-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg ring-2 ring-background touch-none`}
+          style={{ cursor: cur, touchAction: "none" }}
+        >
+          <Maximize2 className="size-4" />
+        </button>
+      ))}
 
       {/* stretch handle — horizontal (width only) */}
       <button
