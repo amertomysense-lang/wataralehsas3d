@@ -226,16 +226,24 @@ export function DraggableDesignLayer({ src, name, box, onChange, container, embo
         </span>
       )}
 
-      {/* resize handle (both axes) */}
-      <button
-        onPointerDown={onDown("resize")}
-        aria-label="تكبير وتصغير"
-        title="تمديد بالعرض والارتفاع"
-        className="absolute -left-1 -bottom-1 grid size-7 place-items-center rounded-full bg-primary text-primary-foreground shadow ring-2 ring-background"
-        style={{ cursor: "nwse-resize" }}
-      >
-        <Maximize2 className="size-3.5" />
-      </button>
+      {/* مقابض الزوايا الأربع — تكبير/تصغير سلس من أي زاوية (أكبر وأسهل للسحب) */}
+      {([
+        { m: "resize-nw" as const, pos: "-right-3 -top-3", cur: "nwse-resize" },
+        { m: "resize-ne" as const, pos: "-left-3 -top-3", cur: "nesw-resize" },
+        { m: "resize-sw" as const, pos: "-right-3 -bottom-3", cur: "nesw-resize" },
+        { m: "resize-se" as const, pos: "-left-3 -bottom-3", cur: "nwse-resize" },
+      ]).map(({ m, pos, cur }) => (
+        <button
+          key={m}
+          onPointerDown={onDown(m)}
+          aria-label="تكبير/تصغير من الزاوية"
+          title="اسحب من الزاوية"
+          className={`absolute ${pos} grid size-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg ring-2 ring-background touch-none`}
+          style={{ cursor: cur, touchAction: "none" }}
+        >
+          <Maximize2 className="size-4" />
+        </button>
+      ))}
 
       {/* stretch handle — horizontal (width only) */}
       <button
