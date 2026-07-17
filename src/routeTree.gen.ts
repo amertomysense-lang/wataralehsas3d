@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MarketingToolRouteImport } from './routes/marketing-tool'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as BulkUploadStudioRouteImport } from './routes/bulk-upload-studio'
 import { Route as AssistantRouteImport } from './routes/assistant'
@@ -24,6 +25,7 @@ import { Route as ApiAiImageRouteImport } from './routes/api/ai-image'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
 const SimulatorRoute = SimulatorRouteImport.update({
   id: '/simulator',
@@ -38,6 +40,11 @@ const McpRoute = McpRouteImport.update({
 const MarketingToolRoute = MarketingToolRouteImport.update({
   id: '/marketing-tool',
   path: '/marketing-tool',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GalleryRoute = GalleryRouteImport.update({
@@ -103,6 +110,11 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/assistant': typeof AssistantRoute
   '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/gallery': typeof GalleryRoute
+  '/login': typeof LoginRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/mcp': typeof McpRoute
   '/simulator': typeof SimulatorRoute
@@ -119,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRoutesByTo {
@@ -127,6 +141,7 @@ export interface FileRoutesByTo {
   '/assistant': typeof AssistantRoute
   '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/gallery': typeof GalleryRoute
+  '/login': typeof LoginRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/mcp': typeof McpRoute
   '/simulator': typeof SimulatorRoute
@@ -136,6 +151,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRoutesById {
@@ -145,6 +161,7 @@ export interface FileRoutesById {
   '/assistant': typeof AssistantRoute
   '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/gallery': typeof GalleryRoute
+  '/login': typeof LoginRoute
   '/marketing-tool': typeof MarketingToolRoute
   '/mcp': typeof McpRoute
   '/simulator': typeof SimulatorRoute
@@ -154,6 +171,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRouteTypes {
@@ -164,6 +182,7 @@ export interface FileRouteTypes {
     | '/assistant'
     | '/bulk-upload-studio'
     | '/gallery'
+    | '/login'
     | '/marketing-tool'
     | '/mcp'
     | '/simulator'
@@ -173,6 +192,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/decor-project'
     | '/api/remove-bg'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -181,6 +201,7 @@ export interface FileRouteTypes {
     | '/assistant'
     | '/bulk-upload-studio'
     | '/gallery'
+    | '/login'
     | '/marketing-tool'
     | '/mcp'
     | '/simulator'
@@ -190,6 +211,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/decor-project'
     | '/api/remove-bg'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
   id:
     | '__root__'
@@ -198,6 +220,7 @@ export interface FileRouteTypes {
     | '/assistant'
     | '/bulk-upload-studio'
     | '/gallery'
+    | '/login'
     | '/marketing-tool'
     | '/mcp'
     | '/simulator'
@@ -207,6 +230,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/decor-project'
     | '/api/remove-bg'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
   fileRoutesById: FileRoutesById
 }
@@ -216,6 +240,7 @@ export interface RootRouteChildren {
   AssistantRoute: typeof AssistantRoute
   BulkUploadStudioRoute: typeof BulkUploadStudioRoute
   GalleryRoute: typeof GalleryRoute
+  LoginRoute: typeof LoginRoute
   MarketingToolRoute: typeof MarketingToolRoute
   McpRoute: typeof McpRoute
   SimulatorRoute: typeof SimulatorRoute
@@ -225,6 +250,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   ApiDecorProjectRoute: typeof ApiDecorProjectRoute
   ApiRemoveBgRoute: typeof ApiRemoveBgRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 
@@ -249,6 +275,13 @@ declare module '@tanstack/react-router' {
       path: '/marketing-tool'
       fullPath: '/marketing-tool'
       preLoaderRoute: typeof MarketingToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gallery': {
@@ -335,6 +368,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -344,6 +384,7 @@ const rootRouteChildren: RootRouteChildren = {
   AssistantRoute: AssistantRoute,
   BulkUploadStudioRoute: BulkUploadStudioRoute,
   GalleryRoute: GalleryRoute,
+  LoginRoute: LoginRoute,
   MarketingToolRoute: MarketingToolRoute,
   McpRoute: McpRoute,
   SimulatorRoute: SimulatorRoute,
@@ -354,6 +395,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   ApiDecorProjectRoute: ApiDecorProjectRoute,
   ApiRemoveBgRoute: ApiRemoveBgRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
 }
 export const routeTree = rootRouteImport
