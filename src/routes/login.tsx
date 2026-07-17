@@ -19,7 +19,7 @@ function isSafeNext(next: string): boolean {
 
 function LoginPage() {
   const { next } = Route.useSearch();
-  const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
