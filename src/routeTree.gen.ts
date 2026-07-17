@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SimulatorRouteImport } from './routes/simulator'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MarketingToolRouteImport } from './routes/marketing-tool'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as BulkUploadStudioRouteImport } from './routes/bulk-upload-studio'
@@ -20,10 +21,18 @@ import { Route as ApiRemoveBgRouteImport } from './routes/api/remove-bg'
 import { Route as ApiDecorProjectRouteImport } from './routes/api/decor-project'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiAiImageRouteImport } from './routes/api/ai-image'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 
 const SimulatorRoute = SimulatorRouteImport.update({
   id: '/simulator',
   path: '/simulator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketingToolRoute = MarketingToolRouteImport.update({
@@ -76,6 +85,24 @@ const ApiAiImageRoute = ApiAiImageRouteImport.update({
   path: '/api/ai-image',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -84,11 +111,15 @@ export interface FileRoutesByFullPath {
   '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/gallery': typeof GalleryRoute
   '/marketing-tool': typeof MarketingToolRoute
+  '/mcp': typeof McpRoute
   '/simulator': typeof SimulatorRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
   '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -97,11 +128,15 @@ export interface FileRoutesByTo {
   '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/gallery': typeof GalleryRoute
   '/marketing-tool': typeof MarketingToolRoute
+  '/mcp': typeof McpRoute
   '/simulator': typeof SimulatorRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
   '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -111,11 +146,15 @@ export interface FileRoutesById {
   '/bulk-upload-studio': typeof BulkUploadStudioRoute
   '/gallery': typeof GalleryRoute
   '/marketing-tool': typeof MarketingToolRoute
+  '/mcp': typeof McpRoute
   '/simulator': typeof SimulatorRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/ai-image': typeof ApiAiImageRoute
   '/api/chat': typeof ApiChatRoute
   '/api/decor-project': typeof ApiDecorProjectRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -126,11 +165,15 @@ export interface FileRouteTypes {
     | '/bulk-upload-studio'
     | '/gallery'
     | '/marketing-tool'
+    | '/mcp'
     | '/simulator'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/api/ai-image'
     | '/api/chat'
     | '/api/decor-project'
     | '/api/remove-bg'
+    | '/.mcp/invoke-tool/$tool'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -139,11 +182,15 @@ export interface FileRouteTypes {
     | '/bulk-upload-studio'
     | '/gallery'
     | '/marketing-tool'
+    | '/mcp'
     | '/simulator'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/api/ai-image'
     | '/api/chat'
     | '/api/decor-project'
     | '/api/remove-bg'
+    | '/.mcp/invoke-tool/$tool'
   id:
     | '__root__'
     | '/'
@@ -152,11 +199,15 @@ export interface FileRouteTypes {
     | '/bulk-upload-studio'
     | '/gallery'
     | '/marketing-tool'
+    | '/mcp'
     | '/simulator'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/api/ai-image'
     | '/api/chat'
     | '/api/decor-project'
     | '/api/remove-bg'
+    | '/.mcp/invoke-tool/$tool'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -166,11 +217,15 @@ export interface RootRouteChildren {
   BulkUploadStudioRoute: typeof BulkUploadStudioRoute
   GalleryRoute: typeof GalleryRoute
   MarketingToolRoute: typeof MarketingToolRoute
+  McpRoute: typeof McpRoute
   SimulatorRoute: typeof SimulatorRoute
+  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ApiAiImageRoute: typeof ApiAiImageRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiDecorProjectRoute: typeof ApiDecorProjectRoute
   ApiRemoveBgRoute: typeof ApiRemoveBgRoute
+  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -180,6 +235,13 @@ declare module '@tanstack/react-router' {
       path: '/simulator'
       fullPath: '/simulator'
       preLoaderRoute: typeof SimulatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketing-tool': {
@@ -252,6 +314,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAiImageRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -262,11 +345,16 @@ const rootRouteChildren: RootRouteChildren = {
   BulkUploadStudioRoute: BulkUploadStudioRoute,
   GalleryRoute: GalleryRoute,
   MarketingToolRoute: MarketingToolRoute,
+  McpRoute: McpRoute,
   SimulatorRoute: SimulatorRoute,
+  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ApiAiImageRoute: ApiAiImageRoute,
   ApiChatRoute: ApiChatRoute,
   ApiDecorProjectRoute: ApiDecorProjectRoute,
   ApiRemoveBgRoute: ApiRemoveBgRoute,
+  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
