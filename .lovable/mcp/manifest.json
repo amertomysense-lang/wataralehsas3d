@@ -1,0 +1,156 @@
+{
+  "version": 1,
+  "sdk_version": "0.23.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://edogbnnwooowfsyewbng.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "watar-al-ihsas-mcp",
+      "version": "0.1.0",
+      "title": "Watar Al-Ihsas — Decor Print MCP"
+    },
+    "tools": [
+      {
+        "name": "list_products",
+        "title": "List products",
+        "description": "List decor design products available in the Watar Al-Ihsas catalog. Optionally filter by category or search term.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "category": {
+              "description": "Optional category filter, e.g. 'flowers', 'nature'.",
+              "type": "string"
+            },
+            "search": {
+              "description": "Optional case-insensitive text search over product title.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max results (default 25).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_product",
+        "title": "Get product",
+        "description": "Fetch a single product by its UUID.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Product UUID."
+            }
+          },
+          "required": [
+            "id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_projects",
+        "title": "List my saved decor projects",
+        "description": "List decor simulator projects saved by the currently signed-in user. Returns projects whose device_id matches the authenticated user id.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "description": "Max results (default 25).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_order",
+        "title": "Create print order",
+        "description": "Create a new print order for wall/floor decor. Requires the design URL and physical dimensions in meters.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "design_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "Public URL of the design/artwork to print."
+            },
+            "design_name": {
+              "type": "string"
+            },
+            "width": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Width in meters."
+            },
+            "height": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Height in meters."
+            },
+            "embossed": {
+              "description": "Whether to apply the embossed 3D finish.",
+              "type": "boolean"
+            },
+            "region_name": {
+              "description": "Delivery region / city name.",
+              "type": "string"
+            },
+            "customer_phone": {
+              "description": "Contact phone for delivery coordination.",
+              "type": "string"
+            },
+            "shipping_mode": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "design_url",
+            "width",
+            "height"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
