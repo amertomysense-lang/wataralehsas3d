@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -19,8 +19,7 @@ function isSafeNext(next: string): boolean {
 
 function LoginPage() {
   const { next } = Route.useSearch();
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
